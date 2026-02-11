@@ -1,0 +1,5 @@
+{
+  "name": "BRUK - Gestão Financeira Inteligente",
+  "description": "Sistema financeiro inteligente BRUK que integra dashboard web e inputs via chat com NLP.",
+  "requestFramePermissions": []
+}
