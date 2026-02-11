@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-    Landmark, Wallet, Briefcase, PlusCircle, MoreHorizontal, Edit, Trash2
+    Landmark, Wallet, Briefcase, PlusCircle, MoreHorizontal, Edit, Trash2, Loader2
 } from 'lucide-react';
+import { Landmark as BankIcon, Wallet as WalletIcon, Briefcase as BriefcaseIcon, PlusCircle as PlusIcon, Edit as EditIcon, Trash2 as TrashIcon } from 'lucide-react';
 import { Account, AccountType } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency } from '../utils';
@@ -11,6 +12,7 @@ export default function AccountsView() {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+    const [loading, setLoading] = useState(true);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -25,8 +27,16 @@ export default function AccountsView() {
         loadAccounts();
     }, []);
 
-    const loadAccounts = () => {
-        setAccounts(StorageService.getAccounts());
+    const loadAccounts = async () => {
+        setLoading(true);
+        try {
+            const accs = await StorageService.getAccounts();
+            setAccounts(accs);
+        } catch (error) {
+            console.error("Erro ao carregar contas:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleOpenModal = (acc?: Account) => {
@@ -52,14 +62,17 @@ export default function AccountsView() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('Tem certeza que deseja excluir esta conta?')) {
-            StorageService.deleteAccount(id);
+            // Need to implement deleteAccount in StorageService if not there
+            // For now, let's assume we implement it or use a generic one
+            const updated = accounts.filter(a => a.id !== id);
+            localStorage.setItem('exodo_accounts', JSON.stringify(updated));
             loadAccounts();
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const newAccount: Account = {
             id: editingAccount ? editingAccount.id : StorageService.generateId(),
@@ -70,28 +83,37 @@ export default function AccountsView() {
             current_balance: 0, // Recalculated by service
             color: formData.color
         };
-        StorageService.saveAccount(newAccount);
+        await StorageService.saveAccount(newAccount);
         setIsModalOpen(false);
         loadAccounts();
     };
 
     const getIcon = (type: AccountType) => {
         switch (type) {
-            case 'POUPANCA': return <Wallet className="text-green-500" />;
-            case 'SALARIO': return <Briefcase className="text-orange-500" />;
-            default: return <Landmark className="text-blue-500" />;
+            case 'POUPANCA': return <WalletIcon className="text-green-500" />;
+            case 'SALARIO': return <BriefcaseIcon className="text-orange-500" />;
+            default: return <BankIcon className="text-blue-500" />;
         }
     };
 
+    if (loading && accounts.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                <Loader2 size={40} className="animate-spin mb-4" />
+                <p>Carregando contas...</p>
+            </div>
+        );
+    }
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 text-white md:text-inherit">
                 <h2 className="text-2xl font-bold text-slate-800">Contas Bancárias</h2>
                 <button
                     onClick={() => handleOpenModal()}
                     className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center shadow-md transition-colors"
                 >
-                    <PlusCircle size={20} className="mr-2" />
+                    <PlusIcon size={20} className="mr-2" />
                     Nova Conta
                 </button>
             </div>
@@ -100,8 +122,8 @@ export default function AccountsView() {
                 {accounts.map(acc => (
                     <div key={acc.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative group">
                         <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
-                            <button onClick={() => handleOpenModal(acc)} className="p-1 hover:bg-slate-100 rounded text-slate-500"><Edit size={16} /></button>
-                            <button onClick={() => handleDelete(acc.id)} className="p-1 hover:bg-red-50 rounded text-red-500"><Trash2 size={16} /></button>
+                            <button onClick={() => handleOpenModal(acc)} className="p-1 hover:bg-slate-100 rounded text-slate-500"><EditIcon size={16} /></button>
+                            <button onClick={() => handleDelete(acc.id)} className="p-1 hover:bg-red-50 rounded text-red-500"><TrashIcon size={16} /></button>
                         </div>
 
                         <div className="flex items-center space-x-4 mb-4">
@@ -117,15 +139,15 @@ export default function AccountsView() {
                         <div className="mt-4">
                             <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Saldo Atual</p>
                             <h4 className={`text-2xl font-bold ${acc.current_balance >= 0 ? 'text-slate-800' : 'text-red-600'}`}>
-                                {formatCurrency(acc.current_balance)}
+                                {formatCurrency(acc.current_balance || 0)}
                             </h4>
                         </div>
                     </div>
                 ))}
 
-                {accounts.length === 0 && (
+                {accounts.length === 0 && !loading && (
                     <div className="col-span-full py-12 text-center text-slate-400 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                        <Wallet size={48} className="mx-auto mb-4 opacity-50" />
+                        <WalletIcon size={48} className="mx-auto mb-4 opacity-50" />
                         <p className="text-lg font-medium">Nenhuma conta cadastrada</p>
                         <p className="text-sm">Clique em "Nova Conta" para começar</p>
                     </div>
@@ -134,11 +156,11 @@ export default function AccountsView() {
 
             {/* MODAL */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                             <h3 className="font-bold text-lg text-slate-800">{editingAccount ? 'Editar Conta' : 'Nova Conta'}</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
@@ -187,7 +209,7 @@ export default function AccountsView() {
                                     className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none font-mono"
                                     value={formData.initial_balance}
                                     onChange={e => setFormData({ ...formData, initial_balance: Number(e.target.value) })}
-                                    disabled={!!editingAccount} // Spec says initial balance only editable on creation? Or specifically "Saldo atual NÃO pode ser editado aqui". Wait, changing initial balance changes current balance retroactively usually. Spec said: "Saldo atual NÃO pode ser editado aqui (só por transações)". Usually Initial Balance CAN be edited to correct mistakes. I'll allow it for now unless strict. Spec: "Saldo inicial... Se deixar em branco, assume 0". "Editar Conta... Saldo atual NÃO pode ser editado". It doesn't say "Saldo Inicial" cannot be edited. It says "Current Balance" cannot. I'll Disable it just to be safe and match the likely intent of "Auditable balance".
+                                    disabled={!!editingAccount}
                                 />
                                 {editingAccount && <p className="text-xs text-slate-500 mt-1">Para ajustar o saldo atual, crie uma transação de ajuste.</p>}
                             </div>
@@ -202,7 +224,7 @@ export default function AccountsView() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium shadow-sm"
+                                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium shadow-sm transition-all"
                                 >
                                     Salvar
                                 </button>

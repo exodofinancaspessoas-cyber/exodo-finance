@@ -72,11 +72,17 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         loadData();
     }, []);
 
-    const loadData = () => {
-        setTransactions(StorageService.getTransactions());
-        setAccounts(StorageService.getAccounts());
-        setCards(StorageService.getCards());
-        setCategories(StorageService.getCategories());
+    const loadData = async () => {
+        const [trxs, accs, crds, cats] = await Promise.all([
+            StorageService.getTransactions(),
+            StorageService.getAccounts(),
+            StorageService.getCards(),
+            StorageService.getCategories()
+        ]);
+        setTransactions(trxs);
+        setAccounts(accs);
+        setCards(crds);
+        setCategories(cats);
     };
 
     // --- Advanced Filtering Logic ---
@@ -133,9 +139,13 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         }
     };
 
-    const handleBatchDelete = () => {
+    const handleBatchDelete = async () => {
         if (!confirm(`Excluir ${selectedTransactions.size} transações selecionadas?`)) return;
-        selectedTransactions.forEach(id => StorageService.deleteTransaction(id));
+
+        for (const id of Array.from(selectedTransactions)) {
+            await StorageService.deleteTransaction(id as string);
+        }
+
         setSelectedTransactions(new Set());
         loadData();
     };

@@ -1,12 +1,13 @@
 
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowUpCircle, ArrowDownCircle, Wallet, Calendar,
-  TrendingUp, Activity, Plus, FileText, ArrowRight
+  TrendingUp, Activity, Plus, FileText, ArrowRight, Loader2
 } from 'lucide-react';
 import { StorageService } from '../services/storage';
 import { formatCurrency, formatDate } from '../utils';
-import { TransactionType } from '../types';
+import { Account, Card, Transaction, Category } from '../types';
+import SupabaseSync from './SupabaseSync';
 
 interface DashboardProps {
   currentMonth: Date;
@@ -14,23 +15,54 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ currentMonth, onChangeView }: DashboardProps) {
-  const user = StorageService.getUser();
-  const transactions = StorageService.getTransactions();
-  const categories = StorageService.getCategories();
-  const accounts = StorageService.getAccounts();
+  const [user] = useState(() => StorageService.getUser());
+  const [data, setData] = useState<{
+    transactions: Transaction[];
+    categories: Category[];
+    accounts: Account[];
+    cards: Card[];
+  }>({
+    transactions: [],
+    categories: [],
+    accounts: [],
+    cards: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadAllData();
+  }, [currentMonth]);
+
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      const [trxs, cats, accs, crds] = await Promise.all([
+        StorageService.getTransactions(),
+        StorageService.getCategories(),
+        StorageService.getAccounts(),
+        StorageService.getCards()
+      ]);
+      setData({ transactions: trxs, categories: cats, accounts: accs, cards: crds });
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const { transactions, categories, accounts } = data;
 
   // --- Calculations ---
 
   // 1. Total Balance (Sum of all accounts)
   const totalBalance = useMemo(() => {
-    return accounts.reduce((acc, account) => acc + account.current_balance, 0);
+    return accounts.reduce((acc, account) => acc + (account.current_balance || 0), 0);
   }, [accounts]);
 
   // 2. Monthly Stats
   const monthlyStats = useMemo(() => {
-    // Safer filtering: check year and month from string directly to avoid timezone issues
     const targetYear = currentMonth.getFullYear();
-    const targetMonth = currentMonth.getMonth(); // 0-indexed
+    const targetMonth = currentMonth.getMonth();
 
     const monthlyTransactions = transactions.filter(t => {
       if (!t.date) return false;
@@ -56,7 +88,7 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
       .slice(0, 5);
   }, [transactions]);
 
-  // 4. Budget/Category Highlights (Top 3 highest spending categories this month)
+  // 4. Budget/Category Highlights
   const topSpendingCategories = useMemo(() => {
     const targetYear = currentMonth.getFullYear();
     const targetMonth = currentMonth.getMonth();
@@ -80,6 +112,15 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 3);
   }, [transactions, categories, currentMonth]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-slate-400">
+        <Loader2 size={40} className="animate-spin mb-4" />
+        <p className="font-medium">Carregando seus dados...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in space-y-8 pb-20">
@@ -109,9 +150,11 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
         </div>
       </div>
 
+      {/* SUPABASE CONNECTION STATUS & SYNC */}
+      <SupabaseSync />
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Total Balance */}
         <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-xl shadow-slate-900/20 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <Wallet size={80} />
@@ -125,7 +168,6 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
           </div>
         </div>
 
-        {/* Monthly Income */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group hover:border-emerald-100 transition-colors">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
@@ -139,7 +181,6 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
           </div>
         </div>
 
-        {/* Monthly Expense */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group hover:border-red-100 transition-colors">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-red-100 text-red-600 rounded-xl">
@@ -156,8 +197,6 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* Left Column: Recent Activity (2/3 width) */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -192,7 +231,7 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
                         <p className={`font-bold text-sm ${t.type === 'RECEITA' ? 'text-emerald-600' : 'text-red-600'}`}>
                           {t.type === 'RECEITA' ? '+' : '-'}{formatCurrency(t.amount)}
                         </p>
-                        <p className="text-xs text-slate-400 capitalize">{t.status.toLowerCase()}</p>
+                        <p className="text-xs text-slate-400 capitalize">{t.status?.toLowerCase()}</p>
                       </div>
                     </div>
                   );
@@ -206,9 +245,7 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
           </div>
         </div>
 
-        {/* Right Column: Highlights & Quick Stats (1/3 width) */}
         <div className="space-y-6">
-          {/* Top Spending */}
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
             <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2">
               <TrendingUp size={16} /> Maiores Gastos (Mês)
@@ -223,7 +260,7 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
                   <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <div
                       className="bg-orange-500 h-1.5 rounded-full"
-                      style={{ width: `${Math.min((cat.amount / monthlyStats.expense) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((cat.amount / (monthlyStats.expense || 1)) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
@@ -233,7 +270,6 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
             </div>
           </div>
 
-          {/* Quick Insight (Mini AI) */}
           <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg text-white relative overflow-hidden">
             <div className="relative z-10">
               <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
@@ -251,7 +287,6 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
                 Ver Análise Completa
               </button>
             </div>
-            {/* Decorative background circles */}
             <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
             <div className="absolute -top-10 -left-10 w-32 h-32 bg-purple-400/20 rounded-full blur-2xl"></div>
           </div>

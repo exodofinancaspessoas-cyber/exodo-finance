@@ -2,7 +2,9 @@
 import React, { useState } from 'react';
 import { StorageService } from '../services/storage';
 import { User } from '../types';
-import { LayoutDashboard, Wallet, CreditCard, ArrowRightLeft, User as UserIcon } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
+import { AuthService } from '../services/auth';
+import { isSupabaseConfigured } from '../services/supabase';
 
 interface AuthProps {
     onLogin: (user: User) => void;
@@ -10,6 +12,7 @@ interface AuthProps {
 
 export default function Auth({ onLogin }: AuthProps) {
     const [isRegistering, setIsRegistering] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -23,35 +26,54 @@ export default function Auth({ onLogin }: AuthProps) {
         setError('');
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
 
-        if (isRegistering) {
-            if (formData.password !== formData.confirmPassword) {
-                setError('As senhas não conferem');
-                return;
-            }
-            if (formData.name.length < 3) {
-                setError('Nome muito curto');
-                return;
-            }
-
-            const newUser: User = {
-                id: StorageService.generateId(),
-                name: formData.name,
-                email: formData.email,
-                password: formData.password
-            };
-
-            StorageService.setUser(newUser);
-            onLogin(newUser);
-        } else {
-            const storedUser = StorageService.getUser();
-            if (storedUser && storedUser.email === formData.email && storedUser.password === formData.password) {
-                onLogin(storedUser);
+        try {
+            if (isSupabaseConfigured()) {
+                if (isRegistering) {
+                    if (formData.password !== formData.confirmPassword) {
+                        setError('As senhas não conferem');
+                        return;
+                    }
+                    const { user, error: signUpError } = await AuthService.signUp(formData.email, formData.password, formData.name);
+                    if (signUpError) setError(signUpError);
+                    else if (user) onLogin(user);
+                } else {
+                    const { user, error: signInError } = await AuthService.signIn(formData.email, formData.password);
+                    if (signInError) setError(signInError);
+                    else if (user) onLogin(user);
+                }
             } else {
-                setError('Email ou senha incorretos. (Se é o primeiro acesso, crie uma conta)');
+                // FALLBACK TO LOCAL STORAGE (MOCK AUTH)
+                if (isRegistering) {
+                    if (formData.password !== formData.confirmPassword) {
+                        setError('As senhas não conferem');
+                        return;
+                    }
+                    const newUser: User = {
+                        id: StorageService.generateId(),
+                        name: formData.name,
+                        email: formData.email,
+                        password: formData.password
+                    };
+                    StorageService.setUser(newUser);
+                    onLogin(newUser);
+                } else {
+                    const storedUser = StorageService.getUser();
+                    if (storedUser && storedUser.email === formData.email && storedUser.password === formData.password) {
+                        onLogin(storedUser);
+                    } else {
+                        setError('Email ou senha incorretos. (Configure o Supabase para login real)');
+                    }
+                }
             }
+        } catch (err: any) {
+            setError('Ocorreu um erro inesperado.');
+        } finally {
+            setLoading(false);
         }
     };
 

@@ -31,9 +31,13 @@ export default function CardsView() {
         loadData();
     }, []);
 
-    const loadData = () => {
-        setCards(StorageService.getCards());
-        setCategories(StorageService.getCategories());
+    const loadData = async () => {
+        const [crds, cats] = await Promise.all([
+            StorageService.getCards(),
+            StorageService.getCategories()
+        ]);
+        setCards(crds);
+        setCategories(cats);
     };
 
     const handleOpenModal = (card?: Card) => {
@@ -61,14 +65,14 @@ export default function CardsView() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('Tem certeza que deseja excluir este cartão?')) {
-            StorageService.deleteCard(id);
+            await StorageService.deleteCard(id);
             loadData();
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const newCard: Card = {
             id: editingCard ? editingCard.id : StorageService.generateId(),
@@ -80,7 +84,7 @@ export default function CardsView() {
             bank: formData.bank,
             brand: formData.brand as any,
         };
-        StorageService.saveCard(newCard);
+        await StorageService.saveCard(newCard);
         setIsModalOpen(false);
         loadData();
     };
@@ -193,9 +197,9 @@ export default function CardsView() {
                         <div key={card.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative group">
                             <div className="flex justify-between items-start mb-6">
                                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg ${card.brand === 'MASTERCARD' ? 'bg-orange-500' :
-                                        card.brand === 'VISA' ? 'bg-blue-600' :
-                                            card.brand === 'ELO' ? 'bg-red-500' :
-                                                card.brand === 'AMEX' ? 'bg-slate-500' : 'bg-slate-800'
+                                    card.brand === 'VISA' ? 'bg-blue-600' :
+                                        card.brand === 'ELO' ? 'bg-red-500' :
+                                            card.brand === 'AMEX' ? 'bg-slate-500' : 'bg-slate-800'
                                     }`}>
                                     <CreditCard size={24} />
                                 </div>
