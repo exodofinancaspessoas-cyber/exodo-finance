@@ -21,6 +21,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, chil
 
     const detailedMenuItems = [
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'accounts', icon: Wallet, label: 'Minhas Contas' },
         { id: 'projection', icon: TrendingUp, label: 'Projeção (Novo)' },
         { id: 'recurring', icon: Repeat, label: 'Recorrentes' },
         { id: 'reports', icon: BarChart3, label: 'Relatórios' },

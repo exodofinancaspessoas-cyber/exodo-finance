@@ -120,21 +120,15 @@ export default function CardsView() {
         setIsInvoiceModalOpen(true);
     };
 
-    const handleSaveInvoices = () => {
+    const handleSaveInvoices = async () => {
         if (!selectedCardForInvoice) return;
 
         let importCount = 0;
-
-        // We need to iterate and save
-        // NOTE: We do NOT clear existing transactions. We append.
-
         const newTransactions: Transaction[] = [];
 
         invoiceSetupData.forEach(slot => {
             const amountVal = Number(slot.amount);
             if (amountVal > 0) {
-                // Determine Due Date: Year, Month, Card Due Day
-                // JS Date(year, monthIndex, day)
                 const dueDate = new Date(slot.year, slot.monthIndex, selectedCardForInvoice.due_day);
 
                 const newTrx: Transaction = {
@@ -144,7 +138,7 @@ export default function CardsView() {
                     type: 'DESPESA',
                     category_id: invoiceCategory,
                     date: dueDate.toISOString().split('T')[0],
-                    status: 'PREVISTA', // Future debt
+                    status: 'PREVISTA',
                     payment_method: 'CREDITO',
                     card_id: selectedCardForInvoice.id,
                     created_at: new Date().toISOString(),
@@ -157,13 +151,14 @@ export default function CardsView() {
         });
 
         if (importCount > 0) {
-            // Batch save would be better but saveTransaction handles logic.
-            // We just loop.
-            newTransactions.forEach(t => StorageService.saveTransaction(t));
+            // Sequential save to avoid race conditions in local storage fallback
+            for (const t of newTransactions) {
+                await StorageService.saveTransaction(t);
+            }
 
             alert(`${importCount} faturas importadas com sucesso!`);
             setIsInvoiceModalOpen(false);
-            loadData(); // Update limits used
+            await loadData(); // Update limits used
         } else {
             alert('Nenhum valor preenchido para importar.');
         }

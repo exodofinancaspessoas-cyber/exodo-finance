@@ -13,16 +13,29 @@ export default function TransfersView() {
         from: '', to: '', amount: '', date: new Date().toISOString().split('T')[0], description: ''
     });
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         loadData();
     }, []);
 
-    const loadData = () => {
-        setTransfers(StorageService.getTransfers());
-        setAccounts(StorageService.getAccounts());
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const [trfs, accs] = await Promise.all([
+                StorageService.getTransfers(),
+                StorageService.getAccounts()
+            ]);
+            setTransfers(trfs);
+            setAccounts(accs);
+        } catch (error) {
+            console.error("Erro ao carregar transferências:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.from === formData.to) {
             alert('Contas de origem e destino devem ser diferentes');
@@ -37,9 +50,9 @@ export default function TransfersView() {
             description: formData.description,
             created_at: new Date().toISOString()
         };
-        StorageService.saveTransfer(newTransfer);
+        await StorageService.saveTransfer(newTransfer);
         setIsModalOpen(false);
-        loadData();
+        await loadData();
     };
 
     return (

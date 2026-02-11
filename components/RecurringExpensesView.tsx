@@ -28,14 +28,28 @@ export default function RecurringExpensesView() {
         account_id: ''
     });
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         loadData();
     }, []);
 
-    const loadData = () => {
-        setExpenses(StorageService.getRecurringExpenses());
-        setCategories(StorageService.getCategories());
-        setAccounts(StorageService.getAccounts());
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const [exps, cats, accs] = await Promise.all([
+                StorageService.getRecurringExpenses(),
+                StorageService.getCategories(),
+                StorageService.getAccounts()
+            ]);
+            setExpenses(exps);
+            setCategories(cats);
+            setAccounts(accs);
+        } catch (error) {
+            console.error("Erro ao carregar recorrências:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleEdit = (expense: RecurringExpense) => {
@@ -44,14 +58,14 @@ export default function RecurringExpensesView() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('Tem certeza que deseja excluir esta recorrência?')) {
-            StorageService.deleteRecurringExpense(id);
-            loadData();
+            await StorageService.deleteRecurringExpense(id);
+            await loadData();
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!formData.description || !formData.amount || !formData.category_id || !formData.day_of_month) {
@@ -74,11 +88,11 @@ export default function RecurringExpensesView() {
             last_generated: editingId ? expenses.find(e => e.id === editingId)?.last_generated : undefined
         };
 
-        StorageService.saveRecurringExpense(newExpense);
+        await StorageService.saveRecurringExpense(newExpense);
         setIsModalOpen(false);
         setEditingId(null);
         setFormData({ description: '', amount: 0, category_id: '', type: 'FIXO', frequency: 'MENSAL', day_of_month: 1, active: true, auto_create: true, account_id: '' });
-        loadData();
+        await loadData();
     };
 
     return (

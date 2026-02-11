@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Filter, Plus, Edit, Trash2, CreditCard, X, ChevronDown,
-    Download, Trash, Copy, CheckSquare, Square, Calendar
+    Download, Trash, Copy, CheckSquare, Square, Calendar, Check, CheckCircle
 } from 'lucide-react';
 import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category } from '../types';
 import { StorageService } from '../services/storage';
@@ -68,6 +68,15 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         installments_count: 1
     });
 
+    const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+    const [payTrx, setPayTrx] = useState<Transaction | null>(null);
+    const [payFormData, setPayFormData] = useState({
+        date: new Date().toISOString().split('T')[0],
+        payment_method: 'DEBITO' as PaymentMethod,
+        account_id: '',
+        card_id: ''
+    });
+
     useEffect(() => {
         loadData();
     }, []);
@@ -79,6 +88,22 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             StorageService.getCards(),
             StorageService.getCategories()
         ]);
+
+        // Ensure "Pagamento de Cartão" category exists
+        const hasCardPay = cats.find(c => c.name === 'Pagamento de Cartão');
+        if (!hasCardPay) {
+            const newCat: Category = {
+                id: 'cat_card',
+                name: 'Pagamento de Cartão',
+                type: 'DESPESA',
+                icon: 'CreditCard',
+                color: '#64748b',
+                is_default: true
+            };
+            await StorageService.saveCategory(newCat);
+            cats.push(newCat);
+        }
+
         setTransactions(trxs);
         setAccounts(accs);
         setCards(crds);
@@ -106,7 +131,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             // Category
             if (filters.category !== 'ALL' && t.category_id !== filters.category) return false;
 
-            // Account / Payment Method
+            // Account/Card
             if (filters.account !== 'ALL') {
                 if (t.account_id !== filters.account && t.card_id !== filters.account) return false;
             }
@@ -147,7 +172,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         }
 
         setSelectedTransactions(new Set());
-        loadData();
+        await loadData();
     };
 
     // --- Form Logic ---
@@ -158,7 +183,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                 description: trx.description,
                 amount: trx.amount.toString(),
                 type: trx.type,
-                category_id: trx.category_id,
+                category_id: trx.category_id || '',
                 date: trx.date,
                 status: trx.status,
                 payment_method: trx.payment_method || 'DEBITO',
@@ -173,7 +198,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             setFormData({
                 description: '',
                 amount: '',
-                type: typeOverride || filters.type === 'ALL' ? 'DESPESA' : filters.type,
+                type: typeOverride || (filters.type === 'ALL' ? 'DESPESA' : filters.type),
                 category_id: '',
                 date: new Date().toISOString().split('T')[0],
                 status: 'PREVISTA',
@@ -188,14 +213,14 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('Excluir transação?')) {
-            StorageService.deleteTransaction(id);
-            loadData();
+            await StorageService.deleteTransaction(id);
+            await loadData();
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const totalAmount = Number(formData.amount);
         let finalAmount = totalAmount;
@@ -214,7 +239,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             description: formData.description,
             amount: finalAmount,
             type: formData.type,
-            category_id: formData.category_id,
+            category_id: formData.category_id || undefined,
             date: formData.date,
             status: formData.status,
             payment_method: formData.payment_method,
@@ -225,16 +250,44 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             created_at: new Date().toISOString()
         };
 
-        StorageService.saveTransaction(newTrx);
+        await StorageService.saveTransaction(newTrx);
         setIsModalOpen(false);
-        loadData();
+        await loadData();
+    };
+
+    const handleOpenPayModal = (trx: Transaction) => {
+        setPayTrx(trx);
+        setPayFormData({
+            date: new Date().toISOString().split('T')[0],
+            payment_method: trx.payment_method || 'DEBITO',
+            account_id: trx.account_id || '',
+            card_id: trx.card_id || ''
+        });
+        setIsPayModalOpen(true);
+    };
+
+    const handleConfirmPay = async () => {
+        if (!payTrx) return;
+
+        const updatedTrx: Transaction = {
+            ...payTrx,
+            status: payTrx.type === 'RECEITA' ? 'RECEBIDA' : 'PAGA',
+            date: payFormData.date,
+            payment_method: payFormData.payment_method,
+            account_id: payFormData.account_id || undefined,
+            card_id: payFormData.card_id || undefined
+        };
+
+        await StorageService.saveTransaction(updatedTrx);
+        setIsPayModalOpen(false);
+        setPayTrx(null);
+        await loadData();
     };
 
     // Dynamic Options
     const availableCategories = categories.filter(c => c.type === formData.type);
     const showPaymentMethod = formData.type === 'DESPESA';
-    const showAccount = (formData.type === 'RECEITA' && formData.status === 'RECEBIDA') ||
-        (formData.type === 'DESPESA' && formData.status === 'PAGA' && formData.payment_method !== 'CREDITO');
+    const showAccount = (formData.status === 'PAGA' || formData.status === 'RECEBIDA');
 
     // Status visual helper
     const getStatusColor = (status: string) => {
@@ -416,8 +469,17 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                             {t.type === 'RECEITA' ? '+' : '-'}{formatCurrency(t.amount)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className={`flex justify-end space-x-2 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                                <button onClick={() => handleOpenModal(t)} className="p-1 hover:bg-slate-200 rounded text-slate-500"><Edit size={16} /></button>
+                                            <div className="flex justify-end space-x-2 items-center">
+                                                {t.status !== 'PAGA' && t.status !== 'RECEBIDA' && (
+                                                    <button
+                                                        onClick={() => handleOpenPayModal(t)}
+                                                        className="p-1 px-2 bg-green-50 text-green-600 rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-green-100 transition-colors"
+                                                    >
+                                                        <Check size={14} /> QUITAR
+                                                    </button>
+                                                )}
+                                                <button onClick={() => handleOpenModal(t)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-indigo-600 transition-colors"><Edit size={16} /></button>
+                                                <button onClick={() => handleDelete(t.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 group-hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -627,6 +689,92 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                 transactions={filteredTransactions}
                 categories={categories}
             />
+
+            {/* QUICK PAY MODAL */}
+            {isPayModalOpen && payTrx && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform animate-scale-up">
+                        <div className="p-6 bg-slate-50 border-b border-slate-100">
+                            <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                <CheckCircle className="text-green-600" /> Quitar Lançamento
+                            </h3>
+                            <p className="text-sm text-slate-500 mt-1">{payTrx.description}</p>
+                            <p className="text-xl font-bold text-slate-800 mt-2">{formatCurrency(payTrx.amount)}</p>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data do Pagamento</label>
+                                <input
+                                    type="date"
+                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500/20"
+                                    value={payFormData.date}
+                                    onChange={e => setPayFormData({ ...payFormData, date: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Forma de Pagamento</label>
+                                <select
+                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none bg-white font-medium text-slate-700"
+                                    value={payFormData.payment_method}
+                                    onChange={e => setPayFormData({ ...payFormData, payment_method: e.target.value as PaymentMethod })}
+                                >
+                                    <option value="DEBITO">Débito em Conta</option>
+                                    <option value="PIX">Pix</option>
+                                    <option value="DINHEIRO">Dinheiro (Espécie)</option>
+                                    <option value="CREDITO">Cartão de Crédito</option>
+                                    <option value="BOLETO">Boleto (Pago)</option>
+                                    <option value="TRANSFERENCIA">Transferência</option>
+                                </select>
+                            </div>
+
+                            {payFormData.payment_method === 'CREDITO' ? (
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Qual Cartão?</label>
+                                    <select
+                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none bg-white font-medium text-slate-700"
+                                        value={payFormData.card_id}
+                                        onChange={e => setPayFormData({ ...payFormData, card_id: e.target.value })}
+                                        required
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">De qual Conta saiu?</label>
+                                    <select
+                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none bg-white font-medium text-slate-700"
+                                        value={payFormData.account_id}
+                                        onChange={e => setPayFormData({ ...payFormData, account_id: e.target.value })}
+                                        required
+                                    >
+                                        <option value="">Selecione a conta...</option>
+                                        {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-6 pt-0 flex gap-3">
+                            <button
+                                onClick={() => setIsPayModalOpen(false)}
+                                className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleConfirmPay}
+                                className="flex-[2] py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 transition-transform active:scale-95"
+                            >
+                                Confirmar Quitação
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="fixed bottom-6 right-6 z-40">
                 <button

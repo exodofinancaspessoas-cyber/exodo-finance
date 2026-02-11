@@ -26,31 +26,42 @@ export default function ReportsView() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [allCategories, setAllCategories] = useState<Category[]>([]);
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         loadData();
     }, [period]);
 
-    const loadData = () => {
-        const rawTransactions = StorageService.getTransactions();
-        const categories = StorageService.getCategories();
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const [rawTransactions, categories] = await Promise.all([
+                StorageService.getTransactions(),
+                StorageService.getCategories()
+            ]);
 
-        // Filter for chosen period
-        const filteredTrx = filterTransactionsByPeriod(rawTransactions, period);
+            // Filter for chosen period
+            const filteredTrx = filterTransactionsByPeriod(rawTransactions, period);
 
-        // Calculate Stats
-        const stats = calculatePeriodStats(filteredTrx, period);
-        const catStats = calculateCategoryStats(filteredTrx, categories, period);
+            // Calculate Stats
+            const stats = calculatePeriodStats(filteredTrx, period);
+            const catStats = calculateCategoryStats(filteredTrx, categories, period);
 
-        // AI Suggestions & Predictions
-        const aiSuggestions = analyzeSavingsOpportunities(catStats, stats.average);
-        const aiPredictions = predictFutureSpending(catStats, stats.average);
+            // AI Suggestions & Predictions
+            const aiSuggestions = analyzeSavingsOpportunities(catStats, stats.average);
+            const aiPredictions = predictFutureSpending(catStats, stats.average);
 
-        setTransactions(filteredTrx);
-        setAllCategories(categories);
-        setReportStats(stats);
-        setCategoryStats(catStats);
-        setSuggestions(aiSuggestions);
-        setPredictions(aiPredictions);
+            setTransactions(filteredTrx);
+            setAllCategories(categories);
+            setReportStats(stats);
+            setCategoryStats(catStats);
+            setSuggestions(aiSuggestions);
+            setPredictions(aiPredictions);
+        } catch (error) {
+            console.error("Erro ao carregar relatórios:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (!reportStats) return <div className="p-8 text-center animate-pulse text-indigo-600 font-medium">Analisando suas finanças...</div>;
@@ -91,7 +102,7 @@ export default function ReportsView() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {predictions.map((pred, i) => (
                             <div key={i} className={`p-4 rounded-xl border ${pred.riskLevel === 'HIGH' ? 'bg-red-500/10 border-red-500/30' :
-                                    pred.riskLevel === 'MEDIUM' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-slate-800 border-slate-700'
+                                pred.riskLevel === 'MEDIUM' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-slate-800 border-slate-700'
                                 }`}>
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="font-bold text-slate-300 uppercase text-xs">{pred.month}</span>
@@ -125,7 +136,7 @@ export default function ReportsView() {
                                 <div key={suggestion.id} className="bg-white/80 backdrop-blur-sm border border-emerald-100 rounded-xl p-4 hover:shadow-md transition-all">
                                     <div className="flex justify-between items-start mb-2">
                                         <div className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${suggestion.impact === 'HIGH' ? 'bg-red-100 text-red-600' :
-                                                suggestion.impact === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-600'
+                                            suggestion.impact === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-600'
                                             }`}>Impacto {suggestion.impact === 'HIGH' ? 'Alto' : suggestion.impact === 'MEDIUM' ? 'Médio' : 'Baixo'}</div>
                                         <button className="text-slate-400 hover:text-emerald-600"><CheckCircle size={16} /></button>
                                     </div>
@@ -231,7 +242,7 @@ export default function ReportsView() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className={`flex items-center justify-center gap-1 text-sm font-bold px-2 py-1 rounded-full w-fit mx-auto ${cat.trend === 'UP' ? 'bg-red-50 text-red-600' :
-                                                cat.trend === 'DOWN' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-500'
+                                            cat.trend === 'DOWN' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-500'
                                             }`}>
                                             {cat.trend === 'UP' ? <TrendingUp size={14} /> :
                                                 cat.trend === 'DOWN' ? <TrendingDown size={14} /> : <Minus size={14} />}

@@ -20,12 +20,21 @@ export default function GoalsView() {
         status: 'ACTIVE'
     });
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         loadData();
     }, []);
 
-    const loadData = () => {
-        setGoals(StorageService.getGoals());
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            setGoals(await StorageService.getGoals());
+        } catch (error) {
+            console.error("Erro ao carregar metas:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const calculateProgress = (curr: number, target: number) => {
@@ -33,7 +42,7 @@ export default function GoalsView() {
         return Math.min((curr / target) * 100, 100);
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name || !formData.target_amount) return;
 
@@ -53,17 +62,17 @@ export default function GoalsView() {
             }]
         };
 
-        StorageService.saveGoal(newGoal);
+        await StorageService.saveGoal(newGoal);
         setIsModalOpen(false);
         setEditingId(null);
         setFormData({ name: '', target_amount: 0, current_amount: 0, deadline: '', icon: '🎯', status: 'ACTIVE' });
-        loadData();
+        await loadData();
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('Tem certeza que deseja excluir esta meta?')) {
-            StorageService.deleteGoal(id);
-            loadData();
+            await StorageService.deleteGoal(id);
+            await loadData();
         }
     };
 
@@ -73,7 +82,7 @@ export default function GoalsView() {
         setIsModalOpen(true);
     };
 
-    const handleAddValue = (goal: Goal) => {
+    const handleAddValue = async (goal: Goal) => {
         const amountStr = prompt(`Quanto deseja adicionar à meta "${goal.name}"?`);
         if (amountStr) {
             const amount = parseFloat(amountStr.replace(',', '.'));
@@ -91,8 +100,8 @@ export default function GoalsView() {
                     alert(`Parabéns! Você atingiu a meta "${goal.name}"! 🎉`);
                 }
 
-                StorageService.saveGoal(updatedGoal);
-                loadData();
+                await StorageService.saveGoal(updatedGoal);
+                await loadData();
             }
         }
     };

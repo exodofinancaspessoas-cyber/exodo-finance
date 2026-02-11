@@ -64,11 +64,8 @@ export default function AccountsView() {
 
     const handleDelete = async (id: string) => {
         if (confirm('Tem certeza que deseja excluir esta conta?')) {
-            // Need to implement deleteAccount in StorageService if not there
-            // For now, let's assume we implement it or use a generic one
-            const updated = accounts.filter(a => a.id !== id);
-            localStorage.setItem('exodo_accounts', JSON.stringify(updated));
-            loadAccounts();
+            await StorageService.deleteAccount(id);
+            await loadAccounts();
         }
     };
 

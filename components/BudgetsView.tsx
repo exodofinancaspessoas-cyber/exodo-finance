@@ -12,14 +12,28 @@ export default function BudgetsView() {
     const [editingBudget, setEditingBudget] = useState<string | null>(null);
     const [editValue, setEditValue] = useState<number>(0);
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         loadData();
     }, []);
 
-    const loadData = () => {
-        setBudgets(StorageService.getBudgets());
-        setCategories(StorageService.getCategories().filter(c => c.type === 'DESPESA'));
-        setTransactions(StorageService.getTransactions());
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const [bds, cats, trxs] = await Promise.all([
+                StorageService.getBudgets(),
+                StorageService.getCategories(),
+                StorageService.getTransactions()
+            ]);
+            setBudgets(bds);
+            setCategories(cats.filter(c => c.type === 'DESPESA'));
+            setTransactions(trxs);
+        } catch (error) {
+            console.error("Erro ao carregar orçamentos:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const calculateSpent = (categoryId: string) => {
@@ -29,7 +43,7 @@ export default function BudgetsView() {
             .reduce((acc, curr) => acc + curr.amount, 0);
     };
 
-    const handleSaveBudget = (categoryId: string) => {
+    const handleSaveBudget = async (categoryId: string) => {
         const newBudget: Budget = {
             id: StorageService.generateId(),
             category_id: categoryId,
@@ -37,9 +51,9 @@ export default function BudgetsView() {
             alert_80: true,
             alert_100: true
         };
-        StorageService.saveBudget(newBudget);
+        await StorageService.saveBudget(newBudget);
         setEditingBudget(null);
-        loadData();
+        await loadData();
     };
 
     return (

@@ -54,6 +54,7 @@ const getDefaultCategories = (): Category[] => [
     { id: 'cat_lazer', name: 'Lazer', type: 'DESPESA', icon: 'Smile', color: '#ec4899', is_default: true },
     { id: 'cat_saude', name: 'Saúde', type: 'DESPESA', icon: 'Heart', color: '#ef4444', is_default: true },
     { id: 'cat_edu', name: 'Educação', type: 'DESPESA', icon: 'Book', color: '#6366f1', is_default: true },
+    { id: 'cat_card', name: 'Pagamento de Cartão', type: 'DESPESA', icon: 'CreditCard', color: '#64748b', is_default: true },
 ];
 
 const isSameMonth = (d1: Date, d2: Date) => d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear();
@@ -169,7 +170,7 @@ export const StorageService = {
     getAccounts: async (): Promise<Account[]> => {
         const accounts = await DatabaseService.getAccounts();
         const transactions = await DatabaseService.getTransactions();
-        const transfers = getStorage<Transfer[]>(STORAGE_KEYS.TRANSFERS, []);
+        const transfers = await DatabaseService.getTransfers();
 
         return accounts.map(acc => {
             let balance = acc.initial_balance || 0;
@@ -192,6 +193,10 @@ export const StorageService = {
 
     saveAccount: async (account: Account) => {
         await DatabaseService.saveAccount(account);
+    },
+
+    deleteAccount: async (id: string) => {
+        await DatabaseService.deleteAccount(id);
     },
 
     // CARDS
@@ -272,14 +277,21 @@ export const StorageService = {
     },
 
     deleteTransaction: async (id: string) => {
-        const trxs = await DatabaseService.getTransactions();
-        const list = trxs.filter(t => t.id !== id);
-        localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(list));
+        await DatabaseService.deleteTransaction(id);
+    },
+
+    // TRANSFERS
+    getTransfers: async (): Promise<Transfer[]> => {
+        return await DatabaseService.getTransfers();
+    },
+
+    saveTransfer: async (transfer: Transfer) => {
+        await DatabaseService.saveTransfer(transfer);
     },
 
     // CATEGORIES
     getCategories: async (): Promise<Category[]> => {
-        const stored = getStorage<Category[]>(STORAGE_KEYS.CATEGORIES, []);
+        const stored = await DatabaseService.getCategories();
         return stored.length > 0 ? stored : getDefaultCategories();
     },
 
@@ -292,18 +304,23 @@ export const StorageService = {
     },
 
     // GOALS
-    getGoals: async (): Promise<Goal[]> => getStorage<Goal[]>(STORAGE_KEYS.GOALS, []),
+    getGoals: async (): Promise<Goal[]> => {
+        return await DatabaseService.getGoals();
+    },
     saveGoal: async (goal: Goal) => {
-        const list = await StorageService.getGoals();
-        const idx = list.findIndex(g => g.id === goal.id);
-        if (idx >= 0) list[idx] = goal;
-        else list.push(goal);
-        setStorage(STORAGE_KEYS.GOALS, list);
+        await DatabaseService.saveGoal(goal);
+    },
+    deleteGoal: async (id: string) => {
+        await DatabaseService.deleteGoal(id);
     },
 
     // BUDGETS
-    getBudgets: async (): Promise<Budget[]> => getStorage<Budget[]>(STORAGE_KEYS.BUDGETS, []),
-
+    getBudgets: async (): Promise<Budget[]> => {
+        return await DatabaseService.getBudgets();
+    },
+    saveBudget: async (budget: Budget) => {
+        await DatabaseService.saveBudget(budget);
+    },
     // DASHBOARD
     getDashboardData: async (month: number, year: number): Promise<DashboardData> => {
         const transactions = await StorageService.getTransactions();

@@ -13,95 +13,92 @@ export default function ProjectionView() {
     const [period, setPeriod] = useState<number>(6); // Default 6 months
     const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         calculateProjection();
     }, [period]);
 
-    const calculateProjection = () => {
-        const transactions = StorageService.getTransactions();
-        const recurring = StorageService.getRecurringExpenses();
-        const accounts = StorageService.getAccounts();
+    const calculateProjection = async () => {
+        setLoading(true);
+        try {
+            const [transactions, recurring, accounts] = await Promise.all([
+                StorageService.getTransactions(),
+                StorageService.getRecurringExpenses(),
+                StorageService.getAccounts()
+            ]);
 
-        // Initial Balance (Sum of all accounts)
-        let currentBalance = accounts.reduce((sum, acc) => sum + acc.current_balance, 0);
+            // Initial Balance (Sum of all accounts)
+            let currentBalance = accounts.reduce((sum, acc) => sum + (acc.current_balance || 0), 0);
 
-        const projectedMonths: ProjectionMonth[] = [];
-        const today = new Date();
+            const projectedMonths: ProjectionMonth[] = [];
+            const today = new Date();
 
-        // Generate for N months
-        for (let i = 0; i < period; i++) {
-            const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            const monthLabel = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            // Generate for N months
+            for (let i = 0; i < period; i++) {
+                const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const monthLabel = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-            // Filter transactions for this month
-            // NOTE: We include future installments which are already generated as transactions in StorageService
-            const monthTrx = transactions.filter(t => {
-                const tDate = new Date(t.date);
-                return tDate.getMonth() === date.getMonth() && tDate.getFullYear() === date.getFullYear();
-            });
+                // Filter transactions for this month
+                const monthTrx = transactions.filter(t => {
+                    const tDate = new Date(t.date);
+                    return tDate.getMonth() === date.getMonth() && tDate.getFullYear() === date.getFullYear();
+                });
 
-            // Calculate confirmed/predicted from existing transactions
-            let monthIncome = 0;
-            let monthExpense = 0;
-            const detailIncomes: Transaction[] = [];
-            const detailExpenses: Transaction[] = [];
+                let monthIncome = 0;
+                let monthExpense = 0;
+                const detailIncomes: Transaction[] = [];
+                const detailExpenses: Transaction[] = [];
 
-            monthTrx.forEach(t => {
-                if (t.type === 'RECEITA') {
-                    monthIncome += t.amount;
-                    detailIncomes.push(t);
-                } else {
-                    monthExpense += t.amount;
-                    detailExpenses.push(t);
-                }
-            });
+                monthTrx.forEach(t => {
+                    if (t.type === 'RECEITA') {
+                        monthIncome += t.amount;
+                        detailIncomes.push(t);
+                    } else {
+                        monthExpense += t.amount;
+                        detailExpenses.push(t);
+                    }
+                });
 
-            // Add Recurring Expenses that are NOT yet created as transactions for this month
-            // (This avoids double counting if the month is current or near future and already generated)
-            const activeRecurring = recurring.filter(r => r.active);
-            const projectedRecurring: RecurringExpense[] = [];
+                const activeRecurring = recurring.filter(r => r.active);
+                const projectedRecurring: RecurringExpense[] = [];
 
-            activeRecurring.forEach(rec => {
-                // Check if this recurrence is already in monthTrx
-                const alreadyExists = monthTrx.some(t => t.recurrence_id === rec.id);
-                if (!alreadyExists) {
-                    // It's a future projection of a recurring expense
-                    if (rec.type === 'FIXO' || rec.type === 'VARIAVEL') {
-                        // Determine if it's expense or income based on Category (simplified here as mostly expense)
-                        // Our RecurringExpense type currently assumes mostly Expense usage, but logic could handle Income if needed.
-                        // The interface says RecurringExpense, but type has category_id.
-                        // We assume it's Expense for now based on name.
+                activeRecurring.forEach(rec => {
+                    const alreadyExists = monthTrx.some(t => t.recurrence_id === rec.id);
+                    if (!alreadyExists) {
                         monthExpense += rec.amount;
                         projectedRecurring.push(rec);
                     }
-                }
-            });
+                });
 
-            const startBal = currentBalance;
-            const endBal = startBal + monthIncome - monthExpense;
+                const startBal = currentBalance;
+                const endBal = startBal + monthIncome - monthExpense;
+                currentBalance = endBal;
 
-            // Update currentBalance for next iteration
-            currentBalance = endBal;
+                projectedMonths.push({
+                    month: monthKey,
+                    label: monthLabel,
+                    start_balance: startBal,
+                    end_balance: endBal,
+                    incomes: monthIncome,
+                    expenses: monthExpense,
+                    status: endBal >= 0 ? 'POSITIVE' : 'NEGATIVE',
+                    details: {
+                        incomes: detailIncomes,
+                        expenses: detailExpenses,
+                        recurring: projectedRecurring,
+                        card_invoices: []
+                    }
+                });
+            }
 
-            projectedMonths.push({
-                month: monthKey,
-                label: monthLabel,
-                start_balance: startBal,
-                end_balance: endBal,
-                incomes: monthIncome,
-                expenses: monthExpense,
-                status: endBal >= 0 ? 'POSITIVE' : 'NEGATIVE',
-                details: {
-                    incomes: detailIncomes,
-                    expenses: detailExpenses,
-                    recurring: projectedRecurring,
-                    card_invoices: [] // Todo implementation
-                }
-            });
+            setMonths(projectedMonths);
+        } catch (error) {
+            console.error("Erro na projeção:", error);
+        } finally {
+            setLoading(false);
         }
-
-        setMonths(projectedMonths);
     };
 
     const toggleMonth = (month: string) => {
