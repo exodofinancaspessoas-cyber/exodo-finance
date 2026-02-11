@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase credentials not found. The app will continue using LocalStorage only.');
+    console.warn('Supabase credentials not found or incomplete. Check your environment variables.');
 }
 
 export const supabase = createClient(
