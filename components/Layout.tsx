@@ -7,6 +7,7 @@ import {
     BarChart3
 } from 'lucide-react';
 import { User } from '../types';
+import { VersionInfo } from '../version';
 
 interface SidebarProps {
     currentView: string;
@@ -68,8 +69,18 @@ export default function Layout({ currentView, onChangeView, user, onLogout, chil
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-white truncate">{user.name}</p>
-                            <p className="text-xs text-slate-500 truncate">Plano MVP</p>
+                            <div className="flex items-center space-x-2">
+                                <p className="text-xs text-slate-500 truncate">Plano MVP</p>
+                                <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
+                                    v{VersionInfo.version}
+                                </span>
+                            </div>
                         </div>
+                    </div>
+                    <div className="px-2 mb-4">
+                        <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">
+                            Último Deploy: {VersionInfo.date}
+                        </p>
                     </div>
                     <button
                         onClick={onLogout}
