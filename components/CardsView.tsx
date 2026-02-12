@@ -93,9 +93,11 @@ export default function CardsView() {
     const handleOpenInvoiceSetup = (card: Card) => {
         setSelectedCardForInvoice(card);
 
-        // Find default category (Outros or first expense)
+        // Prioritize "Fatura de Cartão" or "Outros"
         const expenseCats = categories.filter(c => c.type === 'DESPESA');
-        const defaultCat = expenseCats.find(c => c.name === 'Outros') || expenseCats[0];
+        const defaultCat = expenseCats.find(c => c.name === 'Fatura de Cartão') ||
+            expenseCats.find(c => c.name === 'Outros') ||
+            expenseCats[0];
         if (defaultCat) setInvoiceCategory(defaultCat.id);
 
         // Generate next 12 months slots
@@ -133,7 +135,7 @@ export default function CardsView() {
 
                 const newTrx: Transaction = {
                     id: StorageService.generateId(),
-                    description: `Fatura Importada (${slot.month}/${slot.year})`,
+                    description: `Fatura de Cartão de Crédito - ${slot.month}/${slot.year}`,
                     amount: amountVal,
                     type: 'DESPESA',
                     category_id: invoiceCategory,

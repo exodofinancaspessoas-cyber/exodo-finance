@@ -14,7 +14,10 @@ export const AuthService = {
             password,
         });
 
-        if (error) return { user: null, error: error.message };
+        if (error) {
+            console.error('Login error details:', error);
+            return { user: null, error: error.message };
+        }
 
         if (data.user) {
             // Get profile data

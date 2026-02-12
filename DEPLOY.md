@@ -10,7 +10,7 @@ Para o sistema funcionar, você deve configurar as seguintes variáveis:
 Configure no arquivo `.env.local`:
 ```env
 VITE_SUPABASE_URL=https://mozbwnrikotnrtrfifqn.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_vJZLBOSWlrXE24AMv3svaA_LtK7URtT
+VITE_SUPABASE_ANON_KEY=sb_publishable_vJZLBOSWlrxe24AMv3svaA_LtK7URtT
 ```
 
 ### Ambiente de Produção (Vercel)

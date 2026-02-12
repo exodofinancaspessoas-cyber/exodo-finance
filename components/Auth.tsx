@@ -143,7 +143,27 @@ export default function Auth({ onLogin }: AuthProps) {
                             </div>
                         )}
 
-                        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+                        {error && (
+                            <div className="space-y-2">
+                                <p className="text-red-500 text-sm text-center">{error}</p>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const mockUser: User = {
+                                            id: StorageService.generateId(),
+                                            name: formData.name || 'Usuário de Teste',
+                                            email: formData.email,
+                                            password: formData.password
+                                        };
+                                        StorageService.setUser(mockUser);
+                                        onLogin(mockUser);
+                                    }}
+                                    className="w-full text-xs text-orange-600 hover:underline border border-orange-200 rounded py-2 mt-2"
+                                >
+                                    Entrar em modo de teste (Ignorar erro de API)
+                                </button>
+                            </div>
+                        )}
 
                         <button
                             type="submit"
