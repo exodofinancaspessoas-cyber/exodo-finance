@@ -1,5 +1,8 @@
 
 export const formatCurrency = (value: number): string => {
+    if (typeof value !== 'number' || isNaN(value)) {
+        return (0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 

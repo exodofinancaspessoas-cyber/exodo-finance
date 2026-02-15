@@ -13,7 +13,12 @@ export const DatabaseService = {
     async getAccounts(): Promise<Account[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('accounts').select('*');
-            if (!error && data) return ensureArray<Account>(data);
+            if (!error && data) {
+                return (data as any[]).map(acc => ({
+                    ...acc,
+                    current_balance: acc.balance // Map balance to current_balance
+                }));
+            }
         }
         const stored = localStorage.getItem('exodo_accounts');
         try {
@@ -66,7 +71,12 @@ export const DatabaseService = {
     async getCards(): Promise<Card[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('cards').select('*');
-            if (!error && data) return ensureArray<Card>(data);
+            if (!error && data) {
+                return (data as any[]).map(card => ({
+                    ...card,
+                    limit: card.limit_amount // Map limit_amount to limit
+                }));
+            }
         }
         const stored = localStorage.getItem('exodo_cards');
         try {
