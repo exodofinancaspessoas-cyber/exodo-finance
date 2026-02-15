@@ -29,10 +29,20 @@ export const DatabaseService = {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { error } = await supabase.from('accounts').upsert({
-                    ...account,
-                    user_id: user.id
+                    id: account.id,
+                    user_id: user.id,
+                    name: account.name,
+                    type: account.type,
+                    bank: account.bank,
+                    initial_balance: account.initial_balance,
+                    balance: account.current_balance || 0,
+                    color: account.color
                 });
-                if (!error) return;
+                if (error) {
+                    console.error('Error saving account to Supabase:', error);
+                } else {
+                    return;
+                }
             }
         }
         const accounts = await this.getAccounts();
@@ -72,10 +82,21 @@ export const DatabaseService = {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { error } = await supabase.from('cards').upsert({
-                    ...card,
-                    user_id: user.id
+                    id: card.id,
+                    user_id: user.id,
+                    name: card.name,
+                    limit_amount: card.limit,
+                    closing_day: card.closing_day,
+                    due_day: card.due_day,
+                    brand: card.brand,
+                    bank: card.bank,
+                    color: card.color
                 });
-                if (!error) return;
+                if (error) {
+                    console.error('Error saving card to Supabase:', error);
+                } else {
+                    return;
+                }
             }
         }
         const cards = await this.getCards();
@@ -115,10 +136,27 @@ export const DatabaseService = {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { error } = await supabase.from('transactions').upsert({
-                    ...transaction,
-                    user_id: user.id
+                    id: transaction.id,
+                    user_id: user.id,
+                    description: transaction.description,
+                    amount: transaction.amount,
+                    type: transaction.type,
+                    category_id: transaction.category_id,
+                    account_id: transaction.account_id,
+                    card_id: transaction.card_id,
+                    date: transaction.date,
+                    status: transaction.status,
+                    payment_method: transaction.payment_method,
+                    installments_current: transaction.installments?.current,
+                    installments_total: transaction.installments?.total,
+                    observation: transaction.observation,
+                    created_at: transaction.created_at
                 });
-                if (!error) return;
+                if (error) {
+                    console.error('Error saving transaction to Supabase:', error);
+                } else {
+                    return;
+                }
             }
         }
         const transactions = await this.getTransactions();
@@ -158,10 +196,20 @@ export const DatabaseService = {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { error } = await supabase.from('transfers').upsert({
-                    ...transfer,
-                    user_id: user.id
+                    id: transfer.id,
+                    user_id: user.id,
+                    description: transfer.description,
+                    amount: transfer.amount,
+                    from_account_id: transfer.from_account_id,
+                    to_account_id: transfer.to_account_id,
+                    date: transfer.date,
+                    created_at: transfer.created_at
                 });
-                if (!error) return;
+                if (error) {
+                    console.error('Error saving transfer to Supabase:', error);
+                } else {
+                    return;
+                }
             }
         }
         const transfers = await this.getTransfers();
@@ -191,10 +239,19 @@ export const DatabaseService = {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { error } = await supabase.from('categories').upsert({
-                    ...category,
-                    user_id: user.id
+                    id: category.id,
+                    user_id: user.id,
+                    name: category.name,
+                    type: category.type,
+                    icon: category.icon,
+                    color: category.color,
+                    is_default: category.is_default
                 });
-                if (!error) return;
+                if (error) {
+                    console.error('Error saving category to Supabase:', error);
+                } else {
+                    return;
+                }
             }
         }
         const categories = await this.getCategories();
@@ -224,10 +281,21 @@ export const DatabaseService = {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { error } = await supabase.from('goals').upsert({
-                    ...goal,
-                    user_id: user.id
+                    id: goal.id,
+                    user_id: user.id,
+                    name: goal.name,
+                    target_amount: goal.target_amount,
+                    current_amount: goal.current_amount,
+                    deadline: goal.deadline,
+                    status: goal.status,
+                    color: '#f97316', // default color or get from goal if exists
+                    icon: goal.icon
                 });
-                if (!error) return;
+                if (error) {
+                    console.error('Error saving goal to Supabase:', error);
+                } else {
+                    return;
+                }
             }
         }
         const goals = await this.getGoals();
@@ -266,10 +334,17 @@ export const DatabaseService = {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { error } = await supabase.from('budgets').upsert({
-                    ...budget,
-                    user_id: user.id
+                    id: budget.id,
+                    user_id: user.id,
+                    category_id: budget.category_id,
+                    amount: budget.amount,
+                    month: new Date().toISOString().substring(0, 7) // Default to current month YYYY-MM
                 });
-                if (!error) return;
+                if (error) {
+                    console.error('Error saving budget to Supabase:', error);
+                } else {
+                    return;
+                }
             }
         }
         const budgets = await this.getBudgets();

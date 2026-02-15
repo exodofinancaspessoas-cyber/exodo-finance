@@ -173,12 +173,24 @@ export default function Auth({ onLogin }: AuthProps) {
                         </button>
                     </form>
 
-                    <div className="mt-6 text-center">
+                    <div className="mt-8 pt-6 border-t border-slate-100 text-center">
                         <button
                             onClick={() => setIsRegistering(!isRegistering)}
-                            className="text-sm text-slate-500 hover:text-orange-600 underline"
+                            className="text-sm text-slate-500 hover:text-orange-600 underline block w-full mb-4"
                         >
                             {isRegistering ? 'Já tem uma conta? Faça login' : 'Não tem conta? Crie agora'}
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                if (window.confirm('Deseja realmente limpar todos os dados locais?')) {
+                                    localStorage.clear();
+                                    window.location.reload();
+                                }
+                            }}
+                            className="text-[10px] text-slate-300 hover:text-red-400 uppercase tracking-widest transition-colors"
+                        >
+                            Limpar Cache do Sistema
                         </button>
                     </div>
                 </div>

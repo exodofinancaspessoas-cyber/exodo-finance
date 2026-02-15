@@ -150,8 +150,7 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
         </div>
       </div>
 
-      {/* SUPABASE CONNECTION STATUS & SYNC */}
-      <SupabaseSync />
+
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
