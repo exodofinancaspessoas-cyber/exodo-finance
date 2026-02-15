@@ -77,28 +77,23 @@ export const StorageService = {
 
     // RECURRING EXPENSES
     getRecurringExpenses: async (): Promise<RecurringExpense[]> => {
-        // Implementation for DatabaseService missing? Let's use local for now or expand DatabaseService
-        return getStorage<RecurringExpense[]>(STORAGE_KEYS.RECURRING_EXPENSES, []);
+        return await DatabaseService.getRecurringExpenses();
     },
 
     saveRecurringExpense: async (expense: RecurringExpense): Promise<void> => {
-        const list = await StorageService.getRecurringExpenses();
-        const index = list.findIndex(i => i.id === expense.id);
-        if (index >= 0) list[index] = expense;
-        else list.push(expense);
-        setStorage(STORAGE_KEYS.RECURRING_EXPENSES, list);
+        await DatabaseService.saveRecurringExpense(expense);
         await StorageService.processRecurringExpenses();
     },
 
     deleteRecurringExpense: async (id: string): Promise<void> => {
-        const list = await StorageService.getRecurringExpenses();
-        setStorage(STORAGE_KEYS.RECURRING_EXPENSES, list.filter(i => i.id !== id));
+        await DatabaseService.deleteRecurringExpense(id);
     },
 
     processRecurringExpenses: async () => {
         const recurring = await StorageService.getRecurringExpenses();
         const transactions = await StorageService.getTransactions();
         const today = new Date();
+        const newTransactions: Transaction[] = [];
         let changed = false;
 
         for (const rec of recurring) {
@@ -118,19 +113,19 @@ export const StorageService = {
                     type: 'DESPESA',
                     category_id: rec.category_id,
                     date: targetDate.toISOString().split('T')[0],
-                    status: 'PREVISTA',
+                    status: rec.type === 'FIXO' ? 'CONFIRMADA' : 'PREVISTA',
                     account_id: rec.account_id,
                     recurrence_id: rec.id,
                     created_at: new Date().toISOString()
                 };
-                transactions.push(newTrx);
+                newTransactions.push(newTrx);
                 rec.last_generated = new Date().toISOString();
                 changed = true;
 
                 StorageService.addNotification({
                     id: generateId(),
                     title: 'Despesa Recorrente Criada',
-                    message: `${rec.description} - R$ ${rec.amount} adicionada para este mês.`,
+                    message: `${rec.description} - R$ ${rec.amount} adicionada para este mês (${rec.type === 'VARIAVEL' ? 'Valor Estimado' : 'Confirmada'}).`,
                     type: 'INFO',
                     read: false,
                     date: new Date().toISOString()
@@ -139,12 +134,15 @@ export const StorageService = {
         }
 
         if (changed) {
-            // Save all new transactions and updated recurring rules
-            // Ideally we'd have a batch saveTransaction
-            for (const t of transactions) {
-                await StorageService.saveTransaction(t);
+            if (newTransactions.length > 0) {
+                await StorageService.saveTransactions(newTransactions);
             }
-            setStorage(STORAGE_KEYS.RECURRING_EXPENSES, recurring);
+            // Update individual recurring rules to mark last_generated
+            for (const rec of recurring) {
+                if (rec.last_generated) {
+                    await DatabaseService.saveRecurringExpense(rec);
+                }
+            }
         }
     },
 

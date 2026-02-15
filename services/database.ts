@@ -437,5 +437,72 @@ export const DatabaseService = {
         if (index >= 0) budgets[index] = budget;
         else budgets.push(budget);
         localStorage.setItem('exodo_budgets', JSON.stringify(budgets));
+    },
+
+    // RECURRING EXPENSES
+    async getRecurringExpenses(): Promise<RecurringExpense[]> {
+        if (isSupabaseConfigured()) {
+            const { data, error } = await supabase.from('recurring_expenses').select('*');
+            if (!error && data) {
+                return (data as any[]).map(rec => ({
+                    ...rec,
+                    amount: Number(rec.amount || 0),
+                    type: rec.type as any, // FIXO or VARIAVEL
+                }));
+            }
+        }
+        const stored = localStorage.getItem('exodo_recurring');
+        try {
+            const parsed = stored ? JSON.parse(stored) : [];
+            return ensureArray<RecurringExpense>(parsed).map(rec => ({
+                ...rec,
+                amount: Number(rec.amount || 0)
+            }));
+        } catch {
+            return [];
+        }
+    },
+
+    async saveRecurringExpense(expense: RecurringExpense): Promise<void> {
+        if (isSupabaseConfigured()) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { error } = await supabase.from('recurring_expenses').upsert({
+                    id: expense.id,
+                    user_id: user.id,
+                    description: expense.description,
+                    amount: expense.amount,
+                    category_id: expense.category_id || null,
+                    account_id: expense.account_id || null,
+                    frequency: expense.frequency,
+                    day_of_month: expense.day_of_month,
+                    type: expense.type,
+                    active: expense.active,
+                    auto_create: expense.auto_create,
+                    last_generated: expense.last_generated || null
+                });
+                if (error) {
+                    console.error('Error saving recurring expense to Supabase:', error);
+                    throw error;
+                }
+                return;
+            }
+        }
+        const list = await this.getRecurringExpenses();
+        const index = list.findIndex(i => i.id === expense.id);
+        if (index >= 0) list[index] = expense;
+        else list.push(expense);
+        localStorage.setItem('exodo_recurring', JSON.stringify(list));
+    },
+
+    async deleteRecurringExpense(id: string): Promise<void> {
+        if (isSupabaseConfigured()) {
+            const { error } = await supabase.from('recurring_expenses').delete().eq('id', id);
+            if (!error) return;
+            else throw error;
+        }
+        const list = await this.getRecurringExpenses();
+        const filtered = list.filter(i => i.id !== id);
+        localStorage.setItem('exodo_recurring', JSON.stringify(filtered));
     }
 };

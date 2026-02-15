@@ -14,6 +14,7 @@ export default function RecurringExpensesView() {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState<Partial<RecurringExpense>>({
@@ -67,32 +68,41 @@ export default function RecurringExpensesView() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSaving) return;
 
         if (!formData.description || !formData.amount || !formData.category_id || !formData.day_of_month) {
             alert('Preencha todos os campos obrigatórios.');
             return;
         }
 
-        const newExpense: RecurringExpense = {
-            id: editingId || StorageService.generateId(),
-            description: formData.description,
-            amount: Number(formData.amount),
-            category_id: formData.category_id,
-            type: formData.type || 'FIXO',
-            frequency: 'MENSAL',
-            day_of_month: Number(formData.day_of_month),
-            active: formData.active !== undefined ? formData.active : true,
-            auto_create: formData.auto_create !== undefined ? formData.auto_create : true,
-            account_id: formData.account_id,
-            // Preserve existing fields if editing
-            last_generated: editingId ? expenses.find(e => e.id === editingId)?.last_generated : undefined
-        };
+        setIsSaving(true);
+        try {
+            const newExpense: RecurringExpense = {
+                id: editingId || StorageService.generateId(),
+                description: formData.description,
+                amount: Number(formData.amount),
+                category_id: formData.category_id,
+                type: formData.type || 'FIXO',
+                frequency: 'MENSAL',
+                day_of_month: Number(formData.day_of_month),
+                active: formData.active !== undefined ? formData.active : true,
+                auto_create: formData.auto_create !== undefined ? formData.auto_create : true,
+                account_id: formData.account_id,
+                // Preserve existing fields if editing
+                last_generated: editingId ? expenses.find(e => e.id === editingId)?.last_generated : undefined
+            };
 
-        await StorageService.saveRecurringExpense(newExpense);
-        setIsModalOpen(false);
-        setEditingId(null);
-        setFormData({ description: '', amount: 0, category_id: '', type: 'FIXO', frequency: 'MENSAL', day_of_month: 1, active: true, auto_create: true, account_id: '' });
-        await loadData();
+            await StorageService.saveRecurringExpense(newExpense);
+            setIsModalOpen(false);
+            setEditingId(null);
+            setFormData({ description: '', amount: 0, category_id: '', type: 'FIXO', frequency: 'MENSAL', day_of_month: 1, active: true, auto_create: true, account_id: '' });
+            await loadData();
+        } catch (error) {
+            console.error("Erro ao salvar recorrência:", error);
+            alert("Erro ao salvar. Tente novamente.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -189,6 +199,14 @@ export default function RecurringExpensesView() {
                                 >
                                     Valor Variável
                                 </button>
+                            </div>
+
+                            <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                {formData.type === 'FIXO' ? (
+                                    <p><span className="font-bold text-slate-700">Valor Fixo:</span> Ideal para aluguel, assinaturas (Netflix) ou mensalidades. A despesa será criada já como <span className="text-green-600 font-bold">confirmada</span>.</p>
+                                ) : (
+                                    <p><span className="font-bold text-slate-700">Valor Variável:</span> Ideal para água, luz ou cartão. O sistema criará a despesa como <span className="text-blue-600 font-bold">prevista</span> para você confirmar o valor exato depois.</p>
+                                )}
                             </div>
 
                             <div>
@@ -291,8 +309,19 @@ export default function RecurringExpensesView() {
 
                             <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-slate-100">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium">Cancelar</button>
-                                <button type="submit" className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10">
-                                    {editingId ? 'Salvar Alterações' : 'Criar Recorrência'}
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10 disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Salvando...
+                                        </>
+                                    ) : (
+                                        editingId ? 'Salvar Alterações' : 'Criar Recorrência'
+                                    )}
                                 </button>
                             </div>
                         </form>
