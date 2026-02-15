@@ -16,14 +16,19 @@ export const DatabaseService = {
             if (!error && data) {
                 return (data as any[]).map(acc => ({
                     ...acc,
-                    current_balance: acc.balance // Map balance to current_balance
+                    initial_balance: Number(acc.initial_balance || 0),
+                    current_balance: Number(acc.balance || 0)
                 }));
             }
         }
         const stored = localStorage.getItem('exodo_accounts');
         try {
             const parsed = stored ? JSON.parse(stored) : [];
-            return ensureArray<Account>(parsed);
+            return ensureArray<Account>(parsed).map(acc => ({
+                ...acc,
+                initial_balance: Number(acc.initial_balance || 0),
+                current_balance: Number(acc.current_balance || 0)
+            }));
         } catch {
             return [];
         }
@@ -74,14 +79,19 @@ export const DatabaseService = {
             if (!error && data) {
                 return (data as any[]).map(card => ({
                     ...card,
-                    limit: card.limit_amount // Map limit_amount to limit
+                    limit: Number(card.limit_amount || 0),
+                    limit_used: Number(card.limit_used || 0)
                 }));
             }
         }
         const stored = localStorage.getItem('exodo_cards');
         try {
             const parsed = stored ? JSON.parse(stored) : [];
-            return ensureArray<Card>(parsed);
+            return ensureArray<Card>(parsed).map(card => ({
+                ...card,
+                limit: Number(card.limit || 0),
+                limit_used: Number(card.limit_used || 0)
+            }));
         } catch {
             return [];
         }
@@ -131,12 +141,24 @@ export const DatabaseService = {
     async getTransactions(): Promise<Transaction[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
-            if (!error && data) return ensureArray<Transaction>(data);
+            if (!error && data) {
+                return (data as any[]).map(t => ({
+                    ...t,
+                    amount: Number(t.amount || 0),
+                    installments: t.installments_total ? {
+                        current: t.installments_current,
+                        total: t.installments_total
+                    } : undefined
+                }));
+            }
         }
         const stored = localStorage.getItem('exodo_transactions');
         try {
             const parsed = stored ? JSON.parse(stored) : [];
-            return ensureArray<Transaction>(parsed);
+            return ensureArray<Transaction>(parsed).map(t => ({
+                ...t,
+                amount: Number(t.amount || 0)
+            }));
         } catch {
             return [];
         }
