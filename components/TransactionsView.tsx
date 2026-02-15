@@ -94,6 +94,13 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         card_id: ''
     });
 
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [categoryFormData, setCategoryFormData] = useState({
+        name: '',
+        color: '#6366f1',
+        icon: 'Tag'
+    });
+
     useEffect(() => {
         loadData();
     }, []);
@@ -341,6 +348,26 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         await StorageService.saveTransaction(newTrx);
         setIsModalOpen(false);
         await loadData();
+    };
+
+    const handleSaveCategory = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!categoryFormData.name) return;
+
+        const newCat: Category = {
+            id: StorageService.generateId(),
+            name: categoryFormData.name,
+            type: formData.type,
+            color: categoryFormData.color,
+            icon: categoryFormData.icon,
+            is_default: false
+        };
+
+        await StorageService.saveCategory(newCat);
+        setCategoryFormData({ name: '', color: '#6366f1', icon: 'Tag' });
+        setIsCategoryModalOpen(false);
+        await loadData();
+        setFormData(prev => ({ ...prev, category_id: newCat.id }));
     };
 
     const handleOpenPayModal = (trx: Transaction) => {
@@ -750,7 +777,13 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                                 {c.name}
                                             </button>
                                         ))}
-                                        <button type="button" className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-slate-300 text-slate-400 hover:text-slate-600">+ Nova</button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCategoryModalOpen(true)}
+                                            className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 transition-colors"
+                                        >
+                                            + Nova
+                                        </button>
                                     </div>
                                 </div>
 
@@ -1019,6 +1052,53 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                         </div>
                     </div>
                 )}
+
+            {/* NEW CATEGORY MODAL */}
+            {isCategoryModalOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 animate-fade-in backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-slate-200">
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 className="font-bold text-slate-800">Nova Categoria</h3>
+                            <button onClick={() => setIsCategoryModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 text-2xl leading-none">&times;</button>
+                        </div>
+
+                        <form onSubmit={handleSaveCategory} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome da Categoria</label>
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                                    value={categoryFormData.name}
+                                    onChange={e => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                                    required
+                                    placeholder="Ex: Assinaturas, Mercado..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Cor</label>
+                                <div className="grid grid-cols-6 gap-2">
+                                    {['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#64748b', '#000000'].map(color => (
+                                        <button
+                                            key={color}
+                                            type="button"
+                                            onClick={() => setCategoryFormData({ ...categoryFormData, color })}
+                                            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${categoryFormData.color === color ? 'border-slate-800 ring-2 ring-slate-200' : 'border-transparent'}`}
+                                            style={{ backgroundColor: color }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4">
+                                <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="flex-1 py-2.5 text-sm text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors">Cancelar</button>
+                                <button type="submit" className="flex-[2] py-2.5 text-sm bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20 transition-transform active:scale-95">Criar Categoria</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <div className="fixed bottom-6 right-6 z-40">
                 <button
