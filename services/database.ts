@@ -174,9 +174,9 @@ export const DatabaseService = {
                     description: transaction.description,
                     amount: transaction.amount,
                     type: transaction.type,
-                    category_id: transaction.category_id,
-                    account_id: transaction.account_id,
-                    card_id: transaction.card_id,
+                    category_id: transaction.category_id || null, // Ensure empty string becomes null
+                    account_id: transaction.account_id || null,
+                    card_id: transaction.card_id || null,
                     date: transaction.date,
                     status: transaction.status,
                     payment_method: transaction.payment_method,
@@ -187,9 +187,9 @@ export const DatabaseService = {
                 });
                 if (error) {
                     console.error('Error saving transaction to Supabase:', error);
-                } else {
-                    return;
+                    throw error;
                 }
+                return;
             }
         }
         const transactions = await this.getTransactions();
@@ -211,9 +211,9 @@ export const DatabaseService = {
                     description: t.description,
                     amount: t.amount,
                     type: t.type,
-                    category_id: t.category_id,
-                    account_id: t.account_id,
-                    card_id: t.card_id,
+                    category_id: t.category_id || null, // Ensure empty string becomes null
+                    account_id: t.account_id || null,
+                    card_id: t.card_id || null,
                     date: t.date,
                     status: t.status,
                     payment_method: t.payment_method,
@@ -226,9 +226,9 @@ export const DatabaseService = {
                 const { error } = await supabase.from('transactions').upsert(mappedTransactions);
                 if (error) {
                     console.error('Error saving batch transactions to Supabase:', error);
-                } else {
-                    return;
+                    throw error;
                 }
+                return;
             }
         }
 

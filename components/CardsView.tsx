@@ -181,9 +181,9 @@ export default function CardsView() {
                 alert(`${importCount} faturas importadas com sucesso!`);
                 setIsInvoiceModalOpen(false);
                 await loadData(); // Update limits used
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Erro ao importar faturas:', error);
-                alert('Ocorreu um erro ao salvar as faturas. Tente novamente.');
+                alert(`Erro ao salvar faturas: ${error.message || 'Verifique sua conexão.'}`);
             } finally {
                 setIsSavingInvoices(false);
             }
