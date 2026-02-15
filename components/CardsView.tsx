@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CreditCard, PlusCircle, Edit, Trash2, FileText, Check, AlertCircle } from 'lucide-react';
-import { Card, Category, Transaction } from '../types';
+import { Card, Category, Transaction, Account } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency } from '../utils';
 
@@ -25,20 +25,25 @@ export default function CardsView() {
         closing_day: 1,
         due_day: 10,
         bank: '',
-        brand: 'VISA'
+        brand: 'VISA',
+        account_id: ''
     });
+
+    const [accounts, setAccounts] = useState<Account[]>([]);
 
     useEffect(() => {
         loadData();
     }, []);
 
     const loadData = async () => {
-        const [crds, cats] = await Promise.all([
+        const [crds, cats, accs] = await Promise.all([
             StorageService.getCards(),
-            StorageService.getCategories()
+            StorageService.getCategories(),
+            StorageService.getAccounts()
         ]);
         setCards(crds);
         setCategories(cats);
+        setAccounts(accs);
     };
 
     const handleOpenModal = (card?: Card) => {
@@ -50,7 +55,8 @@ export default function CardsView() {
                 closing_day: card.closing_day,
                 due_day: card.due_day,
                 bank: card.bank || '',
-                brand: card.brand || 'VISA'
+                brand: card.brand || 'VISA',
+                account_id: card.account_id || ''
             });
         } else {
             setEditingCard(null);
@@ -60,7 +66,8 @@ export default function CardsView() {
                 closing_day: 1,
                 due_day: 10,
                 bank: '',
-                brand: 'VISA'
+                brand: 'VISA',
+                account_id: ''
             });
         }
         setIsModalOpen(true);
@@ -84,6 +91,7 @@ export default function CardsView() {
             due_day: Number(formData.due_day),
             bank: formData.bank,
             brand: formData.brand as any,
+            account_id: formData.account_id || undefined,
         };
         await StorageService.saveCard(newCard);
         setIsModalOpen(false);
@@ -322,6 +330,24 @@ export default function CardsView() {
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Banco Emissor</label>
                                     <input type="text" className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none text-sm font-medium text-slate-700" placeholder="Ex: Itaú" value={formData.bank} onChange={e => setFormData({ ...formData, bank: e.target.value })} />
                                 </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Vincular a Conta Bancária (Opcional)</label>
+                                <select className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none bg-white text-sm font-medium text-slate-700" value={formData.account_id} onChange={e => {
+                                    const accId = e.target.value;
+                                    const acc = accounts.find(a => a.id === accId);
+                                    setFormData({
+                                        ...formData,
+                                        account_id: accId,
+                                        bank: acc ? acc.bank || acc.name : formData.bank
+                                    });
+                                }}>
+                                    <option value="">Nenhuma (Cartão Avulso)</option>
+                                    {accounts.map(acc => (
+                                        <option key={acc.id} value={acc.id}>{acc.name} {acc.bank ? `(${acc.bank})` : ''}</option>
+                                    ))}
+                                </select>
+                                <p className="text-[10px] text-slate-400 mt-1">Ao vincular, o banco emissor será preenchido automaticamente.</p>
                             </div>
 
                             <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-slate-100">

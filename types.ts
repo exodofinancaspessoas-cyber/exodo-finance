@@ -42,6 +42,7 @@ export interface Card {
   due_day: number;
   brand?: 'VISA' | 'MASTERCARD' | 'ELO' | 'AMEX' | 'HIPERCARD' | 'OUTRO';
   bank?: string;
+  account_id?: string;
   color?: string;
 }
 

@@ -90,6 +90,7 @@ export const DatabaseService = {
                     due_day: card.due_day,
                     brand: card.brand,
                     bank: card.bank,
+                    account_id: card.account_id,
                     color: card.color
                 });
                 if (error) {

@@ -1,18 +1,28 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-    Landmark, Wallet, Briefcase, PlusCircle, MoreHorizontal, Edit, Trash2, Loader2
+    Landmark, Wallet, Briefcase, PlusCircle, MoreHorizontal, Edit, Trash2, Loader2, CreditCard
 } from 'lucide-react';
-import { Landmark as BankIcon, Wallet as WalletIcon, Briefcase as BriefcaseIcon, PlusCircle as PlusIcon, Edit as EditIcon, Trash2 as TrashIcon } from 'lucide-react';
-import { Account, AccountType } from '../types';
+import { Landmark as BankIcon, Wallet as WalletIcon, Briefcase as BriefcaseIcon, PlusCircle as PlusIcon, Edit as EditIcon, Trash2 as TrashIcon, CreditCard as CardIcon } from 'lucide-react';
+import { Account, AccountType, Card } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency } from '../utils';
 
 export default function AccountsView() {
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [cards, setCards] = useState<Card[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState<Account | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // Form for quick card addition inside account modal
+    const [showCardForm, setShowCardForm] = useState(false);
+    const [cardFormData, setCardFormData] = useState({
+        name: '',
+        limit: 0,
+        closing_day: 1,
+        due_day: 10
+    });
 
     // Form State
     const [formData, setFormData] = useState({
@@ -30,8 +40,12 @@ export default function AccountsView() {
     const loadAccounts = async () => {
         setLoading(true);
         try {
-            const accs = await StorageService.getAccounts();
+            const [accs, crds] = await Promise.all([
+                StorageService.getAccounts(),
+                StorageService.getCards()
+            ]);
             setAccounts(accs);
+            setCards(crds);
         } catch (error) {
             console.error("Erro ao carregar contas:", error);
         } finally {
@@ -71,8 +85,9 @@ export default function AccountsView() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const accountId = editingAccount ? editingAccount.id : StorageService.generateId();
         const newAccount: Account = {
-            id: editingAccount ? editingAccount.id : StorageService.generateId(),
+            id: accountId,
             name: formData.name,
             type: formData.type,
             bank: formData.bank,
@@ -81,6 +96,19 @@ export default function AccountsView() {
             color: formData.color
         };
         await StorageService.saveAccount(newAccount);
+
+        // Save pending cards if any
+        const pending = (window as any)._pendingCards || [];
+        if (pending.length > 0) {
+            for (const card of pending) {
+                await StorageService.saveCard({
+                    ...card,
+                    account_id: accountId
+                });
+            }
+            (window as any)._pendingCards = [];
+        }
+
         setIsModalOpen(false);
         loadAccounts();
     };
@@ -211,10 +239,162 @@ export default function AccountsView() {
                                 {editingAccount && <p className="text-xs text-slate-500 mt-1">Para ajustar o saldo atual, crie uma transação de ajuste.</p>}
                             </div>
 
+                            {/* CARDS SECTION */}
+                            <div className="pt-4 border-t border-slate-100">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h4 className="text-sm font-bold text-slate-700 uppercase flex items-center gap-2">
+                                        <CardIcon size={16} className="text-orange-500" />
+                                        Cartões de Crédito Vinculados
+                                    </h4>
+                                    {!showCardForm && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCardForm(true)}
+                                            className="text-orange-600 hover:text-orange-700 text-xs font-bold flex items-center gap-1 bg-orange-50 px-2 py-1 rounded-md"
+                                        >
+                                            <PlusIcon size={14} /> Novo Cartão
+                                        </button>
+                                    )}
+                                </div>
+
+                                {showCardForm && (
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 space-y-4 animate-in slide-in-from-top-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs font-bold text-slate-500 uppercase">Novo Cartão para {formData.bank || formData.name}</span>
+                                            <button type="button" onClick={() => setShowCardForm(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="col-span-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nome do Cartão (ex: Gold, Platinum)"
+                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-orange-500"
+                                                    value={cardFormData.name}
+                                                    onChange={e => setCardFormData({ ...cardFormData, name: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Limite</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="0,00"
+                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+                                                    value={cardFormData.limit}
+                                                    onChange={e => setCardFormData({ ...cardFormData, limit: Number(e.target.value) })}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Fecha</label>
+                                                    <input
+                                                        type="number"
+                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-center"
+                                                        value={cardFormData.closing_day}
+                                                        onChange={e => setCardFormData({ ...cardFormData, closing_day: Number(e.target.value) })}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vence</label>
+                                                    <input
+                                                        type="number"
+                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-center"
+                                                        value={cardFormData.due_day}
+                                                        onChange={e => setCardFormData({ ...cardFormData, due_day: Number(e.target.value) })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            disabled={!cardFormData.name || !cardFormData.limit}
+                                            onClick={async () => {
+                                                const newCard: Card = {
+                                                    id: StorageService.generateId(),
+                                                    name: cardFormData.name,
+                                                    limit: cardFormData.limit,
+                                                    limit_used: 0,
+                                                    closing_day: cardFormData.closing_day,
+                                                    due_day: cardFormData.due_day,
+                                                    bank: formData.bank || formData.name,
+                                                    account_id: editingAccount?.id // Link if exists, otherwise link on handleSubmit
+                                                };
+                                                // If we are editing an account, save immediately
+                                                if (editingAccount) {
+                                                    await StorageService.saveCard(newCard);
+                                                    await loadAccounts();
+                                                } else {
+                                                    // If new account, we'll need to save this card after account creation
+                                                    // For now let's just push to a local list or handle it after
+                                                    // Simplest: just save it later in handleSubmit
+                                                    (window as any)._pendingCards = (window as any)._pendingCards || [];
+                                                    (window as any)._pendingCards.push(newCard);
+                                                }
+                                                setCardFormData({ name: '', limit: 0, closing_day: 1, due_day: 10 });
+                                                setShowCardForm(false);
+                                            }}
+                                            className="w-full bg-slate-800 text-white py-2 rounded-lg text-sm font-bold hover:bg-slate-700 disabled:opacity-50"
+                                        >
+                                            Adicionar Cartão
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                    {cards.filter(c => c.account_id === editingAccount?.id).map(card => (
+                                        <div key={card.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">
+                                                    <CardIcon size={16} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-800">{card.name}</p>
+                                                    <p className="text-[10px] text-slate-500">Limite: {formatCurrency(card.limit)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-[10px] text-right text-slate-400">
+                                                Fecha: {card.closing_day} | Vence: {card.due_day}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Show pending cards for new account */}
+                                    {(!editingAccount && (window as any)._pendingCards) && (window as any)._pendingCards.map((card: Card) => (
+                                        <div key={card.id} className="flex justify-between items-center p-3 bg-orange-50 rounded-xl border border-orange-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">
+                                                    <CardIcon size={16} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-800">{card.name}</p>
+                                                    <p className="text-[10px] text-slate-500">Limite: {formatCurrency(card.limit)} (Pendente)</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    (window as any)._pendingCards = (window as any)._pendingCards.filter((c: Card) => c.id !== card.id);
+                                                    loadAccounts(); // force re-render
+                                                }}
+                                                className="text-red-500 hover:bg-red-50 p-1 rounded"
+                                            >
+                                                <TrashIcon size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {cards.filter(c => c.account_id === editingAccount?.id).length === 0 && (!editingAccount || !(window as any)._pendingCards?.length) && !showCardForm && (
+                                        <p className="text-center py-4 text-xs text-slate-400 italic">Nenhum cartão vinculado a esta conta.</p>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="flex justify-end space-x-3 mt-6">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => {
+                                        (window as any)._pendingCards = [];
+                                        setIsModalOpen(false);
+                                    }}
                                     className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
                                 >
                                     Cancelar

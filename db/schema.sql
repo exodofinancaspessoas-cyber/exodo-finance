@@ -36,6 +36,7 @@ create table public.cards (
   due_day integer not null,
   brand text, -- 'VISA', 'MASTERCARD', etc
   bank text,
+  account_id uuid references public.accounts(id) on delete set null,
   color text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
