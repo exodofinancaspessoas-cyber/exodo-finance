@@ -8,6 +8,13 @@ const ensureArray = <T>(data: any): T[] => {
     return Array.isArray(data) ? data : [];
 };
 
+// Helper to validate UUIDs
+const isValidUUID = (uuid: string | null | undefined): boolean => {
+    if (!uuid) return false;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+};
+
 export const DatabaseService = {
     // ACCOUNTS
     async getAccounts(): Promise<Account[]> {
@@ -174,9 +181,9 @@ export const DatabaseService = {
                     description: transaction.description,
                     amount: transaction.amount,
                     type: transaction.type,
-                    category_id: transaction.category_id || null, // Ensure empty string becomes null
-                    account_id: transaction.account_id || null,
-                    card_id: transaction.card_id || null,
+                    category_id: isValidUUID(transaction.category_id) ? transaction.category_id : null,
+                    account_id: isValidUUID(transaction.account_id) ? transaction.account_id : null,
+                    card_id: isValidUUID(transaction.card_id) ? transaction.card_id : null,
                     date: transaction.date,
                     status: transaction.status,
                     payment_method: transaction.payment_method,
@@ -211,9 +218,9 @@ export const DatabaseService = {
                     description: t.description,
                     amount: t.amount,
                     type: t.type,
-                    category_id: t.category_id || null, // Ensure empty string becomes null
-                    account_id: t.account_id || null,
-                    card_id: t.card_id || null,
+                    category_id: isValidUUID(t.category_id) ? t.category_id : null,
+                    account_id: isValidUUID(t.account_id) ? t.account_id : null,
+                    card_id: isValidUUID(t.card_id) ? t.card_id : null,
                     date: t.date,
                     status: t.status,
                     payment_method: t.payment_method,
