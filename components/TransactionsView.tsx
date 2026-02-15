@@ -381,7 +381,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             alert('Categorias padrão importadas com sucesso!');
         } catch (error) {
             console.error(error);
-            alert('Erro ao importar categorias.');
+            alert('Erro ao importar categorias. Verifique se o banco de dados permite a coluna "parent_id" ou tente novamente.');
         } finally {
             setIsImporting(false);
         }
@@ -800,7 +800,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
                                         <label className="block text-xs font-bold text-slate-500 uppercase">Categoria</label>
-                                        {categories.length <= 10 && (
+                                        {categories.length <= 50 && (
                                             <button
                                                 type="button"
                                                 onClick={handleImportDefaults}

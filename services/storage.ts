@@ -304,8 +304,8 @@ export const StorageService = {
 
     async initializeDefaultCategories(): Promise<void> {
         const existing = await this.getCategories();
-        // If we already have a lot of categories (more than our base default), skip
-        if (existing.length > 10) return;
+        // Skip if we already have a significant number of categories
+        if (existing.length > 50) return;
 
         for (const mainCat of INITIAL_CATEGORIES_DATA) {
             const parentId = generateId();
