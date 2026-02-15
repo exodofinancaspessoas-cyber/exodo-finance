@@ -29,10 +29,12 @@ export const AuthService = {
 
             // If profile doesn't exist (legacy users), create it now
             if (!profile && !profileError) {
+                const displayName = data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Usuário';
+
                 const newProfile = {
                     id: data.user.id,
                     email: data.user.email,
-                    name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Usuário',
+                    name: displayName,
                     currency: 'BRL'
                 };
 
@@ -52,7 +54,7 @@ export const AuthService = {
             const user: User = {
                 id: data.user.id,
                 email: data.user.email || '',
-                name: profile?.name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Usuário',
+                name: profile?.name || data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Usuário',
                 password: '', // We don't store password in local state for Supabase users
             };
 
@@ -73,7 +75,8 @@ export const AuthService = {
             password,
             options: {
                 data: {
-                    full_name: name
+                    full_name: name,
+                    name: name
                 }
             }
         });
