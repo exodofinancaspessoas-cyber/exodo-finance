@@ -17,6 +17,7 @@ export default function CardsView() {
     const [invoiceSetupData, setInvoiceSetupData] = useState<{ month: string, year: number, monthIndex: number, amount: string }[]>([]);
     const [invoiceCategory, setInvoiceCategory] = useState<string>('');
     const [isSavingInvoices, setIsSavingInvoices] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Form
     const [formData, setFormData] = useState({
@@ -82,20 +83,30 @@ export default function CardsView() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newCard: Card = {
-            id: editingCard ? editingCard.id : StorageService.generateId(),
-            name: formData.name,
-            limit: Number(formData.limit),
-            limit_used: editingCard ? editingCard.limit_used : 0, // Recalc by service
-            closing_day: Number(formData.closing_day),
-            due_day: Number(formData.due_day),
-            bank: formData.bank,
-            brand: formData.brand as any,
-            account_id: formData.account_id || undefined,
-        };
-        await StorageService.saveCard(newCard);
-        setIsModalOpen(false);
-        loadData();
+        if (isSaving) return;
+
+        setIsSaving(true);
+        try {
+            const newCard: Card = {
+                id: editingCard ? editingCard.id : StorageService.generateId(),
+                name: formData.name,
+                limit: Number(formData.limit),
+                limit_used: editingCard ? editingCard.limit_used : 0, // Recalc by service
+                closing_day: Number(formData.closing_day),
+                due_day: Number(formData.due_day),
+                bank: formData.bank,
+                brand: formData.brand as any,
+                account_id: formData.account_id || undefined,
+            };
+            await StorageService.saveCard(newCard);
+            setIsModalOpen(false);
+            loadData();
+        } catch (error) {
+            console.error("Erro ao salvar cartão:", error);
+            alert("Erro ao salvar cartão. Tente novamente.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // --- Invoice Setup Logic ---
@@ -352,7 +363,20 @@ export default function CardsView() {
 
                             <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-slate-100">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium">Cancelar</button>
-                                <button type="submit" className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10">Salvar</button>
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Salvando...
+                                        </>
+                                    ) : (
+                                        'Salvar'
+                                    )}
+                                </button>
                             </div>
                         </form>
                     </div>

@@ -14,6 +14,7 @@ export default function AccountsView() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState<Account | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Form for quick card addition inside account modal
     const [showCardForm, setShowCardForm] = useState(false);
@@ -85,32 +86,42 @@ export default function AccountsView() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const accountId = editingAccount ? editingAccount.id : StorageService.generateId();
-        const newAccount: Account = {
-            id: accountId,
-            name: formData.name,
-            type: formData.type,
-            bank: formData.bank,
-            initial_balance: Number(formData.initial_balance),
-            current_balance: 0, // Recalculated by service
-            color: formData.color
-        };
-        await StorageService.saveAccount(newAccount);
+        if (isSaving) return;
 
-        // Save pending cards if any
-        const pending = (window as any)._pendingCards || [];
-        if (pending.length > 0) {
-            for (const card of pending) {
-                await StorageService.saveCard({
-                    ...card,
-                    account_id: accountId
-                });
+        setIsSaving(true);
+        try {
+            const accountId = editingAccount ? editingAccount.id : StorageService.generateId();
+            const newAccount: Account = {
+                id: accountId,
+                name: formData.name,
+                type: formData.type,
+                bank: formData.bank,
+                initial_balance: Number(formData.initial_balance),
+                current_balance: 0, // Recalculated by service
+                color: formData.color
+            };
+            await StorageService.saveAccount(newAccount);
+
+            // Save pending cards if any
+            const pending = (window as any)._pendingCards || [];
+            if (pending.length > 0) {
+                for (const card of pending) {
+                    await StorageService.saveCard({
+                        ...card,
+                        account_id: accountId
+                    });
+                }
+                (window as any)._pendingCards = [];
             }
-            (window as any)._pendingCards = [];
-        }
 
-        setIsModalOpen(false);
-        loadAccounts();
+            setIsModalOpen(false);
+            loadAccounts();
+        } catch (error) {
+            console.error("Erro ao salvar conta:", error);
+            alert("Erro ao salvar conta. Tente novamente.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const getIcon = (type: AccountType) => {
@@ -401,9 +412,17 @@ export default function AccountsView() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium shadow-sm transition-all"
+                                    disabled={isSaving}
+                                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                 >
-                                    Salvar
+                                    {isSaving ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            Salvando...
+                                        </>
+                                    ) : (
+                                        'Salvar'
+                                    )}
                                 </button>
                             </div>
                         </form>
