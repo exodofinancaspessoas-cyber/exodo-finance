@@ -101,6 +101,9 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         icon: 'Tag'
     });
 
+    const [categorySearch, setCategorySearch] = useState('');
+    const [isImporting, setIsImporting] = useState(false);
+
     useEffect(() => {
         loadData();
     }, []);
@@ -370,6 +373,20 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         setFormData(prev => ({ ...prev, category_id: newCat.id }));
     };
 
+    const handleImportDefaults = async () => {
+        setIsImporting(true);
+        try {
+            await StorageService.initializeDefaultCategories();
+            await loadData();
+            alert('Categorias padrão importadas com sucesso!');
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao importar categorias.');
+        } finally {
+            setIsImporting(false);
+        }
+    };
+
     const handleOpenPayModal = (trx: Transaction) => {
         setPayTrx(trx);
         setPayFormData({
@@ -400,7 +417,23 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     };
 
     // Dynamic Options
-    const availableCategories = categories.filter(c => c.type === formData.type);
+    const availableCategories = useMemo(() => {
+        const filtered = categories.filter(c => {
+            const matchesType = c.type === formData.type || c.type === 'DESPESA'; // Most defaults are DESPESA
+            const matchesSearch = c.name.toLowerCase().includes(categorySearch.toLowerCase());
+            return matchesType && matchesSearch;
+        });
+
+        // Grouping logic
+        const parents = filtered.filter(c => !c.parent_id);
+        const children = filtered.filter(c => c.parent_id);
+
+        return parents.map(p => ({
+            ...p,
+            subcategories: children.filter(c => c.parent_id === p.id)
+        })).filter(p => p.subcategories.length > 0 || p.name.toLowerCase().includes(categorySearch.toLowerCase()));
+    }, [categories, formData.type, categorySearch]);
+
     const showPaymentMethod = formData.type === 'DESPESA';
     const showAccount = (formData.status === 'PAGA' || formData.status === 'RECEBIDA');
 
@@ -763,26 +796,81 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                     </div>
                                 </div>
 
-                                {/* Categories Palls */}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Categoria</label>
-                                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                                        {availableCategories.map(c => (
+                                {/* Categories Section */}
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase">Categoria</label>
+                                        {categories.length <= 10 && (
                                             <button
-                                                key={c.id}
                                                 type="button"
-                                                onClick={() => setFormData({ ...formData, category_id: c.id })}
-                                                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${formData.category_id === c.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                                                onClick={handleImportDefaults}
+                                                disabled={isImporting}
+                                                className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider"
                                             >
-                                                {c.name}
+                                                {isImporting ? 'Importando...' : 'Carregar Padrões'}
                                             </button>
+                                        )}
+                                    </div>
+
+                                    <div className="relative">
+                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar categoria..."
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                            value={categorySearch}
+                                            onChange={e => setCategorySearch(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1 border border-slate-100 rounded-xl bg-slate-50/30">
+                                        {availableCategories.length === 0 && (
+                                            <div className="w-full text-center py-4 text-xs text-slate-400 italic">
+                                                Nenhuma categoria encontrada
+                                            </div>
+                                        )}
+
+                                        {availableCategories.map(p => (
+                                            <div key={p.id} className="w-full space-y-2 mb-2 last:mb-0">
+                                                {!categorySearch && (
+                                                    <div className="flex items-center space-x-2 px-1">
+                                                        <div className="w-1.5 h-3 rounded-full" style={{ backgroundColor: p.color }} />
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{p.name}</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex flex-wrap gap-2">
+                                                    {/* If it has no subs or we are searching, show the parent itself as a button if it's not JUST a folder */}
+                                                    {(p.subcategories.length === 0 || categorySearch) && (
+                                                        <button
+                                                            key={p.id}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, category_id: p.id })}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${formData.category_id === p.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                                                        >
+                                                            {p.name}
+                                                        </button>
+                                                    )}
+                                                    {p.subcategories.map(c => (
+                                                        <button
+                                                            key={c.id}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, category_id: c.id })}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${formData.category_id === c.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                                                        >
+                                                            {c.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         ))}
+
                                         <button
                                             type="button"
                                             onClick={() => setIsCategoryModalOpen(true)}
-                                            className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 transition-colors"
+                                            className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 transition-colors flex items-center space-x-1"
                                         >
-                                            + Nova
+                                            <Plus size={12} />
+                                            <span>Nova Categoria</span>
                                         </button>
                                     </div>
                                 </div>

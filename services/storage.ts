@@ -5,6 +5,7 @@ import {
     Goal, Budget
 } from '../types';
 import { DatabaseService } from './database';
+import { INITIAL_CATEGORIES_DATA } from './initialCategories';
 
 const STORAGE_KEYS = {
     USER: 'exodo_user',
@@ -215,15 +216,12 @@ export const StorageService = {
         });
     },
 
-    saveCard: async (card: Card) => {
+    async saveCard(card: Card) {
         await DatabaseService.saveCard(card);
     },
 
-    deleteCard: async (id: string) => {
-        // Implementation for DatabaseService needed
-        const cards = await StorageService.getCards();
-        const list = cards.filter(c => c.id !== id);
-        localStorage.setItem(STORAGE_KEYS.CARDS, JSON.stringify(list));
+    async deleteCard(id: string) {
+        await DatabaseService.deleteCard(id);
     },
 
     // TRANSACTIONS
@@ -300,12 +298,40 @@ export const StorageService = {
         return stored.length > 0 ? stored : getDefaultCategories();
     },
 
-    saveCategory: async (cat: Category) => {
-        const list = await StorageService.getCategories();
-        const idx = list.findIndex(c => c.id === cat.id);
-        if (idx >= 0) list[idx] = cat;
-        else list.push(cat);
-        setStorage(STORAGE_KEYS.CATEGORIES, list);
+    saveCategory: async (category: Category) => {
+        await DatabaseService.saveCategory(category);
+    },
+
+    async initializeDefaultCategories(): Promise<void> {
+        const existing = await this.getCategories();
+        // If we already have a lot of categories (more than our base default), skip
+        if (existing.length > 10) return;
+
+        for (const mainCat of INITIAL_CATEGORIES_DATA) {
+            const parentId = generateId();
+            const main: Category = {
+                id: parentId,
+                name: mainCat.name,
+                type: 'DESPESA',
+                color: mainCat.color,
+                icon: 'Folder',
+                is_default: true
+            };
+            await DatabaseService.saveCategory(main);
+
+            for (const subName of mainCat.sub) {
+                const sub: Category = {
+                    id: generateId(),
+                    name: subName,
+                    type: 'DESPESA',
+                    color: mainCat.color,
+                    icon: 'Tag',
+                    is_default: true,
+                    parent_id: parentId
+                };
+                await DatabaseService.saveCategory(sub);
+            }
+        }
     },
 
     // GOALS

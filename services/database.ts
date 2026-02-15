@@ -330,7 +330,8 @@ export const DatabaseService = {
                     type: category.type,
                     icon: category.icon,
                     color: category.color,
-                    is_default: category.is_default
+                    is_default: category.is_default,
+                    parent_id: category.parent_id
                 });
                 if (error) {
                     console.error('Error saving category to Supabase:', error);
