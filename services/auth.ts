@@ -21,16 +21,38 @@ export const AuthService = {
 
         if (data.user) {
             // Get profile data
-            const { data: profile } = await supabase
+            let { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', data.user.id)
-                .single();
+                .maybeSingle();
+
+            // If profile doesn't exist (legacy users), create it now
+            if (!profile && !profileError) {
+                const newProfile = {
+                    id: data.user.id,
+                    email: data.user.email,
+                    name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Usuário',
+                    currency: 'BRL'
+                };
+
+                const { data: createdProfile, error: insertError } = await supabase
+                    .from('profiles')
+                    .upsert(newProfile)
+                    .select()
+                    .single();
+
+                if (!insertError) {
+                    profile = createdProfile;
+                } else {
+                    console.error('Error creating missing profile:', insertError);
+                }
+            }
 
             const user: User = {
                 id: data.user.id,
                 email: data.user.email || '',
-                name: profile?.full_name || data.user.email?.split('@')[0] || 'Usuário',
+                name: profile?.name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Usuário',
                 password: '', // We don't store password in local state for Supabase users
             };
 
