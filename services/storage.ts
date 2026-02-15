@@ -99,6 +99,11 @@ export const StorageService = {
         for (const rec of recurring) {
             if (!rec.active || !rec.auto_create) continue;
 
+            // Check if recurrence has ended
+            if (rec.end_date && new Date(rec.end_date) < new Date(today.getFullYear(), today.getMonth(), 1)) {
+                continue;
+            }
+
             const targetDate = new Date(today.getFullYear(), today.getMonth(), rec.day_of_month);
             const exists = transactions.some(t =>
                 t.recurrence_id === rec.id &&

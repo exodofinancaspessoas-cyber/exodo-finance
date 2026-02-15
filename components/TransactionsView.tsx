@@ -78,7 +78,11 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         card_id: '',
         observation: '',
         is_installment: false,
-        installments_count: 1
+        installments_count: 1,
+        is_recurring: false,
+        recurring_type: 'FIXO' as 'FIXO' | 'VARIAVEL',
+        day_of_month: new Date().getDate(),
+        recurring_duration: '' // Empty means perpetual
     });
 
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
@@ -240,7 +244,10 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                 card_id: trx.card_id || '',
                 observation: trx.observation || '',
                 is_installment: false,
-                installments_count: 1
+                installments_count: 1,
+                is_recurring: !!trx.recurrence_id,
+                recurring_type: 'FIXO',
+                day_of_month: new Date(trx.date).getDate()
             });
         } else {
             setEditingTransaction(null);
@@ -256,7 +263,11 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                 card_id: '',
                 observation: '',
                 is_installment: false,
-                installments_count: 1
+                installments_count: 1,
+                is_recurring: false,
+                recurring_type: 'FIXO',
+                day_of_month: new Date().getDate(),
+                recurring_duration: ''
             });
         }
         setIsModalOpen(true);
@@ -298,6 +309,34 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             installments: installmentsData,
             created_at: new Date().toISOString()
         };
+
+        // Handle Recurring
+        if (formData.is_recurring && !editingTransaction) {
+            let endDate = undefined;
+            if (formData.recurring_duration && Number(formData.recurring_duration) > 0) {
+                const duration = Number(formData.recurring_duration);
+                const end = new Date(formData.date);
+                end.setMonth(end.getMonth() + duration - 1);
+                endDate = end.toISOString().split('T')[0];
+            }
+
+            const recurringExpense = {
+                id: StorageService.generateId(),
+                description: formData.description,
+                amount: finalAmount,
+                category_id: formData.category_id,
+                type: formData.recurring_type,
+                frequency: 'MENSAL' as const,
+                day_of_month: Number(formData.day_of_month),
+                active: true,
+                auto_create: true,
+                account_id: formData.account_id || undefined,
+                last_generated: new Date().toISOString(), // Marked as generated for this month
+                end_date: endDate
+            };
+            await StorageService.saveRecurringExpense(recurringExpense);
+            newTrx.recurrence_id = recurringExpense.id;
+        }
 
         await StorageService.saveTransaction(newTrx);
         setIsModalOpen(false);
@@ -783,6 +822,76 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Recurring Section */}
+                                {!editingTransaction && (
+                                    <div className="space-y-4">
+                                        <label className="flex items-center space-x-3 p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.is_recurring}
+                                                onChange={e => setFormData({ ...formData, is_recurring: e.target.checked })}
+                                                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                            />
+                                            <div className="flex-1">
+                                                <span className="block font-bold text-slate-800">Repetir esta despesa?</span>
+                                                <span className="block text-xs text-slate-500">Mantenha seus gastos fixos e variáveis organizados</span>
+                                            </div>
+                                        </label>
+
+                                        {formData.is_recurring && (
+                                            <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-4 animate-slide-down">
+                                                <div className="flex bg-white p-1 rounded-lg border border-indigo-100">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, recurring_type: 'FIXO' })}
+                                                        className={`flex-1 py-1.5 text-[10px] font-bold rounded uppercase transition-all ${formData.recurring_type === 'FIXO' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400'}`}
+                                                    >
+                                                        Valor Fixo
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, recurring_type: 'VARIAVEL' })}
+                                                        className={`flex-1 py-1.5 text-[10px] font-bold rounded uppercase transition-all ${formData.recurring_type === 'VARIAVEL' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400'}`}
+                                                    >
+                                                        Valor Variável
+                                                    </button>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Dia de Vencimento</label>
+                                                        <select
+                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
+                                                            value={formData.day_of_month}
+                                                            onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
+                                                        >
+                                                            {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                                                <option key={d} value={d}>Dia {d}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Duração (Meses)</label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            placeholder="Infinito"
+                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
+                                                            value={formData.recurring_duration}
+                                                            onChange={e => setFormData({ ...formData, recurring_duration: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 italic leading-tight">
+                                                    {formData.recurring_type === 'FIXO'
+                                                        ? 'O sistema criará a despesa como confirmada todo mês.'
+                                                        : 'Ideal para contas de consumo (água, luz).'}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Status Final */}
                                 <div>
