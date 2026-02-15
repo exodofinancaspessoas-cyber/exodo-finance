@@ -224,27 +224,29 @@ export const StorageService = {
     },
 
     // TRANSACTIONS
-    getTransactions: async (): Promise<Transaction[]> => {
+    async getTransactions(): Promise<Transaction[]> {
         const trxs = await DatabaseService.getTransactions();
         const today = new Date();
-        let updated = false;
+        const toUpdate: Transaction[] = [];
 
         trxs.forEach(t => {
             if ((t.status === 'PREVISTA' || t.status === 'CONFIRMADA') && t.type === 'DESPESA') {
                 const dueDate = new Date(t.date);
                 if (dueDate < startOfDay(today)) {
                     t.status = 'ATRASADA';
-                    updated = true;
+                    toUpdate.push(t);
                 }
             }
         });
 
-        if (updated) {
-            for (const t of trxs) {
-                if (t.status === 'ATRASADA') await DatabaseService.saveTransaction(t);
-            }
+        if (toUpdate.length > 0) {
+            await DatabaseService.saveTransactions(toUpdate);
         }
         return trxs;
+    },
+
+    saveTransactions: async (transactions: Transaction[]) => {
+        await DatabaseService.saveTransactions(transactions);
     },
 
     saveTransaction: async (transaction: Transaction) => {

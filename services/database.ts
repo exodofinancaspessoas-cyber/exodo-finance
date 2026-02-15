@@ -166,6 +166,51 @@ export const DatabaseService = {
         localStorage.setItem('exodo_transactions', JSON.stringify(transactions));
     },
 
+    async saveTransactions(transactions: Transaction[]): Promise<void> {
+        if (transactions.length === 0) return;
+
+        if (isSupabaseConfigured()) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const mappedTransactions = transactions.map(t => ({
+                    id: t.id,
+                    user_id: user.id,
+                    description: t.description,
+                    amount: t.amount,
+                    type: t.type,
+                    category_id: t.category_id,
+                    account_id: t.account_id,
+                    card_id: t.card_id,
+                    date: t.date,
+                    status: t.status,
+                    payment_method: t.payment_method,
+                    installments_current: t.installments?.current,
+                    installments_total: t.installments?.total,
+                    observation: t.observation,
+                    created_at: t.created_at
+                }));
+
+                const { error } = await supabase.from('transactions').upsert(mappedTransactions);
+                if (error) {
+                    console.error('Error saving batch transactions to Supabase:', error);
+                } else {
+                    return;
+                }
+            }
+        }
+
+        const currentTransactions = await this.getTransactions();
+        const updatedList = [...currentTransactions];
+
+        transactions.forEach(newT => {
+            const index = updatedList.findIndex(t => t.id === newT.id);
+            if (index >= 0) updatedList[index] = newT;
+            else updatedList.push(newT);
+        });
+
+        localStorage.setItem('exodo_transactions', JSON.stringify(updatedList));
+    },
+
     async deleteTransaction(id: string): Promise<void> {
         if (isSupabaseConfigured()) {
             const { error } = await supabase.from('transactions').delete().eq('id', id);

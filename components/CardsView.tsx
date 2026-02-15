@@ -16,6 +16,7 @@ export default function CardsView() {
     const [selectedCardForInvoice, setSelectedCardForInvoice] = useState<Card | null>(null);
     const [invoiceSetupData, setInvoiceSetupData] = useState<{ month: string, year: number, monthIndex: number, amount: string }[]>([]);
     const [invoiceCategory, setInvoiceCategory] = useState<string>('');
+    const [isSavingInvoices, setIsSavingInvoices] = useState(false);
 
     // Form
     const [formData, setFormData] = useState({
@@ -123,7 +124,7 @@ export default function CardsView() {
     };
 
     const handleSaveInvoices = async () => {
-        if (!selectedCardForInvoice) return;
+        if (!selectedCardForInvoice || isSavingInvoices) return;
 
         let importCount = 0;
         const newTransactions: Transaction[] = [];
@@ -153,14 +154,20 @@ export default function CardsView() {
         });
 
         if (importCount > 0) {
-            // Sequential save to avoid race conditions in local storage fallback
-            for (const t of newTransactions) {
-                await StorageService.saveTransaction(t);
-            }
+            setIsSavingInvoices(true);
+            try {
+                // Batch save is MUCH faster and prevents duplicates by disabling the button
+                await StorageService.saveTransactions(newTransactions);
 
-            alert(`${importCount} faturas importadas com sucesso!`);
-            setIsInvoiceModalOpen(false);
-            await loadData(); // Update limits used
+                alert(`${importCount} faturas importadas com sucesso!`);
+                setIsInvoiceModalOpen(false);
+                await loadData(); // Update limits used
+            } catch (error) {
+                console.error('Erro ao importar faturas:', error);
+                alert('Ocorreu um erro ao salvar as faturas. Tente novamente.');
+            } finally {
+                setIsSavingInvoices(false);
+            }
         } else {
             alert('Nenhum valor preenchido para importar.');
         }
@@ -417,14 +424,28 @@ export default function CardsView() {
                         </div>
 
                         <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                            <button onClick={() => setIsInvoiceModalOpen(false)} className="px-5 py-3 text-slate-600 font-bold hover:bg-slate-200 rounded-xl transition-colors">
+                            <button
+                                onClick={() => setIsInvoiceModalOpen(false)}
+                                className="px-5 py-3 text-slate-600 font-bold hover:bg-slate-200 rounded-xl transition-colors"
+                                disabled={isSavingInvoices}
+                            >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSaveInvoices}
-                                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 flex items-center gap-2 transition-transform active:scale-95"
+                                disabled={isSavingInvoices}
+                                className={`px-6 py-3 text-white font-bold rounded-xl shadow-lg flex items-center gap-2 transition-all ${isSavingInvoices ? 'bg-slate-400 cursor-not-allowed opacity-70' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 active:scale-95'}`}
                             >
-                                <Check size={20} /> Confirmar Importação
+                                {isSavingInvoices ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Salvando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check size={20} /> Confirmar Importação
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
