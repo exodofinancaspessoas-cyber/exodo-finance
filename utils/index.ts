@@ -31,8 +31,7 @@ export const isSameMonth = (d1: Date, d2: Date): boolean => {
 
 export const getMonthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
-export const APP_VERSION = '1.1.1'; // Increment this on every deploy
-const DEPLOY_DATE = '2026-02-16 13:15';
+
 
 export const toISODate = (date: Date): string => {
     const y = date.getFullYear();
