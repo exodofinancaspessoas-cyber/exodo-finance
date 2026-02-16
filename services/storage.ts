@@ -141,10 +141,13 @@ export const StorageService = {
 
     saveRecurringExpense: async (expense: RecurringExpense): Promise<void> => {
         await DatabaseService.saveRecurringExpense(expense);
+        StorageService.clearCache();
+        await StorageService.processRecurringExpenses();
     },
 
     deleteRecurringExpense: async (id: string): Promise<void> => {
         await DatabaseService.deleteRecurringExpense(id);
+        StorageService.clearCache();
     },
 
     processRecurringExpenses: async () => {
@@ -152,32 +155,36 @@ export const StorageService = {
         StorageService._isProcessingRecurring = true;
 
         try {
-            const recurring = await DatabaseService.getRecurringExpenses();
-            const transactions = await DatabaseService.getTransactions();
+            const recurring = await StorageService.getRecurringExpenses();
+            const transactions = await StorageService.getTransactions();
             const today = new Date();
             const newTransactions: Transaction[] = [];
             let changed = false;
 
-            const monthsToGenerate = 12; // Horizon of 12 months
+            // Reduce horizon to just current and next month to prevent thundering herd/duplication
+            const monthsToGenerate = 2; // Current month + 2 future months
 
             for (const rec of recurring) {
                 if (!rec.active || !rec.auto_create) continue;
 
                 for (let i = 0; i <= monthsToGenerate; i++) {
                     const targetMonth = addMonths(today, i);
+                    const targetYear = targetMonth.getFullYear();
+                    const targetMonthIdx = targetMonth.getMonth();
 
-                    // Check if recurrence has ended
+                    // Skip if target month is after end date
                     if (rec.end_date && startOfDay(new Date(rec.end_date)) < startOfDay(targetMonth)) {
                         break;
                     }
 
-                    const exists = transactions.some(t =>
-                        t.recurrence_id === rec.id &&
-                        matchesYearMonth(t.date, targetMonth)
-                    );
+                    // Strict check: verify if a transaction for this rule exists in this specific month/year
+                    const exists = transactions.some(t => {
+                        if (t.recurrence_id !== rec.id || t.status === 'EXCLUIDA') return false;
+                        const [ty, tm] = t.date.split('-').map(Number);
+                        return ty === targetYear && (tm - 1) === targetMonthIdx;
+                    });
 
                     if (!exists) {
-                        // Safe date generation: if day_of_month is e.g. 31, it will fall back to 30 or 28/29
                         const targetDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
                         const lastDayOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0).getDate();
                         const day = Math.min(rec.day_of_month, lastDayOfMonth);
@@ -197,7 +204,7 @@ export const StorageService = {
                             created_at: new Date().toISOString()
                         };
                         newTransactions.push(newTrx);
-                        transactions.push(newTrx); // Update local list to prevent duplicates in next month iterations
+                        transactions.push(newTrx); // Avoid generating twice in this loop
                         rec.last_generated = new Date().toISOString();
                         changed = true;
 
@@ -219,12 +226,14 @@ export const StorageService = {
                 if (newTransactions.length > 0) {
                     await StorageService.saveTransactions(newTransactions);
                 }
-                // Update individual recurring rules to mark last_generated
+                // Batch update rules
                 for (const rec of recurring) {
-                    if (rec.last_generated) {
+                    if (rec.last_generated && changed) {
                         await DatabaseService.saveRecurringExpense(rec);
                     }
                 }
+                // Crucial: clear cache so other components see the new transactions
+                StorageService.clearCache();
             }
         } finally {
             StorageService._isProcessingRecurring = false;

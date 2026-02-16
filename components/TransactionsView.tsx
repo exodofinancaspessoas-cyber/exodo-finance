@@ -61,7 +61,10 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false); // New state for export
-    const [filters, setFilters] = useState<FilterState>({ ...initialFilters, type: initialType });
+    const [filters, setFilters] = useState<FilterState>(() => ({
+        ...initialFilters,
+        type: initialType
+    }));
     const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
 
     // Form State
@@ -109,7 +112,14 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [initialType]);
+
+    // Force type synchronization separately
+    useEffect(() => {
+        if (initialType !== 'ALL') {
+            setFilters(prev => ({ ...prev, type: initialType }));
+        }
+    }, [initialType]);
 
     const loadData = async () => {
         try {

@@ -24,6 +24,9 @@ export default function App() {
   useEffect(() => {
     const loadedUser = StorageService.getUser();
     setUser(loadedUser);
+    if (loadedUser) {
+      StorageService.processRecurringExpenses();
+    }
   }, []);
 
   if (!user) {

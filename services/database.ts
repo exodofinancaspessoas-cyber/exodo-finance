@@ -71,12 +71,29 @@ export const DatabaseService = {
 
     async deleteAccount(id: string): Promise<void> {
         if (isSupabaseConfigured()) {
+            // 1. Delete linked transactions
+            await supabase.from('transactions').delete().eq('account_id', id);
+
+            // 2. Delete linked cards
+            await supabase.from('cards').delete().eq('account_id', id);
+
+            // 3. Delete linked transfers (from or to)
+            await supabase.from('transfers').delete().or(`from_account_id.eq.${id},to_account_id.eq.${id}`);
+
+            // 4. Finally delete the account
             const { error } = await supabase.from('accounts').delete().eq('id', id);
             if (!error) return;
         }
         const accounts = await this.getAccounts();
         const filtered = accounts.filter(a => a.id !== id);
         localStorage.setItem('exodo_accounts', JSON.stringify(filtered));
+
+        // Localstorage fallback for related data (simplified)
+        const trxs = localStorage.getItem('exodo_transactions');
+        if (trxs) {
+            const parsed = JSON.parse(trxs);
+            localStorage.setItem('exodo_transactions', JSON.stringify(parsed.filter((t: any) => t.account_id !== id)));
+        }
     },
 
     // CARDS
