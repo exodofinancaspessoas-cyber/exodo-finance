@@ -77,16 +77,66 @@ const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0);
 export const StorageService = {
     generateId,
     _isProcessingRecurring: false,
+    _cache: {
+        transactions: null as Transaction[] | null,
+        accounts: null as Account[] | null,
+        cards: null as Card[] | null,
+        categories: null as Category[] | null,
+        transfers: null as Transfer[] | null,
+        recurring: null as RecurringExpense[] | null,
+        lastFetch: 0
+    },
 
+    _pending: {
+        transactions: null as Promise<Transaction[]> | null,
+        accounts: null as Promise<Account[]> | null,
+        cards: null as Promise<Card[]> | null,
+        categories: null as Promise<Category[]> | null,
+        transfers: null as Promise<Transfer[]> | null,
+        recurring: null as Promise<RecurringExpense[]> | null,
+    },
+
+    clearCache: () => {
+        StorageService._cache = {
+            transactions: null,
+            accounts: null,
+            cards: null,
+            categories: null,
+            transfers: null,
+            recurring: null,
+            lastFetch: 0
+        };
+        StorageService._pending = {
+            transactions: null,
+            accounts: null,
+            cards: null,
+            categories: null,
+            transfers: null,
+            recurring: null,
+        };
+    },
 
     // USER (Keep sync as it is tiny)
     getUser: (): User | null => getStorage<User | null>(STORAGE_KEYS.USER, null),
     setUser: (user: User) => setStorage(STORAGE_KEYS.USER, user),
-    logout: () => localStorage.removeItem(STORAGE_KEYS.USER),
+    logout: () => {
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        StorageService.clearCache();
+    },
 
     // RECURRING EXPENSES
     getRecurringExpenses: async (): Promise<RecurringExpense[]> => {
-        return await DatabaseService.getRecurringExpenses();
+        if (StorageService._cache.recurring) return StorageService._cache.recurring;
+        if (StorageService._pending.recurring) return StorageService._pending.recurring;
+
+        StorageService._pending.recurring = DatabaseService.getRecurringExpenses();
+        try {
+            const data = await StorageService._pending.recurring;
+            StorageService._cache.recurring = data;
+            return data;
+        } finally {
+            StorageService._pending.recurring = null;
+        }
     },
 
     saveRecurringExpense: async (expense: RecurringExpense): Promise<void> => {
@@ -201,86 +251,152 @@ export const StorageService = {
 
     // ACCOUNTS
     getAccounts: async (): Promise<Account[]> => {
-        const accounts = await DatabaseService.getAccounts();
-        const transactions = await DatabaseService.getTransactions();
-        const transfers = await DatabaseService.getTransfers();
+        // Use internally coalesced methods
+        const [accounts, transactions, transfers] = await Promise.all([
+            StorageService._getAccountsRaw(),
+            StorageService.getTransactions(),
+            StorageService.getTransfers()
+        ]);
 
-        return accounts.map(acc => {
-            let balance = acc.initial_balance || 0;
+        // Optimized O(M) balance calculation
+        const balanceMap = new Map<string, number>();
+        accounts.forEach(acc => balanceMap.set(acc.id, acc.initial_balance || 0));
 
-            transactions.forEach(t => {
-                if (t.account_id === acc.id) {
-                    if (t.type === 'RECEITA' && t.status === 'RECEBIDA') balance += t.amount;
-                    else if (t.type === 'DESPESA' && t.status === 'PAGA') balance -= t.amount;
-                }
-            });
-
-            transfers.forEach(t => {
-                if (t.from_account_id === acc.id) balance -= t.amount;
-                if (t.to_account_id === acc.id) balance += t.amount;
-            });
-
-            return { ...acc, current_balance: balance };
-        });
-    },
-
-    saveAccount: async (account: Account) => {
-        await DatabaseService.saveAccount(account);
-    },
-
-    deleteAccount: async (id: string) => {
-        await DatabaseService.deleteAccount(id);
-    },
-
-    // CARDS
-    getCards: async (): Promise<Card[]> => {
-        const cards = await DatabaseService.getCards();
-        const transactions = await DatabaseService.getTransactions();
-
-        return cards.map(c => {
-            const used = transactions
-                .filter(t => t.card_id === c.id && t.type === 'DESPESA' && t.status !== 'PAGA')
-                .reduce((sum, t) => sum + t.amount, 0);
-            return { ...c, limit_used: used };
-        });
-    },
-
-    async saveCard(card: Card) {
-        await DatabaseService.saveCard(card);
-    },
-
-    async deleteCard(id: string) {
-        await DatabaseService.deleteCard(id);
-    },
-
-    // TRANSACTIONS
-    async getTransactions(): Promise<Transaction[]> {
-        const trxs = await DatabaseService.getTransactions();
-        const today = new Date();
-        const toUpdate: Transaction[] = [];
-
-        trxs.forEach(t => {
-            if ((t.status === 'PREVISTA' || t.status === 'CONFIRMADA') && t.type === 'DESPESA') {
-                const dueDate = new Date(t.date);
-                if (dueDate < startOfDay(today)) {
-                    t.status = 'ATRASADA';
-                    toUpdate.push(t);
+        transactions.forEach(t => {
+            if (t.account_id) {
+                const current = balanceMap.get(t.account_id) || 0;
+                if (t.type === 'RECEITA' && t.status === 'RECEBIDA') {
+                    balanceMap.set(t.account_id, current + t.amount);
+                } else if (t.type === 'DESPESA' && t.status === 'PAGA') {
+                    balanceMap.set(t.account_id, current - t.amount);
                 }
             }
         });
 
-        if (toUpdate.length > 0) {
-            await DatabaseService.saveTransactions(toUpdate);
+        transfers.forEach(t => {
+            if (t.from_account_id) {
+                balanceMap.set(t.from_account_id, (balanceMap.get(t.from_account_id) || 0) - t.amount);
+            }
+            if (t.to_account_id) {
+                balanceMap.set(t.to_account_id, (balanceMap.get(t.to_account_id) || 0) + t.amount);
+            }
+        });
+
+        return accounts.map(acc => ({
+            ...acc,
+            current_balance: balanceMap.get(acc.id) || acc.initial_balance || 0
+        }));
+    },
+
+    _getAccountsRaw: async (): Promise<Account[]> => {
+        if (StorageService._cache.accounts) return StorageService._cache.accounts;
+        if (StorageService._pending.accounts) return StorageService._pending.accounts;
+
+        StorageService._pending.accounts = DatabaseService.getAccounts();
+        try {
+            const data = await StorageService._pending.accounts;
+            StorageService._cache.accounts = data;
+            return data;
+        } finally {
+            StorageService._pending.accounts = null;
         }
-        return trxs;
+    },
+
+    saveAccount: async (account: Account) => {
+        await DatabaseService.saveAccount(account);
+        StorageService.clearCache();
+    },
+
+    deleteAccount: async (id: string) => {
+        await DatabaseService.deleteAccount(id);
+        StorageService.clearCache();
+    },
+
+    // CARDS
+    getCards: async (): Promise<Card[]> => {
+        const [cards, transactions] = await Promise.all([
+            StorageService._getCardsRaw(),
+            StorageService.getTransactions()
+        ]);
+
+        // Optimized O(M) limit calculation
+        const cardUsageMap = new Map<string, number>();
+        transactions.forEach(t => {
+            if (t.card_id && t.type === 'DESPESA' && t.status !== 'PAGA') {
+                const current = cardUsageMap.get(t.card_id) || 0;
+                cardUsageMap.set(t.card_id, current + t.amount);
+            }
+        });
+
+        return cards.map(c => ({
+            ...c,
+            limit_used: cardUsageMap.get(c.id) || 0
+        }));
+    },
+
+    _getCardsRaw: async (): Promise<Card[]> => {
+        if (StorageService._cache.cards) return StorageService._cache.cards;
+        if (StorageService._pending.cards) return StorageService._pending.cards;
+
+        StorageService._pending.cards = DatabaseService.getCards();
+        try {
+            const data = await StorageService._pending.cards;
+            StorageService._cache.cards = data;
+            return data;
+        } finally {
+            StorageService._pending.cards = null;
+        }
+    },
+
+    async saveCard(card: Card) {
+        await DatabaseService.saveCard(card);
+        StorageService.clearCache();
+    },
+
+    async deleteCard(id: string) {
+        await DatabaseService.deleteCard(id);
+        StorageService.clearCache();
+    },
+
+    // TRANSACTIONS
+    async getTransactions(): Promise<Transaction[]> {
+        if (StorageService._cache.transactions) return StorageService._cache.transactions;
+        if (StorageService._pending.transactions) return StorageService._pending.transactions;
+
+        StorageService._pending.transactions = DatabaseService.getTransactions();
+        try {
+            const trxs = await StorageService._pending.transactions;
+            StorageService._cache.transactions = trxs;
+
+            const today = new Date();
+            const toUpdate: Transaction[] = [];
+
+            trxs.forEach(t => {
+                if ((t.status === 'PREVISTA' || t.status === 'CONFIRMADA') && t.type === 'DESPESA') {
+                    const dueDate = new Date(t.date);
+                    if (dueDate < startOfDay(today)) {
+                        t.status = 'ATRASADA';
+                        toUpdate.push(t);
+                    }
+                }
+            });
+
+            if (toUpdate.length > 0) {
+                await DatabaseService.saveTransactions(toUpdate);
+            }
+            return trxs;
+        } finally {
+            StorageService._pending.transactions = null;
+        }
     },
 
     saveTransactions: async (transactions: Transaction[]) => {
         await DatabaseService.saveTransactions(transactions);
+        StorageService.clearCache();
     },
 
     saveTransaction: async (transaction: Transaction) => {
-        const transactions = await DatabaseService.getTransactions();
+        const transactions = await StorageService.getTransactions();
         const index = transactions.findIndex(t => t.id === transaction.id);
 
         if (index === -1 && transaction.installments && transaction.installments.current === 1 && transaction.installments.total > 1) {
@@ -306,37 +422,63 @@ export const StorageService = {
         } else {
             await DatabaseService.saveTransaction(transaction);
         }
+        StorageService.clearCache();
     },
 
     deleteTransaction: async (id: string) => {
         await DatabaseService.deleteTransaction(id);
+        StorageService.clearCache();
     },
 
     // TRANSFERS
     getTransfers: async (): Promise<Transfer[]> => {
-        return await DatabaseService.getTransfers();
+        if (StorageService._cache.transfers) return StorageService._cache.transfers;
+        if (StorageService._pending.transfers) return StorageService._pending.transfers;
+
+        StorageService._pending.transfers = DatabaseService.getTransfers();
+        try {
+            const data = await StorageService._pending.transfers;
+            StorageService._cache.transfers = data;
+            return data;
+        } finally {
+            StorageService._pending.transfers = null;
+        }
     },
 
     saveTransfer: async (transfer: Transfer) => {
         await DatabaseService.saveTransfer(transfer);
+        StorageService.clearCache();
     },
 
     // CATEGORIES
     getCategories: async (): Promise<Category[]> => {
-        const stored = await DatabaseService.getCategories();
-        return stored.length > 0 ? stored : getDefaultCategories();
+        if (StorageService._cache.categories) return StorageService._cache.categories;
+        if (StorageService._pending.categories) return StorageService._pending.categories;
+
+        StorageService._pending.categories = DatabaseService.getCategories();
+        try {
+            const stored = await StorageService._pending.categories;
+            const data = stored.length > 0 ? stored : getDefaultCategories();
+            StorageService._cache.categories = data;
+            return data;
+        } finally {
+            StorageService._pending.categories = null;
+        }
     },
 
     saveCategory: async (category: Category) => {
         await DatabaseService.saveCategory(category);
+        StorageService.clearCache();
     },
 
     saveCategories: async (categories: Category[]) => {
         await DatabaseService.saveCategories(categories);
+        StorageService.clearCache();
     },
 
     deleteCategory: async (id: string) => {
         await DatabaseService.deleteCategory(id);
+        StorageService.clearCache();
     },
 
     async resetCategories(): Promise<void> {
