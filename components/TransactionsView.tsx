@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Filter, Plus, Edit, Trash2, CreditCard, X, ChevronDown,
     Download, Trash, Copy, CheckSquare, Square, Calendar, Check, CheckCircle,
-    TrendingDown, AlertTriangle, Clock
+    TrendingDown, AlertTriangle, Clock, Settings, Settings2
 } from 'lucide-react';
 import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category } from '../types';
 import { StorageService } from '../services/storage';
@@ -104,6 +104,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     const [categorySearch, setCategorySearch] = useState('');
     const [isImporting, setIsImporting] = useState(false);
     const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+    const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -360,6 +361,12 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
         await StorageService.saveTransaction(newTrx);
         setIsModalOpen(false);
+        await loadData();
+    };
+
+    const handleDeleteCategory = async (id: string) => {
+        if (!confirm('Excluir esta categoria? Isso pode afetar transações existentes.')) return;
+        await StorageService.deleteCategory(id);
         await loadData();
     };
 
@@ -831,11 +838,11 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                         <label className="block text-xs font-bold text-slate-500 uppercase">Categoria</label>
                                         <button
                                             type="button"
-                                            onClick={handleResetCategories}
-                                            disabled={isImporting}
-                                            className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-wider transition-colors"
+                                            onClick={() => setIsCategoryManagerOpen(true)}
+                                            className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-wider transition-colors flex items-center space-x-1"
                                         >
-                                            {isImporting ? 'Atualizando...' : 'Resetar Padrões'}
+                                            <Settings size={12} />
+                                            <span>Configurações</span>
                                         </button>
                                     </div>
 
@@ -1206,6 +1213,123 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                         </div>
                     </div>
                 )}
+
+            {/* CATEGORY MANAGER MODAL */}
+            {isCategoryManagerOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] border border-slate-200">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <div>
+                                <h3 className="font-bold text-xl text-slate-800">Configuração de Categorias</h3>
+                                <p className="text-xs text-slate-500 mt-1">Personalize suas categorias e subcategorias</p>
+                            </div>
+                            <button onClick={() => setIsCategoryManagerOpen(false)} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">&times;</button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {/* Controls */}
+                            <div className="flex justify-between items-center gap-4">
+                                <button
+                                    onClick={() => {
+                                        setCategoryFormData({ name: '', color: '#6366f1', icon: 'Folder' });
+                                        setIsCategoryModalOpen(true);
+                                    }}
+                                    className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/10"
+                                >
+                                    <Plus size={16} /> Nova Categoria Principal
+                                </button>
+                                <button
+                                    onClick={handleResetCategories}
+                                    className="px-4 py-3 border border-slate-200 text-slate-500 rounded-xl font-bold text-sm hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center gap-2"
+                                >
+                                    <Trash size={16} /> Restaurar Padrões
+                                </button>
+                            </div>
+
+                            {/* Category List */}
+                            <div className="space-y-4">
+                                {parentCategories.map(parent => {
+                                    const subs = subCategories.filter(s => s.parent_id === parent.id);
+                                    return (
+                                        <div key={parent.id} className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/30">
+                                            <div className="p-4 bg-white flex items-center justify-between border-b border-slate-50">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: parent.color }} />
+                                                    <span className="font-bold text-slate-700">{parent.name}</span>
+                                                    <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                                        {subs.length} subcategorias
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            const newName = prompt('Novo nome para a categoria:', parent.name);
+                                                            if (newName) StorageService.saveCategory({ ...parent, name: newName }).then(loadData);
+                                                        }}
+                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                    >
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteCategory(parent.id)}
+                                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 flex flex-wrap gap-2">
+                                                {subs.map(sub => (
+                                                    <div key={sub.id} className="group relative">
+                                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:border-indigo-300 transition-all">
+                                                            {sub.name}
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteCategory(sub.id);
+                                                                }}
+                                                                className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 transition-all"
+                                                            >
+                                                                <X size={12} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    onClick={() => {
+                                                        const name = prompt('Nome da subcategoria:');
+                                                        if (name) {
+                                                            StorageService.saveCategory({
+                                                                id: StorageService.generateId(),
+                                                                name,
+                                                                parent_id: parent.id,
+                                                                type: 'DESPESA',
+                                                                color: parent.color,
+                                                                icon: 'Tag',
+                                                                is_default: false
+                                                            }).then(loadData);
+                                                        }
+                                                    }}
+                                                    className="px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs font-bold text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center gap-1"
+                                                >
+                                                    <Plus size={12} /> Adicionar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 border-t border-slate-100">
+                            <button onClick={() => setIsCategoryManagerOpen(false)} className="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all">
+                                Fechar Configurações
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* NEW CATEGORY MODAL */}
             {isCategoryModalOpen && (

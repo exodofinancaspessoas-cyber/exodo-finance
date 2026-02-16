@@ -306,6 +306,10 @@ export const StorageService = {
         await DatabaseService.saveCategories(categories);
     },
 
+    deleteCategory: async (id: string) => {
+        await DatabaseService.deleteCategory(id);
+    },
+
     async resetCategories(): Promise<void> {
         localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
         await this.initializeDefaultCategories(true);

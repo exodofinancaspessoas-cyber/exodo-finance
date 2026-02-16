@@ -358,6 +358,16 @@ export const DatabaseService = {
         localStorage.setItem('exodo_categories', JSON.stringify(updated));
     },
 
+    async deleteCategory(id: string): Promise<void> {
+        if (isSupabaseConfigured()) {
+            const { error } = await supabase.from('categories').delete().eq('id', id);
+            if (!error) return;
+            console.error('Error deleting category from Supabase:', error);
+        }
+        const categories = await this.getCategories();
+        localStorage.setItem('exodo_categories', JSON.stringify(categories.filter(c => c.id !== id)));
+    },
+
     // FALLBACKS/OTHERS (Will implement as needed)
     async getGoals(): Promise<Goal[]> {
         if (isSupabaseConfigured()) {
