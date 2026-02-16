@@ -105,6 +105,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     const [isImporting, setIsImporting] = useState(false);
     const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
     const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
+    const [isCategoryListExpanded, setIsCategoryListExpanded] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -251,6 +252,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     const handleOpenModal = (trx?: Transaction, typeOverride?: TransactionType) => {
         setSelectedParentId(null);
         setCategorySearch('');
+        setIsCategoryListExpanded(false);
         if (trx) {
             setEditingTransaction(trx);
             setFormData({
@@ -466,6 +468,8 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
     const showPaymentMethod = formData.type === 'DESPESA';
     const showAccount = (formData.status === 'PAGA' || formData.status === 'RECEBIDA');
+
+    const selectedCategory = useMemo(() => categories.find(c => c.id === formData.category_id), [categories, formData.category_id]);
 
     // Status visual helper
     const getStatusColor = (status: string) => {
@@ -835,118 +839,168 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                 {/* Categories Section */}
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase">Categoria</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase font-mono tracking-tight">Categoria</label>
                                         <button
                                             type="button"
                                             onClick={() => setIsCategoryManagerOpen(true)}
-                                            className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-wider transition-colors flex items-center space-x-1"
+                                            className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all flex items-center space-x-1 px-2 py-1 hover:bg-indigo-50 rounded-lg"
                                         >
                                             <Settings size={12} />
                                             <span>Configurações</span>
                                         </button>
                                     </div>
 
-                                    <div className="relative">
-                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="text"
-                                            placeholder="Buscar categoria..."
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
-                                            value={categorySearch}
-                                            onChange={e => setCategorySearch(e.target.value)}
-                                        />
-                                    </div>
+                                    {/* SELECT TRIGGER */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCategoryListExpanded(!isCategoryListExpanded)}
+                                        className={`w-full flex items-center justify-between px-4 py-3 bg-white border rounded-2xl transition-all duration-300 ${isCategoryListExpanded ? 'border-slate-900 ring-4 ring-slate-900/5 shadow-lg shadow-slate-900/5' : 'border-slate-200 hover:border-slate-300'}`}
+                                    >
+                                        <div className="flex items-center space-x-3 overflow-hidden">
+                                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor: selectedCategory?.color || '#cbd5e1' }} />
+                                            <span className={`text-sm font-bold truncate ${selectedCategory ? 'text-slate-800' : 'text-slate-400'}`}>
+                                                {selectedCategory ? selectedCategory.name.toUpperCase() : 'SELECIONAR CATEGORIA'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center space-x-2 flex-shrink-0">
+                                            {selectedCategory && (
+                                                <X
+                                                    size={14}
+                                                    className="text-slate-300 hover:text-red-500 transition-colors"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setFormData({ ...formData, category_id: '' });
+                                                    }}
+                                                />
+                                            )}
+                                            <ChevronDown size={16} className={`text-slate-400 transition-transform duration-500 ${isCategoryListExpanded ? 'rotate-180' : ''}`} />
+                                        </div>
+                                    </button>
 
-                                    <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1 border border-slate-100 rounded-xl bg-slate-50/30">
-                                        {categorySearch ? (
-                                            // Search Results
-                                            filteredDirect.map(c => (
-                                                <button
-                                                    key={c.id}
-                                                    type="button"
-                                                    onClick={() => setFormData({ ...formData, category_id: c.id })}
-                                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${formData.category_id === c.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
-                                                >
-                                                    {c.name}
-                                                </button>
-                                            ))
-                                        ) : selectedParentId ? (
-                                            // Subcategories View
-                                            <div className="w-full space-y-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSelectedParentId(null)}
-                                                    className="flex items-center text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest pl-1"
-                                                >
-                                                    <ChevronDown size={14} className="rotate-90 mr-1" />
-                                                    Voltar para Categorias
-                                                </button>
-                                                <div className="flex flex-wrap gap-2 pb-2">
-                                                    {activeSubcategories.map(c => (
+                                    {/* EXPANDABLE LIST */}
+                                    {isCategoryListExpanded && (
+                                        <div className="border border-slate-100 rounded-3xl bg-slate-50 p-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                            <div className="relative group">
+                                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Buscar por nome..."
+                                                    autoFocus
+                                                    className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/50 transition-all font-medium"
+                                                    value={categorySearch}
+                                                    onChange={e => setCategorySearch(e.target.value)}
+                                                />
+                                            </div>
+
+                                            <div className="max-h-64 overflow-y-auto space-y-1.5 p-1 custom-scrollbar">
+                                                {categorySearch ? (
+                                                    filteredDirect.map(c => (
                                                         <button
                                                             key={c.id}
                                                             type="button"
-                                                            onClick={() => setFormData({ ...formData, category_id: c.id })}
-                                                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${formData.category_id === c.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                                                            onClick={() => {
+                                                                setFormData({ ...formData, category_id: c.id });
+                                                                setIsCategoryListExpanded(false);
+                                                            }}
+                                                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left ${formData.category_id === c.id ? 'bg-slate-900 text-white shadow-md' : 'hover:bg-white text-slate-600 border border-transparent hover:border-slate-100'}`}
                                                         >
-                                                            {c.name}
+                                                            <div className="flex items-center space-x-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.color }} />
+                                                                <span className="text-xs font-bold leading-none">{c.name}</span>
+                                                            </div>
+                                                            {formData.category_id === c.id && <Check size={12} />}
                                                         </button>
-                                                    ))}
-                                                    {/* Option to select the parent itself if it's not just a folder */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setFormData({ ...formData, category_id: selectedParentId })}
-                                                        className={`px-3 py-1.5 rounded-full text-xs font-medium border border-dashed transition-all ${formData.category_id === selectedParentId ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'}`}
-                                                    >
-                                                        Geral
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            // Main Categories View
-                                            <div className="grid grid-cols-2 gap-2 w-full">
-                                                {parentCategories.map(p => {
-                                                    const hasSubs = subCategories.some(s => s.parent_id === p.id);
-                                                    return (
+                                                    ))
+                                                ) : selectedParentId ? (
+                                                    <div className="space-y-3">
                                                         <button
-                                                            key={p.id}
+                                                            type="button"
+                                                            onClick={() => setSelectedParentId(null)}
+                                                            className="flex items-center w-fit px-3 py-1.5 text-[10px] font-black text-indigo-500 hover:text-indigo-700 uppercase tracking-[0.2em] bg-indigo-50 rounded-lg transition-all"
+                                                        >
+                                                            <ChevronDown size={14} className="rotate-90 mr-1" />
+                                                            VOLTAR
+                                                        </button>
+
+                                                        <div className="animate-in fade-in slide-in-from-left-2 duration-300 space-y-1.5">
+                                                            {/* General / Parent Picker */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setFormData({ ...formData, category_id: selectedParentId });
+                                                                    setIsCategoryListExpanded(false);
+                                                                }}
+                                                                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-xs transition-all ${formData.category_id === selectedParentId ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-white hover:text-slate-600 border border-dashed border-slate-200'}`}
+                                                            >
+                                                                <span className="font-black uppercase tracking-widest text-[10px]">Utilizar Categoria Principal</span>
+                                                                {formData.category_id === selectedParentId && <Check size={12} />}
+                                                            </button>
+
+                                                            {activeSubcategories.map(c => (
+                                                                <button
+                                                                    key={c.id}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setFormData({ ...formData, category_id: c.id });
+                                                                        setIsCategoryListExpanded(false);
+                                                                    }}
+                                                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-left ${formData.category_id === c.id ? 'bg-slate-900 text-white shadow-xl scale-[1.02]' : 'hover:bg-white text-slate-600 border border-transparent hover:border-slate-100'}`}
+                                                                >
+                                                                    <span className="text-xs font-bold">{c.name}</span>
+                                                                    {formData.category_id === c.id && <Check size={12} />}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {parentCategories.map(p => {
+                                                            const hasSubs = subCategories.some(s => s.parent_id === p.id);
+                                                            return (
+                                                                <button
+                                                                    key={p.id}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (hasSubs) {
+                                                                            setSelectedParentId(p.id);
+                                                                        } else {
+                                                                            setFormData({ ...formData, category_id: p.id });
+                                                                            setIsCategoryListExpanded(false);
+                                                                        }
+                                                                    }}
+                                                                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 text-left group ${formData.category_id === p.id ? 'bg-slate-900 text-white shadow-lg' : 'hover:bg-white bg-transparent border border-transparent hover:border-slate-100 hover:shadow-sm'}`}
+                                                                >
+                                                                    <div className="flex items-center space-x-3">
+                                                                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
+                                                                        <span className="text-xs font-black uppercase tracking-tight">{p.name}</span>
+                                                                    </div>
+                                                                    {hasSubs ? (
+                                                                        <ChevronDown size={14} className="-rotate-90 text-slate-300 group-hover:text-indigo-500 transition-all duration-300 group-hover:translate-x-1" />
+                                                                    ) : (
+                                                                        formData.category_id === p.id && <Check size={12} />
+                                                                    )}
+                                                                </button>
+                                                            );
+                                                        })}
+
+                                                        <button
                                                             type="button"
                                                             onClick={() => {
-                                                                if (hasSubs) {
-                                                                    setSelectedParentId(p.id);
-                                                                } else {
-                                                                    setFormData({ ...formData, category_id: p.id });
-                                                                }
+                                                                setIsCategoryModalOpen(true);
+                                                                setIsCategoryListExpanded(false);
                                                             }}
-                                                            className={`group flex items-center space-x-2 px-3 py-2 border rounded-xl hover:shadow-sm transition-all text-left ${formData.category_id === p.id ? 'bg-slate-800 border-slate-800' : 'bg-white border-slate-200 hover:border-indigo-300'}`}
+                                                            className="w-full mt-3 px-4 py-3.5 rounded-2xl text-[10px] font-black border-2 border-dashed border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-white transition-all flex items-center justify-center space-x-2 uppercase tracking-widest"
                                                         >
-                                                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
-                                                            <span className={`text-xs font-bold truncate ${formData.category_id === p.id ? 'text-white' : 'text-slate-700'}`}>{p.name}</span>
-                                                            {hasSubs && <ChevronDown size={12} className={`-rotate-90 ml-auto flex-shrink-0 ${formData.category_id === p.id ? 'text-white/50' : 'text-slate-300 group-hover:text-indigo-400'}`} />}
+                                                            <Plus size={14} />
+                                                            <span>Criar Categoria</span>
                                                         </button>
-                                                    );
-                                                })}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-
-                                        {filteredDirect.length === 0 && categorySearch && (
-                                            <div className="w-full text-center py-4 text-xs text-slate-400 italic">
-                                                Nenhuma categoria encontrada
-                                            </div>
-                                        )}
-
-                                        {!categorySearch && !selectedParentId && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsCategoryModalOpen(true)}
-                                                className="w-full mt-2 px-3 py-2.5 rounded-xl text-xs font-bold border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 hover:bg-white transition-colors flex items-center justify-center space-x-2"
-                                            >
-                                                <Plus size={14} />
-                                                <span>Nova Categoria Personalizada</span>
-                                            </button>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
+
 
                                 {/* Payment Details Section */}
                                 <div className="bg-slate-50 p-4 rounded-xl space-y-4 border border-slate-100">
