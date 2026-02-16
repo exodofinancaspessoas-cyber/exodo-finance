@@ -514,6 +514,10 @@ export const DatabaseService = {
                     ...rec,
                     amount: Number(rec.amount || 0),
                     type: rec.type as any, // FIXO or VARIAVEL
+                    start_date: rec.start_date,
+                    end_date: rec.end_date,
+                    duration_count: rec.duration_count,
+                    payment_method: rec.payment_method
                 }));
             }
         }
@@ -545,7 +549,12 @@ export const DatabaseService = {
                     type: expense.type,
                     active: expense.active,
                     auto_create: expense.auto_create,
-                    last_generated: expense.last_generated || null
+                    last_generated: expense.last_generated || null,
+                    start_date: expense.start_date || null,
+                    end_date: expense.end_date || null,
+                    payment_method: expense.payment_method || null,
+                    duration_count: expense.duration_count || null,
+                    card_id: isValidUUID(expense.card_id) ? expense.card_id : null
                 });
                 if (error) {
                     console.error('Error saving recurring expense to Supabase:', error);

@@ -1,11 +1,10 @@
-
 import {
     User, Account, Card, Transaction, Category, Transfer,
     DashboardData, RecurringExpense, AppNotification,
     Goal, Budget
 } from '../types';
 import { DatabaseService } from './database';
-import { formatCurrency, formatDate, toISODate } from '../utils';
+import { toISODate } from '../utils';
 import { INITIAL_CATEGORIES_DATA } from './initialCategories';
 
 const STORAGE_KEYS = {
@@ -21,14 +20,15 @@ const STORAGE_KEYS = {
     BUDGETS: 'exodo_budgets'
 };
 
+const APP_VERSION = '1.1.3';
+const DEPLOY_DATE = '2026-02-16 13:40';
+
 // --- HELPER FUNCTIONS ---
 const getStorage = <T>(key: string, defaultValue: T): T => {
     const stored = localStorage.getItem(key);
     try {
         const parsed = stored ? JSON.parse(stored) : defaultValue;
-        if (defaultValue instanceof Array && !Array.isArray(parsed)) {
-            return defaultValue;
-        }
+        if (defaultValue instanceof Array && !Array.isArray(parsed)) return defaultValue;
         return parsed;
     } catch {
         return defaultValue;
@@ -40,32 +40,11 @@ const setStorage = <T>(key: string, value: T) => {
 };
 
 const generateId = () => {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-        return crypto.randomUUID();
-    }
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
 
-const getDefaultCategories = (): Category[] => [
-    { id: 'cat_salario', name: 'Salário', type: 'RECEITA', icon: 'Briefcase', color: '#16a34a', is_default: true },
-    { id: 'cat_invest', name: 'Investimentos', type: 'RECEITA', icon: 'TrendingUp', color: '#0ea5e9', is_default: true },
-    { id: 'cat_extra', name: 'Renda Extra', type: 'RECEITA', icon: 'PlusCircle', color: '#8b5cf6', is_default: true },
-    { id: 'cat_casa', name: 'Moradia', type: 'DESPESA', icon: 'Home', color: '#ea580c', is_default: true },
-    { id: 'cat_ali', name: 'Alimentação', type: 'DESPESA', icon: 'ShoppingCart', color: '#dc2626', is_default: true },
-    { id: 'cat_trans', name: 'Transporte', type: 'DESPESA', icon: 'Car', color: '#f59e0b', is_default: true },
-    { id: 'cat_lazer', name: 'Lazer', type: 'DESPESA', icon: 'Smile', color: '#ec4899', is_default: true },
-    { id: 'cat_saude', name: 'Saúde', type: 'DESPESA', icon: 'Heart', color: '#ef4444', is_default: true },
-    { id: 'cat_edu', name: 'Educação', type: 'DESPESA', icon: 'Book', color: '#6366f1', is_default: true },
-    { id: 'cat_card', name: 'Pagamento de Cartão', type: 'DESPESA', icon: 'CreditCard', color: '#64748b', is_default: true },
-];
-
-// Helper to safely compare YYYY-MM-DD strings with Date objects for Month/Year
-const matchesYearMonth = (isoDate: string, target: Date) => {
-    // isoDate is YYYY-MM-DD
-    const [y, m] = isoDate.split('-').map(Number);
-    return y === target.getFullYear() && (m - 1) === target.getMonth();
-};
-
+// Helper for recurrence logic
 const addDays = (date: Date, days: number) => {
     const d = new Date(date);
     d.setDate(d.getDate() + days);
@@ -90,12 +69,20 @@ const addYears = (date: Date, years: number) => {
     return d;
 };
 
-const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const matchesYearMonth = (isoDate: string, target: Date) => {
+    const [y, m] = isoDate.split('-').map(Number);
+    return y === target.getFullYear() && (m - 1) === target.getMonth();
+};
 
-// --- SERVICE ---
+const getDefaultCategories = (): Category[] => [
+    { id: 'cat_salario', name: 'Salário', type: 'RECEITA', icon: 'Briefcase', color: '#16a34a', is_default: true },
+    { id: 'cat_invest', name: 'Investimentos', type: 'RECEITA', icon: 'TrendingUp', color: '#0ea5e9', is_default: true },
+    { id: 'cat_casa', name: 'Moradia', type: 'DESPESA', icon: 'Home', color: '#ea580c', is_default: true },
+    { id: 'cat_ali', name: 'Alimentação', type: 'DESPESA', icon: 'ShoppingCart', color: '#dc2626', is_default: true },
+    { id: 'cat_trans', name: 'Transporte', type: 'DESPESA', icon: 'Car', color: '#f59e0b', is_default: true },
+];
 
 export const StorageService = {
-    generateId,
     _isProcessingRecurring: false,
     _cache: {
         transactions: null as Transaction[] | null,
@@ -103,10 +90,8 @@ export const StorageService = {
         cards: null as Card[] | null,
         categories: null as Category[] | null,
         transfers: null as Transfer[] | null,
-        recurring: null as RecurringExpense[] | null,
-        lastFetch: 0
+        recurring: null as RecurringExpense[] | null
     },
-
     _pending: {
         transactions: null as Promise<Transaction[]> | null,
         accounts: null as Promise<Account[]> | null,
@@ -123,8 +108,7 @@ export const StorageService = {
             cards: null,
             categories: null,
             transfers: null,
-            recurring: null,
-            lastFetch: 0
+            recurring: null
         };
         StorageService._pending = {
             transactions: null,
@@ -132,11 +116,11 @@ export const StorageService = {
             cards: null,
             categories: null,
             transfers: null,
-            recurring: null,
+            recurring: null
         };
     },
 
-    // USER (Keep sync as it is tiny)
+    // USER
     getUser: (): User | null => getStorage<User | null>(STORAGE_KEYS.USER, null),
     setUser: (user: User) => setStorage(STORAGE_KEYS.USER, user),
     logout: () => {
@@ -144,8 +128,8 @@ export const StorageService = {
         StorageService.clearCache();
     },
 
-    // RECURRING EXPENSES
-    getRecurringExpenses: async (): Promise<RecurringExpense[]> => {
+    // RECURRING
+    async getRecurringExpenses(): Promise<RecurringExpense[]> {
         if (StorageService._cache.recurring) return StorageService._cache.recurring;
         if (StorageService._pending.recurring) return StorageService._pending.recurring;
 
@@ -159,20 +143,21 @@ export const StorageService = {
         }
     },
 
-    saveRecurringExpense: async (expense: RecurringExpense): Promise<void> => {
+    async saveRecurringExpense(expense: RecurringExpense) {
         await DatabaseService.saveRecurringExpense(expense);
         StorageService.clearCache();
         await StorageService.processRecurringExpenses();
     },
 
-    deleteRecurringExpense: async (id: string): Promise<void> => {
+    async deleteRecurringExpense(id: string) {
         await DatabaseService.deleteRecurringExpense(id);
         StorageService.clearCache();
     },
 
-    processRecurringExpenses: async () => {
+    async processRecurringExpenses() {
         if (StorageService._isProcessingRecurring) return;
         StorageService._isProcessingRecurring = true;
+        console.log('[Recurring] Starting check for scheduled transactions...');
 
         try {
             const recurring = await StorageService.getRecurringExpenses();
@@ -181,19 +166,16 @@ export const StorageService = {
             const newTransactions: Transaction[] = [];
             let changed = false;
 
-            const defaultHorizon = 12; // 1 year default for perpetual
+            const defaultHorizon = 12;
 
             for (const rec of recurring) {
                 if (!rec.active || !rec.auto_create) continue;
 
-                // Determine how many occurrences to check
                 const count = rec.duration_count || defaultHorizon;
                 const startDate = rec.start_date ? new Date(rec.start_date) : today;
 
                 for (let i = 0; i < count; i++) {
                     let targetDate: Date;
-
-                    // Frequency logic
                     switch (rec.frequency) {
                         case 'DIARIO': targetDate = addDays(startDate, i); break;
                         case 'SEMANAL': targetDate = addWeeks(startDate, i); break;
@@ -208,16 +190,10 @@ export const StorageService = {
                     }
 
                     const dateStr = toISODate(targetDate);
+                    if (rec.end_date && dateStr > rec.end_date) break;
 
-                    // Stop if past end_date
-                    if (rec.end_date && dateStr > rec.end_date) {
-                        break;
-                    }
-
-                    // Strict check: verify if a transaction for this rule exists on this date (or month for monthly)
                     const exists = transactions.some(t => {
                         if (t.recurrence_id !== rec.id || t.status === 'EXCLUIDA' || !t.date) return false;
-
                         if (rec.frequency === 'MENSAL') {
                             const [ty, tm] = t.date.split('-').map(Number);
                             return ty === targetDate.getFullYear() && (tm - 1) === targetDate.getMonth();
@@ -229,12 +205,13 @@ export const StorageService = {
                         const newTrx: Transaction = {
                             id: generateId(),
                             description: rec.description,
-                            amount: rec.amount, // Programmed amount
+                            amount: rec.amount,
                             type: 'DESPESA',
                             category_id: rec.category_id,
                             date: dateStr,
                             status: rec.type === 'FIXO' ? 'CONFIRMADA' : 'PREVISTA',
                             account_id: rec.account_id,
+                            card_id: rec.card_id,
                             payment_method: rec.payment_method,
                             recurrence_id: rec.id,
                             created_at: new Date().toISOString()
@@ -244,12 +221,11 @@ export const StorageService = {
                         rec.last_generated = new Date().toISOString();
                         changed = true;
 
-                        // Notification only for current month
                         if (matchesYearMonth(dateStr, today)) {
                             StorageService.addNotification({
                                 id: generateId(),
-                                title: 'Projeção Criada',
-                                message: `${rec.description} - R$ ${rec.amount} projetada para ${dateStr}.`,
+                                title: 'Pagamento Programado',
+                                message: `${rec.description} (R$ ${rec.amount}) para ${dateStr}.`,
                                 type: 'INFO',
                                 read: false,
                                 date: new Date().toISOString()
@@ -259,57 +235,39 @@ export const StorageService = {
                 }
             }
 
+            if (newTransactions.length > 0) {
+                console.log(`[Recurring] Generated ${newTransactions.length} items. Syncing...`);
+                await DatabaseService.saveTransactions(newTransactions);
+            }
+
             if (changed) {
-                if (newTransactions.length > 0) {
-                    await StorageService.saveTransactions(newTransactions);
-                }
                 for (const rec of recurring) {
-                    if (rec.last_generated && changed) {
-                        await DatabaseService.saveRecurringExpense(rec);
-                    }
+                    if (rec.last_generated) await DatabaseService.saveRecurringExpense(rec);
                 }
                 StorageService.clearCache();
             }
+        } catch (err) {
+            console.error('[Recurring] Error:', err);
         } finally {
             StorageService._isProcessingRecurring = false;
         }
     },
 
-    // NOTIFICATIONS
-    getNotifications: (): AppNotification[] => getStorage<AppNotification[]>(STORAGE_KEYS.NOTIFICATIONS, []),
-
-    addNotification: (notification: AppNotification) => {
-        const list = StorageService.getNotifications();
-        list.unshift(notification);
-        setStorage(STORAGE_KEYS.NOTIFICATIONS, list.slice(0, 50));
-    },
-
-    markNotificationRead: (id: string) => {
-        const list = StorageService.getNotifications();
-        const item = list.find(n => n.id === id);
-        if (item) {
-            item.read = true;
-            setStorage(STORAGE_KEYS.NOTIFICATIONS, list);
-        }
-    },
-
     // ACCOUNTS
-    getAccounts: async (): Promise<Account[]> => {
-        // Use internally coalesced methods
+    async getAccounts(): Promise<Account[]> {
         const [accounts, transactions, transfers] = await Promise.all([
             StorageService._getAccountsRaw(),
             StorageService.getTransactions(),
             StorageService.getTransfers()
         ]);
 
-        // Optimized O(M) balance calculation
         const balanceMap = new Map<string, number>();
         accounts.forEach(acc => balanceMap.set(acc.id, acc.initial_balance || 0));
 
         transactions.forEach(t => {
             if (t.account_id) {
                 const current = balanceMap.get(t.account_id) || 0;
-                if (t.type === 'RECEITA' && t.status === 'RECEBIDA') {
+                if (t.type === 'RECEITA' && (t.status === 'RECEBIDA' || t.status === 'CONFIRMADA')) {
                     balanceMap.set(t.account_id, current + t.amount);
                 } else if (t.type === 'DESPESA' && t.status === 'PAGA') {
                     balanceMap.set(t.account_id, current - t.amount);
@@ -318,12 +276,8 @@ export const StorageService = {
         });
 
         transfers.forEach(t => {
-            if (t.from_account_id) {
-                balanceMap.set(t.from_account_id, (balanceMap.get(t.from_account_id) || 0) - t.amount);
-            }
-            if (t.to_account_id) {
-                balanceMap.set(t.to_account_id, (balanceMap.get(t.to_account_id) || 0) + t.amount);
-            }
+            if (t.from_account_id) balanceMap.set(t.from_account_id, (balanceMap.get(t.from_account_id) || 0) - t.amount);
+            if (t.to_account_id) balanceMap.set(t.to_account_id, (balanceMap.get(t.to_account_id) || 0) + t.amount);
         });
 
         return accounts.map(acc => ({
@@ -332,10 +286,9 @@ export const StorageService = {
         }));
     },
 
-    _getAccountsRaw: async (): Promise<Account[]> => {
+    async _getAccountsRaw(): Promise<Account[]> {
         if (StorageService._cache.accounts) return StorageService._cache.accounts;
         if (StorageService._pending.accounts) return StorageService._pending.accounts;
-
         StorageService._pending.accounts = DatabaseService.getAccounts();
         try {
             const data = await StorageService._pending.accounts;
@@ -346,24 +299,23 @@ export const StorageService = {
         }
     },
 
-    saveAccount: async (account: Account) => {
+    async saveAccount(account: Account) {
         await DatabaseService.saveAccount(account);
         StorageService.clearCache();
     },
 
-    deleteAccount: async (id: string) => {
+    async deleteAccount(id: string) {
         await DatabaseService.deleteAccount(id);
         StorageService.clearCache();
     },
 
     // CARDS
-    getCards: async (): Promise<Card[]> => {
+    async getCards(): Promise<Card[]> {
         const [cards, transactions] = await Promise.all([
             StorageService._getCardsRaw(),
             StorageService.getTransactions()
         ]);
 
-        // Optimized O(M) limit calculation
         const cardUsageMap = new Map<string, number>();
         transactions.forEach(t => {
             if (t.card_id && t.type === 'DESPESA' && t.status !== 'PAGA') {
@@ -378,10 +330,9 @@ export const StorageService = {
         }));
     },
 
-    _getCardsRaw: async (): Promise<Card[]> => {
+    async _getCardsRaw(): Promise<Card[]> {
         if (StorageService._cache.cards) return StorageService._cache.cards;
         if (StorageService._pending.cards) return StorageService._pending.cards;
-
         StorageService._pending.cards = DatabaseService.getCards();
         try {
             const data = await StorageService._pending.cards;
@@ -416,11 +367,9 @@ export const StorageService = {
             const toUpdate: Transaction[] = [];
 
             trxs.forEach(t => {
-                if ((t.status === 'PREVISTA' || t.status === 'CONFIRMADA') && t.type === 'DESPESA') {
-                    if (t.date < todayStr) {
-                        t.status = 'ATRASADA';
-                        toUpdate.push(t);
-                    }
+                if ((t.status === 'PREVISTA' || t.status === 'CONFIRMADA') && t.type === 'DESPESA' && t.date < todayStr) {
+                    t.status = 'ATRASADA';
+                    toUpdate.push(t);
                 }
             });
 
@@ -433,71 +382,25 @@ export const StorageService = {
         }
     },
 
-    saveTransactions: async (transactions: Transaction[]) => {
+    async saveTransaction(transaction: Transaction) {
+        await DatabaseService.saveTransaction(transaction);
+        StorageService.clearCache();
+    },
+
+    async saveTransactions(transactions: Transaction[]) {
         await DatabaseService.saveTransactions(transactions);
         StorageService.clearCache();
     },
 
-    saveTransaction: async (transaction: Transaction) => {
-        const transactions = await StorageService.getTransactions();
-        const index = transactions.findIndex(t => t.id === transaction.id);
-
-        if (index === -1 && transaction.installments && transaction.installments.current === 1 && transaction.installments.total > 1) {
-            const total = transaction.installments.total;
-            const baseDate = new Date(transaction.date);
-
-            await DatabaseService.saveTransaction(transaction);
-
-            for (let i = 2; i <= total; i++) {
-                const nextDate = addMonths(baseDate, i - 1);
-                await DatabaseService.saveTransaction({
-                    ...transaction,
-                    id: generateId(),
-                    date: nextDate.toISOString().split('T')[0],
-                    installments: {
-                        current: i,
-                        total: total,
-                        original_transaction_id: transaction.id
-                    },
-                    status: 'PREVISTA'
-                });
-            }
-        } else {
-            await DatabaseService.saveTransaction(transaction);
-        }
-        StorageService.clearCache();
-    },
-
-    deleteTransaction: async (id: string) => {
+    async deleteTransaction(id: string) {
         await DatabaseService.deleteTransaction(id);
         StorageService.clearCache();
     },
 
-    // TRANSFERS
-    getTransfers: async (): Promise<Transfer[]> => {
-        if (StorageService._cache.transfers) return StorageService._cache.transfers;
-        if (StorageService._pending.transfers) return StorageService._pending.transfers;
-
-        StorageService._pending.transfers = DatabaseService.getTransfers();
-        try {
-            const data = await StorageService._pending.transfers;
-            StorageService._cache.transfers = data;
-            return data;
-        } finally {
-            StorageService._pending.transfers = null;
-        }
-    },
-
-    saveTransfer: async (transfer: Transfer) => {
-        await DatabaseService.saveTransfer(transfer);
-        StorageService.clearCache();
-    },
-
     // CATEGORIES
-    getCategories: async (): Promise<Category[]> => {
+    async getCategories(): Promise<Category[]> {
         if (StorageService._cache.categories) return StorageService._cache.categories;
         if (StorageService._pending.categories) return StorageService._pending.categories;
-
         StorageService._pending.categories = DatabaseService.getCategories();
         try {
             const stored = await StorageService._pending.categories;
@@ -509,147 +412,70 @@ export const StorageService = {
         }
     },
 
-    saveCategory: async (category: Category) => {
-        await DatabaseService.saveCategory(category);
-        StorageService.clearCache();
-    },
-
-    saveCategories: async (categories: Category[]) => {
+    async saveCategories(categories: Category[]) {
         await DatabaseService.saveCategories(categories);
         StorageService.clearCache();
     },
 
-    deleteCategory: async (id: string) => {
-        await DatabaseService.deleteCategory(id);
-        StorageService.clearCache();
-    },
-
-    async resetCategories(): Promise<void> {
-        localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
-        await this.initializeDefaultCategories(true);
-    },
-
-    async initializeDefaultCategories(force = false): Promise<void> {
+    async initializeDefaultCategories(force = false) {
         const existing = await this.getCategories();
-        // If we already have a significant number of categories and not forcing, skip
         if (!force && existing.length > 10) return;
 
         const allToSave: Category[] = [];
-
         for (const mainCat of INITIAL_CATEGORIES_DATA) {
             const parentId = generateId();
-            const main: Category = {
-                id: parentId,
-                name: mainCat.name,
-                type: 'DESPESA',
-                color: mainCat.color,
-                icon: 'Folder',
-                is_default: true
-            };
-            allToSave.push(main);
-
+            allToSave.push({ id: parentId, name: mainCat.name, type: 'DESPESA', color: mainCat.color, icon: 'Folder' });
             for (const subName of mainCat.sub) {
-                const sub: Category = {
-                    id: generateId(),
-                    name: subName,
-                    type: 'DESPESA',
-                    color: mainCat.color,
-                    icon: 'Tag',
-                    is_default: true,
-                    parent_id: parentId
-                };
-                allToSave.push(sub);
+                allToSave.push({ id: generateId(), name: subName, type: 'DESPESA', color: mainCat.color, icon: 'Tag', parent_id: parentId });
             }
         }
+        await this.saveCategories(allToSave);
+    },
 
-        if (allToSave.length > 0) {
-            await this.saveCategories(allToSave);
+    // TRANSFERS
+    async getTransfers(): Promise<Transfer[]> {
+        if (StorageService._cache.transfers) return StorageService._cache.transfers;
+        if (StorageService._pending.transfers) return StorageService._pending.transfers;
+        StorageService._pending.transfers = DatabaseService.getTransfers();
+        try {
+            const data = await StorageService._pending.transfers;
+            StorageService._cache.transfers = data;
+            return data;
+        } finally {
+            StorageService._pending.transfers = null;
         }
+    },
+
+    async saveTransfer(transfer: Transfer) {
+        await DatabaseService.saveTransfer(transfer);
+        StorageService.clearCache();
     },
 
     // GOALS
-    getGoals: async (): Promise<Goal[]> => {
-        return await DatabaseService.getGoals();
-    },
-    saveGoal: async (goal: Goal) => {
-        await DatabaseService.saveGoal(goal);
-    },
-    deleteGoal: async (id: string) => {
-        await DatabaseService.deleteGoal(id);
-    },
+    async getGoals(): Promise<Goal[]> { return await DatabaseService.getGoals(); },
+    async saveGoal(goal: Goal) { await DatabaseService.saveGoal(goal); },
+    async deleteGoal(id: string) { await DatabaseService.deleteGoal(id); },
 
     // BUDGETS
-    getBudgets: async (): Promise<Budget[]> => {
-        return await DatabaseService.getBudgets();
+    async getBudgets(): Promise<Budget[]> { return await DatabaseService.getBudgets(); },
+    async saveBudget(budget: Budget) { await DatabaseService.saveBudget(budget); },
+
+    // NOTIFICATIONS
+    getNotifications: (): AppNotification[] => getStorage<AppNotification[]>(STORAGE_KEYS.NOTIFICATIONS, []),
+    addNotification: (notification: AppNotification) => {
+        const list = StorageService.getNotifications();
+        list.unshift(notification);
+        setStorage(STORAGE_KEYS.NOTIFICATIONS, list.slice(0, 50));
     },
-    saveBudget: async (budget: Budget) => {
-        await DatabaseService.saveBudget(budget);
+    markNotificationRead: (id: string) => {
+        const list = StorageService.getNotifications();
+        const item = list.find(n => n.id === id);
+        if (item) {
+            item.read = true;
+            setStorage(STORAGE_KEYS.NOTIFICATIONS, list);
+        }
     },
-    // DASHBOARD
-    getDashboardData: async (month: number, year: number): Promise<DashboardData> => {
-        const transactions = await StorageService.getTransactions();
-        const accounts = await StorageService.getAccounts();
-        const cards = await StorageService.getCards();
 
-        let totalBalance = 0;
-        accounts.forEach(a => totalBalance += (a as any).current_balance || a.initial_balance);
-
-        const monthStart = new Date(year, month, 1);
-        const monthEnd = new Date(year, month + 1, 0);
-
-        const monthData = transactions.filter(t => {
-            const date = new Date(t.date + 'T00:00:00');
-            return date >= monthStart && date <= monthEnd;
-        });
-
-        const income = { total: 0, received: 0, confirmed: 0, predicted: 0 };
-        const expense = { total: 0, paid: 0, confirmed: 0, predicted: 0, overdue: 0 };
-
-        monthData.forEach(t => {
-            if (t.type === 'RECEITA') {
-                income.total += t.amount;
-                if (t.status === 'RECEBIDA') income.received += t.amount;
-                if (t.status === 'CONFIRMADA') income.confirmed += t.amount;
-                if (t.status === 'PREVISTA') income.predicted += t.amount;
-            } else {
-                expense.total += t.amount;
-                if (t.status === 'PAGA') expense.paid += t.amount;
-                if (t.status === 'CONFIRMADA') expense.confirmed += t.amount;
-                if (t.status === 'PREVISTA') expense.predicted += t.amount;
-                if (t.status === 'ATRASADA') expense.overdue += t.amount;
-            }
-        });
-
-        const cardInvoicesMap = new Map<string, number>();
-        monthData.forEach(t => {
-            if (t.type === 'DESPESA' && t.card_id) {
-                const current = cardInvoicesMap.get(t.card_id) || 0;
-                cardInvoicesMap.set(t.card_id, current + t.amount);
-            }
-        });
-
-        const cardInvoices = cards.map(c => {
-            return {
-                cardId: c.id,
-                cardName: c.name,
-                amount: cardInvoicesMap.get(c.id) || 0,
-                dueDate: `${c.due_day}/${month + 1}`,
-                status: 'OPEN' as any
-            };
-        }).filter(i => i.amount > 0);
-
-        return {
-            totalBalance,
-            monthIncome: income,
-            monthExpense: expense,
-            monthResult: income.received - expense.paid,
-            toPay: expense.total - expense.paid,
-            cardInvoices,
-            projection: {
-                nextMonthBalance: totalBalance + income.total - expense.total,
-                status: (totalBalance + income.total - expense.total) > 0 ? 'POSITIVE' : 'NEGATIVE'
-            },
-            alerts: StorageService.getNotifications().filter(n => !n.read)
-        };
-    }
+    // VERSION
+    getVersion: () => ({ version: APP_VERSION, date: DEPLOY_DATE })
 };
