@@ -165,7 +165,9 @@ export const DatabaseService = {
     async getTransactions(): Promise<Transaction[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
-            if (!error && data) {
+            if (error) {
+                console.error('Error fetching transactions from Supabase:', error.message || error);
+            } else if (data) {
                 return (data as any[]).map(t => ({
                     ...t,
                     amount: Number(t.amount || 0),
@@ -388,7 +390,12 @@ export const DatabaseService = {
 
                 const { error } = await supabase.from('categories').upsert(toUpsert);
                 if (error) {
-                    console.error('Error saving categories to Supabase:', error);
+                    console.error('Error saving categories to Supabase:', JSON.stringify(error));
+                    if (error.code === '42703' || error.message?.includes('parent_id')) {
+                        console.warn('[Supabase] Missing parent_id column. Trying without it...');
+                        const fallbackUpsert = toUpsert.map(({ parent_id, ...rest }) => rest);
+                        await supabase.from('categories').upsert(fallbackUpsert);
+                    }
                 } else {
                     return;
                 }
@@ -513,7 +520,9 @@ export const DatabaseService = {
     async getRecurringExpenses(): Promise<RecurringExpense[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('recurring_expenses').select('*');
-            if (!error && data) {
+            if (error) {
+                console.error('Error fetching recurring expenses from Supabase:', error.message || error);
+            } else if (data) {
                 return (data as any[]).map(rec => ({
                     ...rec,
                     amount: Number(rec.amount || 0),
@@ -561,10 +570,13 @@ export const DatabaseService = {
                     card_id: isValidUUID(expense.card_id) ? expense.card_id : null
                 });
                 if (error) {
-                    console.error('Error saving recurring expense to Supabase:', error);
-                    throw error;
+                    console.error('Error saving recurring expense to Supabase:', JSON.stringify(error));
+                    if (error.code === '42703' || error.message?.includes('card_id') || error.message?.includes('start_date')) {
+                        console.warn('[Supabase] Missing columns in recurring_expenses. Proceeding with LocalStorage.');
+                    }
+                } else {
+                    return;
                 }
-                return;
             }
         }
         const list = await this.getRecurringExpenses();
