@@ -320,31 +320,42 @@ export const DatabaseService = {
     },
 
     async saveCategory(category: Category): Promise<void> {
+        await this.saveCategories([category]);
+    },
+
+    async saveCategories(categories: Category[]): Promise<void> {
         if (isSupabaseConfigured()) {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { error } = await supabase.from('categories').upsert({
-                    id: category.id,
+                const toUpsert = categories.map(c => ({
+                    id: c.id,
                     user_id: user.id,
-                    name: category.name,
-                    type: category.type,
-                    icon: category.icon,
-                    color: category.color,
-                    is_default: category.is_default,
-                    parent_id: category.parent_id
-                });
+                    name: c.name,
+                    type: c.type,
+                    icon: c.icon,
+                    color: c.color,
+                    is_default: c.is_default,
+                    parent_id: c.parent_id
+                }));
+
+                const { error } = await supabase.from('categories').upsert(toUpsert);
                 if (error) {
-                    console.error('Error saving category to Supabase:', error);
+                    console.error('Error saving categories to Supabase:', error);
                 } else {
                     return;
                 }
             }
         }
-        const categories = await this.getCategories();
-        const index = categories.findIndex(c => c.id === category.id);
-        if (index >= 0) categories[index] = category;
-        else categories.push(category);
-        localStorage.setItem('exodo_categories', JSON.stringify(categories));
+        const existing = await this.getCategories();
+        const updated = [...existing];
+
+        categories.forEach(category => {
+            const index = updated.findIndex(c => c.id === category.id);
+            if (index >= 0) updated[index] = category;
+            else updated.push(category);
+        });
+
+        localStorage.setItem('exodo_categories', JSON.stringify(updated));
     },
 
     // FALLBACKS/OTHERS (Will implement as needed)

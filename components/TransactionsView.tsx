@@ -109,12 +109,19 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     }, []);
 
     const loadData = async () => {
-        const [trxs, accs, crds, cats] = await Promise.all([
+        const [trxs, accs, crds, catsRaw] = await Promise.all([
             StorageService.getTransactions(),
             StorageService.getAccounts(),
             StorageService.getCards(),
             StorageService.getCategories()
         ]);
+
+        let cats = catsRaw;
+        // If no categories yet (besides the very basic ones), initialize defaults automatically
+        if (cats.length <= 5) {
+            await StorageService.initializeDefaultCategories();
+            cats = await StorageService.getCategories();
+        }
 
         // Ensure "Fatura de Cartão" category exists
         const hasCardPay = cats.find(c => c.name === 'Fatura de Cartão');
@@ -373,15 +380,15 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         setFormData(prev => ({ ...prev, category_id: newCat.id }));
     };
 
-    const handleImportDefaults = async () => {
+    const handleResetCategories = async () => {
+        if (!confirm('Isso irá apagar suas categorias atuais e restaurar o padrão de fábrica. Continuar?')) return;
         setIsImporting(true);
         try {
-            await StorageService.initializeDefaultCategories();
+            await StorageService.resetCategories();
             await loadData();
-            alert('Categorias padrão importadas com sucesso!');
         } catch (error) {
             console.error(error);
-            alert('Erro ao importar categorias. Verifique se o banco de dados permite a coluna "parent_id" ou tente novamente.');
+            alert('Erro ao resetar categorias.');
         } finally {
             setIsImporting(false);
         }
@@ -800,16 +807,14 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
                                         <label className="block text-xs font-bold text-slate-500 uppercase">Categoria</label>
-                                        {categories.length <= 50 && (
-                                            <button
-                                                type="button"
-                                                onClick={handleImportDefaults}
-                                                disabled={isImporting}
-                                                className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider"
-                                            >
-                                                {isImporting ? 'Importando...' : 'Carregar Padrões'}
-                                            </button>
-                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={handleResetCategories}
+                                            disabled={isImporting}
+                                            className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-wider transition-colors"
+                                        >
+                                            {isImporting ? 'Atualizando...' : 'Resetar Padrões'}
+                                        </button>
                                     </div>
 
                                     <div className="relative">

@@ -302,10 +302,21 @@ export const StorageService = {
         await DatabaseService.saveCategory(category);
     },
 
-    async initializeDefaultCategories(): Promise<void> {
+    saveCategories: async (categories: Category[]) => {
+        await DatabaseService.saveCategories(categories);
+    },
+
+    async resetCategories(): Promise<void> {
+        localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
+        await this.initializeDefaultCategories(true);
+    },
+
+    async initializeDefaultCategories(force = false): Promise<void> {
         const existing = await this.getCategories();
-        // Skip if we already have a significant number of categories
-        if (existing.length > 50) return;
+        // If we already have a significant number of categories and not forcing, skip
+        if (!force && existing.length > 10) return;
+
+        const allToSave: Category[] = [];
 
         for (const mainCat of INITIAL_CATEGORIES_DATA) {
             const parentId = generateId();
@@ -317,7 +328,7 @@ export const StorageService = {
                 icon: 'Folder',
                 is_default: true
             };
-            await DatabaseService.saveCategory(main);
+            allToSave.push(main);
 
             for (const subName of mainCat.sub) {
                 const sub: Category = {
@@ -329,8 +340,12 @@ export const StorageService = {
                     is_default: true,
                     parent_id: parentId
                 };
-                await DatabaseService.saveCategory(sub);
+                allToSave.push(sub);
             }
+        }
+
+        if (allToSave.length > 0) {
+            await this.saveCategories(allToSave);
         }
     },
 
