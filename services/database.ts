@@ -20,12 +20,28 @@ export const DatabaseService = {
     async getAccounts(): Promise<Account[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('accounts').select('*');
+            console.log(`[Database] Accounts fetch: ${data?.length || 0} rows. Error:`, error);
             if (!error && data) {
-                return (data as any[]).map(acc => ({
+                const supabaseAccounts = (data as any[]).map(acc => ({
                     ...acc,
                     initial_balance: Number(acc.initial_balance || 0),
                     current_balance: Number(acc.balance || 0)
                 }));
+
+                // Se o Supabase estiver vazio, tenta recuperar do LocalStorage
+                if (supabaseAccounts.length === 0) {
+                    const stored = localStorage.getItem('exodo_accounts');
+                    if (stored) {
+                        try {
+                            const localAccounts = JSON.parse(stored);
+                            if (localAccounts.length > 0) {
+                                console.warn('[Database] Supabase empty, recovered accounts from LocalStorage');
+                                return localAccounts;
+                            }
+                        } catch (e) { }
+                    }
+                }
+                return supabaseAccounts;
             }
         }
         const stored = localStorage.getItem('exodo_accounts');
@@ -101,11 +117,22 @@ export const DatabaseService = {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('cards').select('*');
             if (!error && data) {
-                return (data as any[]).map(card => ({
+                const supabaseCards = (data as any[]).map(card => ({
                     ...card,
                     limit: Number(card.limit_amount || 0),
                     limit_used: Number(card.limit_used || 0)
                 }));
+
+                if (supabaseCards.length === 0) {
+                    const stored = localStorage.getItem('exodo_cards');
+                    if (stored) {
+                        try {
+                            const localCards = JSON.parse(stored);
+                            if (localCards.length > 0) return localCards;
+                        } catch (e) { }
+                    }
+                }
+                return supabaseCards;
             }
         }
         const stored = localStorage.getItem('exodo_cards');
@@ -165,10 +192,11 @@ export const DatabaseService = {
     async getTransactions(): Promise<Transaction[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
+            console.log(`[Database] Transactions fetch: ${data?.length || 0} rows. Error:`, error);
             if (error) {
                 console.error('Error fetching transactions from Supabase:', error.message || error);
             } else if (data) {
-                return (data as any[]).map(t => ({
+                const supabaseTransactions = (data as any[]).map(t => ({
                     ...t,
                     amount: Number(t.amount || 0),
                     account_id: t.account_id,
@@ -180,6 +208,21 @@ export const DatabaseService = {
                         total: t.installments_total
                     } : undefined
                 }));
+
+                // Fallback se estiver vazio
+                if (supabaseTransactions.length === 0) {
+                    const stored = localStorage.getItem('exodo_transactions');
+                    if (stored) {
+                        try {
+                            const localTrxs = JSON.parse(stored);
+                            if (localTrxs.length > 0) {
+                                console.warn('[Database] Supabase empty, recovered transactions from LocalStorage');
+                                return localTrxs;
+                            }
+                        } catch (e) { }
+                    }
+                }
+                return supabaseTransactions;
             }
         }
         const stored = localStorage.getItem('exodo_transactions');
@@ -358,6 +401,7 @@ export const DatabaseService = {
     async getCategories(): Promise<Category[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('categories').select('*');
+            console.log(`[Database] Categories fetch: ${data?.length || 0} rows. Error:`, error);
             if (!error && data) return ensureArray<Category>(data);
         }
         const stored = localStorage.getItem('exodo_categories');
