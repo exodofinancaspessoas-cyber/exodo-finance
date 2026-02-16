@@ -160,6 +160,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         setAccounts(accs);
         setCards(crds);
         setCategories(cats);
+        console.log(`[TransactionsView] Loaded ${trxs.length} transactions. Filter type: ${initialType}`);
     };
 
     // --- Advanced Filtering Logic ---

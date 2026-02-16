@@ -25,7 +25,15 @@ export default function App() {
     const loadedUser = StorageService.getUser();
     setUser(loadedUser);
     if (loadedUser) {
-      StorageService.processRecurringExpenses();
+      (async () => {
+        try {
+          console.log('[App] Starting recurring expenses processing...');
+          await StorageService.processRecurringExpenses();
+          console.log('[App] Recurring expenses processing complete.');
+        } catch (e) {
+          console.error('[App] Error processing recurring expenses:', e);
+        }
+      })();
     }
   }, []);
 

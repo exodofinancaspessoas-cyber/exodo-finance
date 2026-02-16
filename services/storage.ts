@@ -432,6 +432,11 @@ export const StorageService = {
         StorageService.clearCache();
     },
 
+    async deleteCategory(id: string) {
+        await DatabaseService.deleteCategory(id);
+        StorageService.clearCache();
+    },
+
     async resetCategories(): Promise<void> {
         localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
         await StorageService.initializeDefaultCategories(true);
