@@ -412,13 +412,12 @@ export const StorageService = {
             const trxs = await StorageService._pending.transactions;
             StorageService._cache.transactions = trxs;
 
-            const today = new Date();
+            const todayStr = toISODate(new Date());
             const toUpdate: Transaction[] = [];
 
             trxs.forEach(t => {
                 if ((t.status === 'PREVISTA' || t.status === 'CONFIRMADA') && t.type === 'DESPESA') {
-                    const dueDate = new Date(t.date);
-                    if (dueDate < startOfDay(today)) {
+                    if (t.date < todayStr) {
                         t.status = 'ATRASADA';
                         toUpdate.push(t);
                     }

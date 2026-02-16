@@ -31,6 +31,9 @@ export const isSameMonth = (d1: Date, d2: Date): boolean => {
 
 export const getMonthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
+export const APP_VERSION = '1.1.1'; // Increment this on every deploy
+const DEPLOY_DATE = '2026-02-16 13:15';
+
 export const toISODate = (date: Date): string => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -46,4 +49,30 @@ export const getMonthBounds = (offset = 0) => {
         start: toISODate(start),
         end: toISODate(end)
     };
+};
+
+export const parseSafeDate = (dateStr: string): { y: number, m: number, d: number } | null => {
+    if (!dateStr) return null;
+
+    // Handle YYYY-MM-DD (standard)
+    if (dateStr.includes('-')) {
+        const parts = dateStr.split('-').map(Number);
+        if (parts.length >= 3) return { y: parts[0], m: parts[1], d: parts[2] };
+    }
+
+    // Handle DD/MM/YYYY (legacy/locale)
+    if (dateStr.includes('/')) {
+        const parts = dateStr.split('/').map(Number);
+        if (parts.length >= 3) return { y: parts[2], m: parts[1], d: parts[0] };
+    }
+
+    // Fallback for full ISO strings or garbage
+    try {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+            return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() };
+        }
+    } catch { }
+
+    return null;
 };

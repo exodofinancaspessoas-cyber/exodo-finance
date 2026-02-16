@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense, RecurrenceFrequency } from '../types';
 import { StorageService } from '../services/storage';
-import { formatCurrency, formatDate, toISODate } from '../utils';
+import { formatCurrency, formatDate, toISODate, parseSafeDate } from '../utils';
 import ExportModal from './ExportModal';
 
 interface TransactionsViewProps {
@@ -225,13 +225,16 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-        const currentMonthTrxs = transactions.filter(t => {
+        const monthlyTransactions = transactions.filter(t => {
             if (!t.date) return false;
-            const [y, m] = t.date.split('-').map(Number);
-            return y === now.getFullYear() && (m - 1) === now.getMonth();
+            const dateParts = parseSafeDate(t.date);
+            if (!dateParts) return false;
+            const targetYear = now.getFullYear();
+            const targetMonth = now.getMonth();
+            return dateParts.y === targetYear && (dateParts.m - 1) === targetMonth;
         });
 
-        const pendingExpenses = currentMonthTrxs.filter(t =>
+        const pendingExpenses = monthlyTransactions.filter(t =>
             t.type === 'DESPESA' &&
             (t.status === 'PREVISTA' || t.status === 'ATRASADA' || t.status === 'CONFIRMADA')
         );

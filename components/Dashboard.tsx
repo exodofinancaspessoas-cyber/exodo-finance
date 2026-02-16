@@ -5,7 +5,7 @@ import {
   TrendingUp, Activity, Plus, FileText, ArrowRight, Loader2
 } from 'lucide-react';
 import { StorageService } from '../services/storage';
-import { formatCurrency, formatDate } from '../utils';
+import { formatCurrency, formatDate, toISODate, parseSafeDate } from '../utils';
 import { Account, Card, Transaction, Category } from '../types';
 import SupabaseSync from './SupabaseSync';
 
@@ -66,8 +66,9 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
 
     const monthlyTransactions = transactions.filter(t => {
       if (!t.date) return false;
-      const [y, m] = t.date.split('-').map(Number);
-      return y === targetYear && (m - 1) === targetMonth;
+      const dateParts = parseSafeDate(t.date);
+      if (!dateParts) return false;
+      return dateParts.y === targetYear && (dateParts.m - 1) === targetMonth;
     });
 
     const income = monthlyTransactions
@@ -95,8 +96,9 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
 
     const monthlyExpenses = transactions.filter(t => {
       if (!t.date || t.type !== 'DESPESA') return false;
-      const [y, m] = t.date.split('-').map(Number);
-      return y === targetYear && (m - 1) === targetMonth;
+      const dateParts = parseSafeDate(t.date);
+      if (!dateParts) return false;
+      return dateParts.y === targetYear && (dateParts.m - 1) === targetMonth;
     });
 
     const categorySpending: Record<string, number> = {};
