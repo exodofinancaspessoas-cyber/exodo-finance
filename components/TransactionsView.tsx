@@ -103,6 +103,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
     const [categorySearch, setCategorySearch] = useState('');
     const [isImporting, setIsImporting] = useState(false);
+    const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
 
     useEffect(() => {
         loadData();
@@ -247,6 +248,8 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
     // --- Form Logic ---
     const handleOpenModal = (trx?: Transaction, typeOverride?: TransactionType) => {
+        setSelectedParentId(null);
+        setCategorySearch('');
         if (trx) {
             setEditingTransaction(trx);
             setFormData({
@@ -424,22 +427,35 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     };
 
     // Dynamic Options
-    const availableCategories = useMemo(() => {
+    const { parentCategories, subCategories, filteredDirect } = useMemo(() => {
         const filtered = categories.filter(c => {
-            const matchesType = c.type === formData.type || c.type === 'DESPESA'; // Most defaults are DESPESA
-            const matchesSearch = c.name.toLowerCase().includes(categorySearch.toLowerCase());
-            return matchesType && matchesSearch;
+            const matchesType = c.type === formData.type || c.type === 'RECEITA'; // Always show income cats if type is income
+            return matchesType;
         });
 
-        // Grouping logic
         const parents = filtered.filter(c => !c.parent_id);
         const children = filtered.filter(c => c.parent_id);
 
-        return parents.map(p => ({
-            ...p,
-            subcategories: children.filter(c => c.parent_id === p.id)
-        })).filter(p => p.subcategories.length > 0 || p.name.toLowerCase().includes(categorySearch.toLowerCase()));
+        if (categorySearch) {
+            const searchLower = categorySearch.toLowerCase();
+            return {
+                parentCategories: [],
+                subCategories: [],
+                filteredDirect: filtered.filter(c => c.name.toLowerCase().includes(searchLower))
+            };
+        }
+
+        return {
+            parentCategories: parents,
+            subCategories: children,
+            filteredDirect: []
+        };
     }, [categories, formData.type, categorySearch]);
+
+    const activeSubcategories = useMemo(() => {
+        if (!selectedParentId) return [];
+        return subCategories.filter(c => c.parent_id === selectedParentId);
+    }, [selectedParentId, subCategories]);
 
     const showPaymentMethod = formData.type === 'DESPESA';
     const showAccount = (formData.status === 'PAGA' || formData.status === 'RECEBIDA');
@@ -752,14 +768,20 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                 <div className="flex p-1 bg-slate-100 rounded-xl">
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, type: 'RECEITA' })}
+                                        onClick={() => {
+                                            setFormData({ ...formData, type: 'RECEITA' });
+                                            setSelectedParentId(null);
+                                        }}
                                         className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${formData.type === 'RECEITA' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-400'}`}
                                     >
                                         Receita
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, type: 'DESPESA' })}
+                                        onClick={() => {
+                                            setFormData({ ...formData, type: 'DESPESA' });
+                                            setSelectedParentId(null);
+                                        }}
                                         className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${formData.type === 'DESPESA' ? 'bg-white text-red-700 shadow-sm' : 'text-slate-400'}`}
                                     >
                                         Despesa
@@ -829,33 +851,31 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                     </div>
 
                                     <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1 border border-slate-100 rounded-xl bg-slate-50/30">
-                                        {availableCategories.length === 0 && (
-                                            <div className="w-full text-center py-4 text-xs text-slate-400 italic">
-                                                Nenhuma categoria encontrada
-                                            </div>
-                                        )}
-
-                                        {availableCategories.map(p => (
-                                            <div key={p.id} className="w-full space-y-2 mb-2 last:mb-0">
-                                                {!categorySearch && (
-                                                    <div className="flex items-center space-x-2 px-1">
-                                                        <div className="w-1.5 h-3 rounded-full" style={{ backgroundColor: p.color }} />
-                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{p.name}</span>
-                                                    </div>
-                                                )}
-                                                <div className="flex flex-wrap gap-2">
-                                                    {/* If it has no subs or we are searching, show the parent itself as a button if it's not JUST a folder */}
-                                                    {(p.subcategories.length === 0 || categorySearch) && (
-                                                        <button
-                                                            key={p.id}
-                                                            type="button"
-                                                            onClick={() => setFormData({ ...formData, category_id: p.id })}
-                                                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${formData.category_id === p.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
-                                                        >
-                                                            {p.name}
-                                                        </button>
-                                                    )}
-                                                    {p.subcategories.map(c => (
+                                        {categorySearch ? (
+                                            // Search Results
+                                            filteredDirect.map(c => (
+                                                <button
+                                                    key={c.id}
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, category_id: c.id })}
+                                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${formData.category_id === c.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                                                >
+                                                    {c.name}
+                                                </button>
+                                            ))
+                                        ) : selectedParentId ? (
+                                            // Subcategories View
+                                            <div className="w-full space-y-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedParentId(null)}
+                                                    className="flex items-center text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest pl-1"
+                                                >
+                                                    <ChevronDown size={14} className="rotate-90 mr-1" />
+                                                    Voltar para Categorias
+                                                </button>
+                                                <div className="flex flex-wrap gap-2 pb-2">
+                                                    {activeSubcategories.map(c => (
                                                         <button
                                                             key={c.id}
                                                             type="button"
@@ -865,18 +885,59 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                                             {c.name}
                                                         </button>
                                                     ))}
+                                                    {/* Option to select the parent itself if it's not just a folder */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, category_id: selectedParentId })}
+                                                        className={`px-3 py-1.5 rounded-full text-xs font-medium border border-dashed transition-all ${formData.category_id === selectedParentId ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'}`}
+                                                    >
+                                                        Geral
+                                                    </button>
                                                 </div>
                                             </div>
-                                        ))}
+                                        ) : (
+                                            // Main Categories View
+                                            <div className="grid grid-cols-2 gap-2 w-full">
+                                                {parentCategories.map(p => {
+                                                    const hasSubs = subCategories.some(s => s.parent_id === p.id);
+                                                    return (
+                                                        <button
+                                                            key={p.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (hasSubs) {
+                                                                    setSelectedParentId(p.id);
+                                                                } else {
+                                                                    setFormData({ ...formData, category_id: p.id });
+                                                                }
+                                                            }}
+                                                            className={`group flex items-center space-x-2 px-3 py-2 border rounded-xl hover:shadow-sm transition-all text-left ${formData.category_id === p.id ? 'bg-slate-800 border-slate-800' : 'bg-white border-slate-200 hover:border-indigo-300'}`}
+                                                        >
+                                                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
+                                                            <span className={`text-xs font-bold truncate ${formData.category_id === p.id ? 'text-white' : 'text-slate-700'}`}>{p.name}</span>
+                                                            {hasSubs && <ChevronDown size={12} className={`-rotate-90 ml-auto flex-shrink-0 ${formData.category_id === p.id ? 'text-white/50' : 'text-slate-300 group-hover:text-indigo-400'}`} />}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
 
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsCategoryModalOpen(true)}
-                                            className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 transition-colors flex items-center space-x-1"
-                                        >
-                                            <Plus size={12} />
-                                            <span>Nova Categoria</span>
-                                        </button>
+                                        {filteredDirect.length === 0 && categorySearch && (
+                                            <div className="w-full text-center py-4 text-xs text-slate-400 italic">
+                                                Nenhuma categoria encontrada
+                                            </div>
+                                        )}
+
+                                        {!categorySearch && !selectedParentId && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsCategoryModalOpen(true)}
+                                                className="w-full mt-2 px-3 py-2.5 rounded-xl text-xs font-bold border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 hover:bg-white transition-colors flex items-center justify-center space-x-2"
+                                            >
+                                                <Plus size={14} />
+                                                <span>Nova Categoria Personalizada</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
