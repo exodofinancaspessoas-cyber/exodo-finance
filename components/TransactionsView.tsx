@@ -36,18 +36,19 @@ const getMonthBounds = (offset = 0) => {
     };
 };
 
-const monthBounds = getMonthBounds();
-
-const initialFilters: FilterState = {
-    search: '',
-    type: 'ALL',
-    status: 'ALL',
-    category: 'ALL',
-    account: 'ALL',
-    startDate: monthBounds.start,
-    endDate: monthBounds.end,
-    minAmount: '',
-    maxAmount: ''
+const getInitialFilters = (type: TransactionType | 'ALL' = 'ALL'): FilterState => {
+    const bounds = getMonthBounds();
+    return {
+        search: '',
+        type,
+        status: 'ALL',
+        category: 'ALL',
+        account: 'ALL',
+        startDate: bounds.start,
+        endDate: bounds.end,
+        minAmount: '',
+        maxAmount: ''
+    };
 };
 
 export default function TransactionsView({ initialType = 'ALL' }: TransactionsViewProps) {
@@ -61,10 +62,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false); // New state for export
-    const [filters, setFilters] = useState<FilterState>(() => ({
-        ...initialFilters,
-        type: initialType
-    }));
+    const [filters, setFilters] = useState<FilterState>(() => getInitialFilters(initialType));
     const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
 
     // Form State
@@ -233,7 +231,10 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             return y === now.getFullYear() && (m - 1) === now.getMonth();
         });
 
-        const pendingExpenses = currentMonthTrxs.filter(t => t.type === 'DESPESA' && (t.status === 'PREVISTA' || t.status === 'ATRASADA'));
+        const pendingExpenses = currentMonthTrxs.filter(t =>
+            t.type === 'DESPESA' &&
+            (t.status === 'PREVISTA' || t.status === 'ATRASADA' || t.status === 'CONFIRMADA')
+        );
         const overdueCount = transactions.filter(t => t.status === 'ATRASADA').length;
 
         return {
@@ -643,7 +644,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                             </button>
                             <div className="ml-auto flex gap-2">
                                 <button
-                                    onClick={() => setFilters(initialFilters)}
+                                    onClick={() => setFilters(getInitialFilters(initialType))}
                                     className="px-4 py-2 text-sm text-slate-500 hover:bg-slate-50 rounded-lg"
                                 >
                                     Limpar Filtros
@@ -1361,171 +1362,176 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                             </div>
                         </div>
                     </div>
-                )}
+                )
+            }
 
             {/* CATEGORY MANAGER MODAL */}
-            {isCategoryManagerOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] border border-slate-200">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <div>
-                                <h3 className="font-bold text-xl text-slate-800">Configuração de Categorias</h3>
-                                <p className="text-xs text-slate-500 mt-1">Personalize suas categorias e subcategorias</p>
-                            </div>
-                            <button onClick={() => setIsCategoryManagerOpen(false)} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">&times;</button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            {/* Controls */}
-                            <div className="flex justify-between items-center gap-4">
-                                <button
-                                    onClick={() => {
-                                        setCategoryFormData({ name: '', color: '#6366f1', icon: 'Folder' });
-                                        setIsCategoryModalOpen(true);
-                                    }}
-                                    className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/10"
-                                >
-                                    <Plus size={16} /> Nova Categoria Principal
-                                </button>
-                                <button
-                                    onClick={handleResetCategories}
-                                    className="px-4 py-3 border border-slate-200 text-slate-500 rounded-xl font-bold text-sm hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center gap-2"
-                                >
-                                    <Trash size={16} /> Restaurar Padrões
-                                </button>
+            {
+                isCategoryManagerOpen && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] border border-slate-200">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <div>
+                                    <h3 className="font-bold text-xl text-slate-800">Configuração de Categorias</h3>
+                                    <p className="text-xs text-slate-500 mt-1">Personalize suas categorias e subcategorias</p>
+                                </div>
+                                <button onClick={() => setIsCategoryManagerOpen(false)} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">&times;</button>
                             </div>
 
-                            {/* Category List */}
-                            <div className="space-y-4">
-                                {parentCategories.map(parent => {
-                                    const subs = subCategories.filter(s => s.parent_id === parent.id);
-                                    return (
-                                        <div key={parent.id} className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/30">
-                                            <div className="p-4 bg-white flex items-center justify-between border-b border-slate-50">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: parent.color }} />
-                                                    <span className="font-bold text-slate-700">{parent.name}</span>
-                                                    <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                                                        {subs.length} subcategorias
-                                                    </span>
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                {/* Controls */}
+                                <div className="flex justify-between items-center gap-4">
+                                    <button
+                                        onClick={() => {
+                                            setCategoryFormData({ name: '', color: '#6366f1', icon: 'Folder' });
+                                            setIsCategoryModalOpen(true);
+                                        }}
+                                        className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/10"
+                                    >
+                                        <Plus size={16} /> Nova Categoria Principal
+                                    </button>
+                                    <button
+                                        onClick={handleResetCategories}
+                                        className="px-4 py-3 border border-slate-200 text-slate-500 rounded-xl font-bold text-sm hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center gap-2"
+                                    >
+                                        <Trash size={16} /> Restaurar Padrões
+                                    </button>
+                                </div>
+
+                                {/* Category List */}
+                                <div className="space-y-4">
+                                    {parentCategories.map(parent => {
+                                        const subs = subCategories.filter(s => s.parent_id === parent.id);
+                                        return (
+                                            <div key={parent.id} className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/30">
+                                                <div className="p-4 bg-white flex items-center justify-between border-b border-slate-50">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: parent.color }} />
+                                                        <span className="font-bold text-slate-700">{parent.name}</span>
+                                                        <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                                            {subs.length} subcategorias
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                const newName = prompt('Novo nome para a categoria:', parent.name);
+                                                                if (newName) StorageService.saveCategory({ ...parent, name: newName }).then(loadData);
+                                                            }}
+                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                        >
+                                                            <Edit size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteCategory(parent.id)}
+                                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-1">
+
+                                                <div className="p-4 flex flex-wrap gap-2">
+                                                    {subs.map(sub => (
+                                                        <div key={sub.id} className="group relative">
+                                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:border-indigo-300 transition-all">
+                                                                {sub.name}
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteCategory(sub.id);
+                                                                    }}
+                                                                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 transition-all"
+                                                                >
+                                                                    <X size={12} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                     <button
                                                         onClick={() => {
-                                                            const newName = prompt('Novo nome para a categoria:', parent.name);
-                                                            if (newName) StorageService.saveCategory({ ...parent, name: newName }).then(loadData);
+                                                            const name = prompt('Nome da subcategoria:');
+                                                            if (name) {
+                                                                StorageService.saveCategory({
+                                                                    id: StorageService.generateId(),
+                                                                    name,
+                                                                    parent_id: parent.id,
+                                                                    type: 'DESPESA',
+                                                                    color: parent.color,
+                                                                    icon: 'Tag',
+                                                                    is_default: false
+                                                                }).then(loadData);
+                                                            }
                                                         }}
-                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                        className="px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs font-bold text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center gap-1"
                                                     >
-                                                        <Edit size={16} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteCategory(parent.id)}
-                                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    >
-                                                        <Trash2 size={16} />
+                                                        <Plus size={12} /> Adicionar
                                                     </button>
                                                 </div>
                                             </div>
-
-                                            <div className="p-4 flex flex-wrap gap-2">
-                                                {subs.map(sub => (
-                                                    <div key={sub.id} className="group relative">
-                                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:border-indigo-300 transition-all">
-                                                            {sub.name}
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleDeleteCategory(sub.id);
-                                                                }}
-                                                                className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 transition-all"
-                                                            >
-                                                                <X size={12} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                <button
-                                                    onClick={() => {
-                                                        const name = prompt('Nome da subcategoria:');
-                                                        if (name) {
-                                                            StorageService.saveCategory({
-                                                                id: StorageService.generateId(),
-                                                                name,
-                                                                parent_id: parent.id,
-                                                                type: 'DESPESA',
-                                                                color: parent.color,
-                                                                icon: 'Tag',
-                                                                is_default: false
-                                                            }).then(loadData);
-                                                        }
-                                                    }}
-                                                    className="px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs font-bold text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center gap-1"
-                                                >
-                                                    <Plus size={12} /> Adicionar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <div className="p-6 bg-slate-50 border-t border-slate-100">
-                            <button onClick={() => setIsCategoryManagerOpen(false)} className="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all">
-                                Fechar Configurações
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* NEW CATEGORY MODAL */}
-            {isCategoryModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-slate-200">
-                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h3 className="font-bold text-slate-800">Nova Categoria</h3>
-                            <button onClick={() => setIsCategoryModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 text-2xl leading-none">&times;</button>
-                        </div>
-
-                        <form onSubmit={handleSaveCategory} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome da Categoria</label>
-                                <input
-                                    type="text"
-                                    autoFocus
-                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
-                                    value={categoryFormData.name}
-                                    onChange={e => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
-                                    required
-                                    placeholder="Ex: Assinaturas, Mercado..."
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Cor</label>
-                                <div className="grid grid-cols-6 gap-2">
-                                    {['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#64748b', '#000000'].map(color => (
-                                        <button
-                                            key={color}
-                                            type="button"
-                                            onClick={() => setCategoryFormData({ ...categoryFormData, color })}
-                                            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${categoryFormData.color === color ? 'border-slate-800 ring-2 ring-slate-200' : 'border-transparent'}`}
-                                            style={{ backgroundColor: color }}
-                                        />
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4">
-                                <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="flex-1 py-2.5 text-sm text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors">Cancelar</button>
-                                <button type="submit" className="flex-[2] py-2.5 text-sm bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20 transition-transform active:scale-95">Criar Categoria</button>
+                            <div className="p-6 bg-slate-50 border-t border-slate-100">
+                                <button onClick={() => setIsCategoryManagerOpen(false)} className="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all">
+                                    Fechar Configurações
+                                </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* NEW CATEGORY MODAL */}
+            {
+                isCategoryModalOpen && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 animate-fade-in backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-slate-200">
+                            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="font-bold text-slate-800">Nova Categoria</h3>
+                                <button onClick={() => setIsCategoryModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 text-2xl leading-none">&times;</button>
+                            </div>
+
+                            <form onSubmit={handleSaveCategory} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome da Categoria</label>
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                                        value={categoryFormData.name}
+                                        onChange={e => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                                        required
+                                        placeholder="Ex: Assinaturas, Mercado..."
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Cor</label>
+                                    <div className="grid grid-cols-6 gap-2">
+                                        {['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#64748b', '#000000'].map(color => (
+                                            <button
+                                                key={color}
+                                                type="button"
+                                                onClick={() => setCategoryFormData({ ...categoryFormData, color })}
+                                                className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${categoryFormData.color === color ? 'border-slate-800 ring-2 ring-slate-200' : 'border-transparent'}`}
+                                                style={{ backgroundColor: color }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="flex-1 py-2.5 text-sm text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors">Cancelar</button>
+                                    <button type="submit" className="flex-[2] py-2.5 text-sm bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20 transition-transform active:scale-95">Criar Categoria</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
 
             <div className="fixed bottom-6 right-6 z-40">
                 <button
@@ -1535,6 +1541,6 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                     <Plus size={24} />
                 </button>
             </div>
-        </div>
+        </div >
     );
 }

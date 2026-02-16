@@ -216,7 +216,8 @@ export const StorageService = {
 
                     // Strict check: verify if a transaction for this rule exists on this date (or month for monthly)
                     const exists = transactions.some(t => {
-                        if (t.recurrence_id !== rec.id || t.status === 'EXCLUIDA') return false;
+                        if (t.recurrence_id !== rec.id || t.status === 'EXCLUIDA' || !t.date) return false;
+
                         if (rec.frequency === 'MENSAL') {
                             const [ty, tm] = t.date.split('-').map(Number);
                             return ty === targetDate.getFullYear() && (tm - 1) === targetDate.getMonth();
