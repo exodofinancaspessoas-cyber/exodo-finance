@@ -127,7 +127,11 @@ export const StorageService = {
                     );
 
                     if (!exists) {
-                        const targetDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), rec.day_of_month);
+                        // Safe date generation: if day_of_month is e.g. 31, it will fall back to 30 or 28/29
+                        const targetDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+                        const lastDayOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0).getDate();
+                        const day = Math.min(rec.day_of_month, lastDayOfMonth);
+                        targetDate.setDate(day);
 
                         const newTrx: Transaction = {
                             id: generateId(),
@@ -143,7 +147,7 @@ export const StorageService = {
                             created_at: new Date().toISOString()
                         };
                         newTransactions.push(newTrx);
-                        transactions.push(newTrx); // Add to local list to prevent duplicates in next month iterations
+                        transactions.push(newTrx); // Update local list to prevent duplicates in next month iterations
                         rec.last_generated = new Date().toISOString();
                         changed = true;
 

@@ -189,6 +189,7 @@ export const DatabaseService = {
                     payment_method: transaction.payment_method,
                     installments_current: transaction.installments?.current,
                     installments_total: transaction.installments?.total,
+                    recurrence_id: transaction.recurrence_id,
                     observation: transaction.observation,
                     created_at: transaction.created_at
                 });
@@ -226,6 +227,7 @@ export const DatabaseService = {
                     payment_method: t.payment_method,
                     installments_current: t.installments?.current,
                     installments_total: t.installments?.total,
+                    recurrence_id: t.recurrence_id,
                     observation: t.observation,
                     created_at: t.created_at
                 }));
