@@ -4,7 +4,7 @@ import {
     Repeat, Plus, Edit2, Trash2, CheckCircle, AlertCircle,
     Calendar, RotateCw, DollarSign
 } from 'lucide-react';
-import { RecurringExpense, Category, Account, RecurrenceFrequency } from '../types';
+import { RecurringExpense, Category, Account, Card, RecurrenceFrequency } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency } from '../utils';
 
@@ -12,6 +12,7 @@ export default function RecurringExpensesView() {
     const [expenses, setExpenses] = useState<RecurringExpense[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [cards, setCards] = useState<Card[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -27,6 +28,7 @@ export default function RecurringExpensesView() {
         active: true,
         auto_create: true,
         account_id: '',
+        card_id: '',
         duration_count: undefined
     });
 
@@ -39,14 +41,16 @@ export default function RecurringExpensesView() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [exps, cats, accs] = await Promise.all([
+            const [exps, cats, accs, crds] = await Promise.all([
                 StorageService.getRecurringExpenses(),
                 StorageService.getCategories(),
-                StorageService.getAccounts()
+                StorageService.getAccounts(),
+                StorageService.getCards()
             ]);
             setExpenses(exps);
             setCategories(cats);
             setAccounts(accs);
+            setCards(crds || []);
         } catch (error) {
             console.error("Erro ao carregar recorrências:", error);
         } finally {
@@ -89,6 +93,7 @@ export default function RecurringExpensesView() {
                 active: formData.active !== undefined ? formData.active : true,
                 auto_create: formData.auto_create !== undefined ? formData.auto_create : true,
                 account_id: formData.account_id,
+                card_id: formData.card_id,
                 duration_count: formData.duration_count,
                 // Preserve existing fields if editing
                 last_generated: editingId ? expenses.find(e => e.id === editingId)?.last_generated : undefined,
@@ -299,12 +304,22 @@ export default function RecurringExpensesView() {
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Conta para Debitar</label>
                                     <select
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
+                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none mb-3"
                                         value={formData.account_id}
-                                        onChange={e => setFormData({ ...formData, account_id: e.target.value })}
+                                        onChange={e => setFormData({ ...formData, account_id: e.target.value, card_id: '' })}
                                     >
-                                        <option value="">Decidir na hora</option>
+                                        <option value="">Decidir na hora (ou via cartão)</option>
                                         {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                    </select>
+
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Ou no Cartão de Crédito</label>
+                                    <select
+                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
+                                        value={formData.card_id}
+                                        onChange={e => setFormData({ ...formData, card_id: e.target.value, account_id: '' })}
+                                    >
+                                        <option value="">Não usar cartão</option>
+                                        {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
                                 </div>
                             </div>

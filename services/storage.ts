@@ -120,6 +120,11 @@ export const StorageService = {
         };
     },
 
+    generateId: () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+        return Math.random().toString(36).substring(2) + Date.now().toString(36);
+    },
+
     // USER
     getUser: (): User | null => getStorage<User | null>(STORAGE_KEYS.USER, null),
     setUser: (user: User) => setStorage(STORAGE_KEYS.USER, user),
@@ -165,6 +170,8 @@ export const StorageService = {
             const today = new Date();
             const newTransactions: Transaction[] = [];
             let changed = false;
+
+            console.log(`[Recurring] Found ${recurring.length} recurring expenses. Transactions in memory: ${transactions.length}`);
 
             const defaultHorizon = 12;
 
