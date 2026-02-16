@@ -5,7 +5,7 @@ import {
     Download, Trash, Copy, CheckSquare, Square, Calendar, Check, CheckCircle,
     TrendingDown, AlertTriangle, Clock, Settings, Settings2
 } from 'lucide-react';
-import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category } from '../types';
+import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency, formatDate } from '../utils';
 import ExportModal from './ExportModal';
@@ -112,6 +112,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     }, []);
 
     const loadData = async () => {
+        await StorageService.processRecurringExpenses();
         const [trxs, accs, crds, catsRaw] = await Promise.all([
             StorageService.getTransactions(),
             StorageService.getAccounts(),
@@ -335,6 +336,9 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
         // Handle Recurring
         if (formData.is_recurring && !editingTransaction) {
+            const recurringId = StorageService.generateId();
+            newTrx.recurrence_id = recurringId;
+
             let endDate = undefined;
             if (formData.recurring_duration && Number(formData.recurring_duration) > 0) {
                 const duration = Number(formData.recurring_duration);
@@ -343,8 +347,8 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                 endDate = end.toISOString().split('T')[0];
             }
 
-            const recurringExpense = {
-                id: StorageService.generateId(),
+            const recurringExpense: RecurringExpense = {
+                id: recurringId,
                 description: formData.description,
                 amount: finalAmount,
                 category_id: formData.category_id,
@@ -354,14 +358,22 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                 active: true,
                 auto_create: true,
                 account_id: formData.account_id || undefined,
-                last_generated: new Date().toISOString(), // Marked as generated for this month
+                payment_method: formData.payment_method,
+                last_generated: new Date().toISOString(),
                 end_date: endDate
             };
+
+            // SAVE TRANSACTION FIRST to avoid duplication in processRecurringExpenses
+            await StorageService.saveTransaction(newTrx);
+            // THEN SAVE RECURRING RULE
             await StorageService.saveRecurringExpense(recurringExpense);
-            newTrx.recurrence_id = recurringExpense.id;
+        } else {
+            await StorageService.saveTransaction(newTrx);
         }
 
-        await StorageService.saveTransaction(newTrx);
+        // Process all recurring rules (will create future ones)
+        await StorageService.processRecurringExpenses();
+
         setIsModalOpen(false);
         await loadData();
     };
