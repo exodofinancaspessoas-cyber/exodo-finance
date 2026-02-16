@@ -58,7 +58,13 @@ const getDefaultCategories = (): Category[] => [
     { id: 'cat_card', name: 'Pagamento de Cartão', type: 'DESPESA', icon: 'CreditCard', color: '#64748b', is_default: true },
 ];
 
-const isSameMonth = (d1: Date, d2: Date) => d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear();
+// Helper to safely compare YYYY-MM-DD strings with Date objects for Month/Year
+const matchesYearMonth = (isoDate: string, target: Date) => {
+    // isoDate is YYYY-MM-DD
+    const [y, m] = isoDate.split('-').map(Number);
+    return y === target.getFullYear() && (m - 1) === target.getMonth();
+};
+
 const addMonths = (date: Date, months: number) => {
     const d = new Date(date);
     d.setMonth(d.getMonth() + months);
@@ -70,6 +76,8 @@ const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0);
 
 export const StorageService = {
     generateId,
+    _isProcessingRecurring: false,
+
 
     // USER (Keep sync as it is tiny)
     getUser: (): User | null => getStorage<User | null>(STORAGE_KEYS.USER, null),
@@ -90,75 +98,82 @@ export const StorageService = {
     },
 
     processRecurringExpenses: async () => {
-        const recurring = await DatabaseService.getRecurringExpenses();
-        const transactions = await DatabaseService.getTransactions();
-        const today = new Date();
-        const newTransactions: Transaction[] = [];
-        let changed = false;
+        if (StorageService._isProcessingRecurring) return;
+        StorageService._isProcessingRecurring = true;
 
-        const monthsToGenerate = 12; // Horizon of 12 months
+        try {
+            const recurring = await DatabaseService.getRecurringExpenses();
+            const transactions = await DatabaseService.getTransactions();
+            const today = new Date();
+            const newTransactions: Transaction[] = [];
+            let changed = false;
 
-        for (const rec of recurring) {
-            if (!rec.active || !rec.auto_create) continue;
+            const monthsToGenerate = 12; // Horizon of 12 months
 
-            for (let i = 0; i <= monthsToGenerate; i++) {
-                const targetMonth = addMonths(today, i);
+            for (const rec of recurring) {
+                if (!rec.active || !rec.auto_create) continue;
 
-                // Check if recurrence has ended
-                if (rec.end_date && startOfDay(new Date(rec.end_date)) < startOfDay(targetMonth)) {
-                    break;
-                }
+                for (let i = 0; i <= monthsToGenerate; i++) {
+                    const targetMonth = addMonths(today, i);
 
-                const exists = transactions.some(t =>
-                    t.recurrence_id === rec.id &&
-                    isSameMonth(new Date(t.date), targetMonth)
-                );
+                    // Check if recurrence has ended
+                    if (rec.end_date && startOfDay(new Date(rec.end_date)) < startOfDay(targetMonth)) {
+                        break;
+                    }
 
-                if (!exists) {
-                    const targetDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), rec.day_of_month);
+                    const exists = transactions.some(t =>
+                        t.recurrence_id === rec.id &&
+                        matchesYearMonth(t.date, targetMonth)
+                    );
 
-                    const newTrx: Transaction = {
-                        id: generateId(),
-                        description: rec.description,
-                        amount: rec.amount,
-                        type: 'DESPESA',
-                        category_id: rec.category_id,
-                        date: targetDate.toISOString().split('T')[0],
-                        status: rec.type === 'FIXO' ? 'CONFIRMADA' : 'PREVISTA',
-                        account_id: rec.account_id,
-                        payment_method: rec.payment_method,
-                        recurrence_id: rec.id,
-                        created_at: new Date().toISOString()
-                    };
-                    newTransactions.push(newTrx);
-                    transactions.push(newTrx); // Add to local list to prevent duplicates in next month iterations
-                    rec.last_generated = new Date().toISOString();
-                    changed = true;
+                    if (!exists) {
+                        const targetDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), rec.day_of_month);
 
-                    if (i === 0) {
-                        StorageService.addNotification({
+                        const newTrx: Transaction = {
                             id: generateId(),
-                            title: 'Despesa Recorrente Criada',
-                            message: `${rec.description} - R$ ${rec.amount} adicionada para este mês.`,
-                            type: 'INFO',
-                            read: false,
-                            date: new Date().toISOString()
-                        });
+                            description: rec.description,
+                            amount: rec.amount,
+                            type: 'DESPESA',
+                            category_id: rec.category_id,
+                            date: targetDate.toISOString().split('T')[0],
+                            status: rec.type === 'FIXO' ? 'CONFIRMADA' : 'PREVISTA',
+                            account_id: rec.account_id,
+                            payment_method: rec.payment_method,
+                            recurrence_id: rec.id,
+                            created_at: new Date().toISOString()
+                        };
+                        newTransactions.push(newTrx);
+                        transactions.push(newTrx); // Add to local list to prevent duplicates in next month iterations
+                        rec.last_generated = new Date().toISOString();
+                        changed = true;
+
+                        if (i === 0) {
+                            StorageService.addNotification({
+                                id: generateId(),
+                                title: 'Despesa Recorrente Criada',
+                                message: `${rec.description} - R$ ${rec.amount} adicionada para este mês.`,
+                                type: 'INFO',
+                                read: false,
+                                date: new Date().toISOString()
+                            });
+                        }
                     }
                 }
             }
-        }
 
-        if (changed) {
-            if (newTransactions.length > 0) {
-                await StorageService.saveTransactions(newTransactions);
-            }
-            // Update individual recurring rules to mark last_generated
-            for (const rec of recurring) {
-                if (rec.last_generated) {
-                    await DatabaseService.saveRecurringExpense(rec);
+            if (changed) {
+                if (newTransactions.length > 0) {
+                    await StorageService.saveTransactions(newTransactions);
+                }
+                // Update individual recurring rules to mark last_generated
+                for (const rec of recurring) {
+                    if (rec.last_generated) {
+                        await DatabaseService.saveRecurringExpense(rec);
+                    }
                 }
             }
+        } finally {
+            StorageService._isProcessingRecurring = false;
         }
     },
 
