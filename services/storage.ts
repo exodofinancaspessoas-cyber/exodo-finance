@@ -21,7 +21,7 @@ const STORAGE_KEYS = {
 };
 
 const APP_VERSION = '1.1.3';
-const DEPLOY_DATE = '2026-02-16 13:40';
+const DEPLOY_DATE = '2026-02-16 13:45';
 
 // --- HELPER FUNCTIONS ---
 const getStorage = <T>(key: string, defaultValue: T): T => {
@@ -412,13 +412,23 @@ export const StorageService = {
         }
     },
 
+    async saveCategory(category: Category) {
+        await DatabaseService.saveCategory(category);
+        StorageService.clearCache();
+    },
+
     async saveCategories(categories: Category[]) {
         await DatabaseService.saveCategories(categories);
         StorageService.clearCache();
     },
 
+    async resetCategories(): Promise<void> {
+        localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
+        await StorageService.initializeDefaultCategories(true);
+    },
+
     async initializeDefaultCategories(force = false) {
-        const existing = await this.getCategories();
+        const existing = await StorageService.getCategories();
         if (!force && existing.length > 10) return;
 
         const allToSave: Category[] = [];
@@ -429,7 +439,7 @@ export const StorageService = {
                 allToSave.push({ id: generateId(), name: subName, type: 'DESPESA', color: mainCat.color, icon: 'Tag', parent_id: parentId });
             }
         }
-        await this.saveCategories(allToSave);
+        await StorageService.saveCategories(allToSave);
     },
 
     // TRANSFERS
