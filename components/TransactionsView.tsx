@@ -5,7 +5,7 @@ import {
     Download, Trash, Copy, CheckSquare, Square, Calendar, Check, CheckCircle,
     TrendingDown, AlertTriangle, Clock, Settings, Settings2, RotateCcw
 } from 'lucide-react';
-import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense } from '../types';
+import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense, RecurrenceFrequency } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency, formatDate } from '../utils';
 import ExportModal from './ExportModal';
@@ -84,8 +84,10 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         installments_count: 1,
         is_recurring: false,
         recurring_type: 'FIXO' as 'FIXO' | 'VARIAVEL',
+        frequency: 'MENSAL' as RecurrenceFrequency,
         day_of_month: new Date().getDate(),
-        recurring_duration: '' // Empty means perpetual
+        recurring_duration: '', // Number of repetitions
+        programmed_amount: '' // Optional override for future instances
     });
 
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
@@ -308,8 +310,10 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                 installments_count: 1,
                 is_recurring: false,
                 recurring_type: 'FIXO',
+                frequency: 'MENSAL',
                 day_of_month: new Date().getDate(),
-                recurring_duration: ''
+                recurring_duration: '',
+                programmed_amount: ''
             });
         }
         setIsModalOpen(true);
@@ -381,17 +385,19 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             const recurringExpense: RecurringExpense = {
                 id: recurringId,
                 description: formData.description,
-                amount: finalAmount,
+                amount: formData.programmed_amount ? Number(formData.programmed_amount) : finalAmount,
                 category_id: formData.category_id,
                 type: formData.recurring_type,
-                frequency: 'MENSAL' as const,
+                frequency: formData.frequency,
                 day_of_month: Number(formData.day_of_month),
                 active: true,
                 auto_create: true,
                 account_id: formData.account_id || undefined,
                 payment_method: formData.payment_method,
                 last_generated: new Date().toISOString(),
-                end_date: endDate
+                start_date: formData.date,
+                end_date: endDate,
+                duration_count: formData.recurring_duration ? Number(formData.recurring_duration) : undefined
             };
 
             // SAVE TRANSACTION FIRST to avoid duplication in processRecurringExpenses
@@ -1163,21 +1169,52 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                                     </button>
                                                 </div>
 
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor Programado para futuras</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs text-[10px] font-bold">R$</span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            placeholder="Mesmo valor de hoje"
+                                                            className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-2 outline-none text-sm font-bold text-indigo-600"
+                                                            value={formData.programmed_amount}
+                                                            onChange={e => setFormData({ ...formData, programmed_amount: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <p className="text-[9px] text-slate-400 mt-1">Este valor será usado para as projeções dos próximos meses.</p>
+                                                </div>
+
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Dia de Vencimento</label>
+                                                    <div className="col-span-2">
+                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Frequência</label>
                                                         <select
                                                             className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
-                                                            value={formData.day_of_month}
-                                                            onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
+                                                            value={formData.frequency}
+                                                            onChange={e => setFormData({ ...formData, frequency: e.target.value as RecurrenceFrequency })}
                                                         >
-                                                            {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                                                <option key={d} value={d}>Dia {d}</option>
-                                                            ))}
+                                                            <option value="DIARIO">Diário</option>
+                                                            <option value="SEMANAL">Semanal</option>
+                                                            <option value="MENSAL">Mensal</option>
+                                                            <option value="ANUAL">Anual</option>
                                                         </select>
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Duração (Meses)</label>
+                                                    {formData.frequency === 'MENSAL' && (
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Dia de Vencimento</label>
+                                                            <select
+                                                                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
+                                                                value={formData.day_of_month}
+                                                                onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
+                                                            >
+                                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                                                    <option key={d} value={d}>Dia {d}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                    <div className={formData.frequency !== 'MENSAL' ? 'col-span-2' : ''}>
+                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Duração (Repetições)</label>
                                                         <input
                                                             type="number"
                                                             min="1"

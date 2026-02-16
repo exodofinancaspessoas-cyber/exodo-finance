@@ -65,11 +65,30 @@ const matchesYearMonth = (isoDate: string, target: Date) => {
     return y === target.getFullYear() && (m - 1) === target.getMonth();
 };
 
+const addDays = (date: Date, days: number) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    return d;
+};
+
+const addWeeks = (date: Date, weeks: number) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + (weeks * 7));
+    return d;
+};
+
 const addMonths = (date: Date, months: number) => {
     const d = new Date(date);
     d.setMonth(d.getMonth() + months);
     return d;
 };
+
+const addYears = (date: Date, years: number) => {
+    const d = new Date(date);
+    d.setFullYear(d.getFullYear() + years);
+    return d;
+};
+
 const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
 
 // --- SERVICE ---
@@ -161,42 +180,57 @@ export const StorageService = {
             const newTransactions: Transaction[] = [];
             let changed = false;
 
-            // Reduce horizon to just current and next month to prevent thundering herd/duplication
-            const monthsToGenerate = 2; // Current month + 2 future months
+            const defaultHorizon = 12; // 1 year default for perpetual
 
             for (const rec of recurring) {
                 if (!rec.active || !rec.auto_create) continue;
 
-                for (let i = 0; i <= monthsToGenerate; i++) {
-                    const targetMonth = addMonths(today, i);
-                    const targetYear = targetMonth.getFullYear();
-                    const targetMonthIdx = targetMonth.getMonth();
+                // Determine how many occurrences to check
+                const count = rec.duration_count || defaultHorizon;
+                const startDate = rec.start_date ? new Date(rec.start_date) : today;
 
-                    // Skip if target month is after end date
-                    if (rec.end_date && startOfDay(new Date(rec.end_date)) < startOfDay(targetMonth)) {
+                for (let i = 0; i < count; i++) {
+                    let targetDate: Date;
+
+                    // Frequency logic
+                    switch (rec.frequency) {
+                        case 'DIARIO': targetDate = addDays(startDate, i); break;
+                        case 'SEMANAL': targetDate = addWeeks(startDate, i); break;
+                        case 'ANUAL': targetDate = addYears(startDate, i); break;
+                        case 'MENSAL':
+                        default:
+                            targetDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+                            const lastDay = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+                            const day = Math.min(rec.day_of_month || 1, lastDay);
+                            targetDate.setDate(day);
+                            break;
+                    }
+
+                    const dateStr = targetDate.toISOString().split('T')[0];
+
+                    // Stop if past end_date
+                    if (rec.end_date && startOfDay(new Date(rec.end_date)) < startOfDay(targetDate)) {
                         break;
                     }
 
-                    // Strict check: verify if a transaction for this rule exists in this specific month/year
+                    // Strict check: verify if a transaction for this rule exists on this date (or month for monthly)
                     const exists = transactions.some(t => {
                         if (t.recurrence_id !== rec.id || t.status === 'EXCLUIDA') return false;
-                        const [ty, tm] = t.date.split('-').map(Number);
-                        return ty === targetYear && (tm - 1) === targetMonthIdx;
+                        if (rec.frequency === 'MENSAL') {
+                            const [ty, tm] = t.date.split('-').map(Number);
+                            return ty === targetDate.getFullYear() && (tm - 1) === targetDate.getMonth();
+                        }
+                        return t.date === dateStr;
                     });
 
                     if (!exists) {
-                        const targetDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
-                        const lastDayOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0).getDate();
-                        const day = Math.min(rec.day_of_month, lastDayOfMonth);
-                        targetDate.setDate(day);
-
                         const newTrx: Transaction = {
                             id: generateId(),
                             description: rec.description,
-                            amount: rec.amount,
+                            amount: rec.amount, // Programmed amount
                             type: 'DESPESA',
                             category_id: rec.category_id,
-                            date: targetDate.toISOString().split('T')[0],
+                            date: dateStr,
                             status: rec.type === 'FIXO' ? 'CONFIRMADA' : 'PREVISTA',
                             account_id: rec.account_id,
                             payment_method: rec.payment_method,
@@ -204,15 +238,16 @@ export const StorageService = {
                             created_at: new Date().toISOString()
                         };
                         newTransactions.push(newTrx);
-                        transactions.push(newTrx); // Avoid generating twice in this loop
+                        transactions.push(newTrx);
                         rec.last_generated = new Date().toISOString();
                         changed = true;
 
-                        if (i === 0) {
+                        // Notification only for current month
+                        if (matchesYearMonth(dateStr, today)) {
                             StorageService.addNotification({
                                 id: generateId(),
-                                title: 'Despesa Recorrente Criada',
-                                message: `${rec.description} - R$ ${rec.amount} adicionada para este mês.`,
+                                title: 'Projeção Criada',
+                                message: `${rec.description} - R$ ${rec.amount} projetada para ${dateStr}.`,
                                 type: 'INFO',
                                 read: false,
                                 date: new Date().toISOString()
@@ -226,13 +261,11 @@ export const StorageService = {
                 if (newTransactions.length > 0) {
                     await StorageService.saveTransactions(newTransactions);
                 }
-                // Batch update rules
                 for (const rec of recurring) {
                     if (rec.last_generated && changed) {
                         await DatabaseService.saveRecurringExpense(rec);
                     }
                 }
-                // Crucial: clear cache so other components see the new transactions
                 StorageService.clearCache();
             }
         } finally {

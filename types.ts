@@ -81,13 +81,15 @@ export interface Transaction {
   is_simulation_result?: boolean;
 }
 
+export type RecurrenceFrequency = 'DIARIO' | 'SEMANAL' | 'MENSAL' | 'ANUAL';
+
 export interface RecurringExpense {
   id: string;
   description: string;
   amount: number;
   category_id: string;
   type: RecurrenceType;
-  frequency: 'MENSAL';
+  frequency: RecurrenceFrequency;
   day_of_month: number;
   active: boolean;
   auto_create: boolean;
@@ -96,6 +98,7 @@ export interface RecurringExpense {
   end_date?: string;
   account_id?: string;
   payment_method?: PaymentMethod;
+  duration_count?: number; // How many times it should repeat in total
 }
 
 export interface Transfer {

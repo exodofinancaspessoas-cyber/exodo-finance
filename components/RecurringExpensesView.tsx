@@ -4,7 +4,7 @@ import {
     Repeat, Plus, Edit2, Trash2, CheckCircle, AlertCircle,
     Calendar, RotateCw, DollarSign
 } from 'lucide-react';
-import { RecurringExpense, Category, Account } from '../types';
+import { RecurringExpense, Category, Account, RecurrenceFrequency } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency } from '../utils';
 
@@ -22,11 +22,12 @@ export default function RecurringExpensesView() {
         amount: 0,
         category_id: '',
         type: 'FIXO',
-        frequency: 'MENSAL', // Default
+        frequency: 'MENSAL',
         day_of_month: 1,
         active: true,
         auto_create: true,
-        account_id: ''
+        account_id: '',
+        duration_count: undefined
     });
 
     const [loading, setLoading] = useState(true);
@@ -83,19 +84,21 @@ export default function RecurringExpensesView() {
                 amount: Number(formData.amount),
                 category_id: formData.category_id,
                 type: formData.type || 'FIXO',
-                frequency: 'MENSAL',
+                frequency: formData.frequency || 'MENSAL',
                 day_of_month: Number(formData.day_of_month),
                 active: formData.active !== undefined ? formData.active : true,
                 auto_create: formData.auto_create !== undefined ? formData.auto_create : true,
                 account_id: formData.account_id,
+                duration_count: formData.duration_count,
                 // Preserve existing fields if editing
-                last_generated: editingId ? expenses.find(e => e.id === editingId)?.last_generated : undefined
+                last_generated: editingId ? expenses.find(e => e.id === editingId)?.last_generated : undefined,
+                start_date: editingId ? expenses.find(e => e.id === editingId)?.start_date : new Date().toISOString().split('T')[0]
             };
 
             await StorageService.saveRecurringExpense(newExpense);
             setIsModalOpen(false);
             setEditingId(null);
-            setFormData({ description: '', amount: 0, category_id: '', type: 'FIXO', frequency: 'MENSAL', day_of_month: 1, active: true, auto_create: true, account_id: '' });
+            setFormData({ description: '', amount: 0, category_id: '', type: 'FIXO', frequency: 'MENSAL', day_of_month: 1, active: true, auto_create: true, account_id: '', duration_count: undefined });
             await loadData();
         } catch (error) {
             console.error("Erro ao salvar recorrência:", error);
@@ -253,20 +256,47 @@ export default function RecurringExpensesView() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Dia do Vencimento</label>
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Frequência</label>
                                     <select
                                         className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
-                                        value={formData.day_of_month}
-                                        onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
+                                        value={formData.frequency}
+                                        onChange={e => setFormData({ ...formData, frequency: e.target.value as RecurrenceFrequency })}
                                         required
                                     >
-                                        {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                            <option key={d} value={d}>Dia {d}</option>
-                                        ))}
+                                        <option value="DIARIO">Diário</option>
+                                        <option value="SEMANAL">Semanal</option>
+                                        <option value="MENSAL">Mensal</option>
+                                        <option value="ANUAL">Anual</option>
                                     </select>
                                 </div>
-                                <div>
+                                {formData.frequency === 'MENSAL' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Dia do Vencimento</label>
+                                        <select
+                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
+                                            value={formData.day_of_month}
+                                            onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
+                                            required
+                                        >
+                                            {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                                <option key={d} value={d}>Dia {d}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                                <div className={formData.frequency !== 'MENSAL' ? 'col-span-2' : ''}>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Duração (Repetições)</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        placeholder="Infinito"
+                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
+                                        value={formData.duration_count || ''}
+                                        onChange={e => setFormData({ ...formData, duration_count: e.target.value ? Number(e.target.value) : undefined })}
+                                    />
+                                </div>
+                                <div className="col-span-2">
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Conta para Debitar</label>
                                     <select
                                         className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
