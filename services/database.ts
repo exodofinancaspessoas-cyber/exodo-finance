@@ -257,13 +257,35 @@ export const DatabaseService = {
     },
 
     async deleteTransaction(id: string): Promise<void> {
-        if (isSupabaseConfigured()) {
-            const { error } = await supabase.from('transactions').delete().eq('id', id);
-            if (!error) return;
-        }
         const transactions = await this.getTransactions();
-        const filtered = transactions.filter(t => t.id !== id);
-        localStorage.setItem('exodo_transactions', JSON.stringify(filtered));
+        const trx = transactions.find(t => t.id === id);
+        if (!trx) return;
+
+        trx.status = 'EXCLUIDA';
+
+        if (isSupabaseConfigured()) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                try {
+                    const { error } = await supabase.from('transactions').upsert({
+                        id: trx.id,
+                        user_id: user.id,
+                        description: trx.description,
+                        amount: trx.amount,
+                        type: trx.type,
+                        date: trx.date,
+                        status: 'EXCLUIDA',
+                        created_at: trx.created_at
+                    });
+                    if (error) throw error;
+                    return;
+                } catch (err) {
+                    console.error('Supabase Soft Delete Error:', err);
+                }
+            }
+        }
+
+        localStorage.setItem('exodo_transactions', JSON.stringify(transactions));
     },
 
     // TRANSFERS

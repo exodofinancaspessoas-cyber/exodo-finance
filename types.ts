@@ -1,7 +1,7 @@
 
 export type TransactionType = 'RECEITA' | 'DESPESA';
 
-export type TransactionStatus = 'PREVISTA' | 'CONFIRMADA' | 'PAGA' | 'RECEBIDA' | 'ATRASADA';
+export type TransactionStatus = 'PREVISTA' | 'CONFIRMADA' | 'PAGA' | 'RECEBIDA' | 'ATRASADA' | 'EXCLUIDA';
 
 export type AccountType = 'CORRENTE' | 'POUPANCA' | 'SALARIO' | 'DINHEIRO' | 'OUTRO';
 

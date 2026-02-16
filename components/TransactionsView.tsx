@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Filter, Plus, Edit, Trash2, CreditCard, X, ChevronDown,
     Download, Trash, Copy, CheckSquare, Square, Calendar, Check, CheckCircle,
-    TrendingDown, AlertTriangle, Clock, Settings, Settings2
+    TrendingDown, AlertTriangle, Clock, Settings, Settings2, RotateCcw
 } from 'lucide-react';
 import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense } from '../types';
 import { StorageService } from '../services/storage';
@@ -168,7 +168,11 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             if (filters.type !== 'ALL' && t.type !== filters.type) return false;
 
             // Status
-            if (filters.status !== 'ALL' && t.status !== filters.status) return false;
+            if (filters.status === 'ALL') {
+                if (t.status === 'EXCLUIDA') return false;
+            } else {
+                if (t.status !== filters.status) return false;
+            }
 
             // Category
             if (filters.category !== 'ALL' && t.category_id !== filters.category) return false;
@@ -306,6 +310,19 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             await StorageService.deleteTransaction(id);
             await loadData();
         }
+    };
+
+    const handleRestore = async (id: string) => {
+        const trx = transactions.find(t => t.id === id);
+        if (!trx) return;
+
+        const restoredTrx: Transaction = {
+            ...trx,
+            status: 'PREVISTA' // Default to PREVISTA when restored
+        };
+
+        await StorageService.saveTransaction(restoredTrx);
+        await loadData();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -495,6 +512,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             case 'PAGA': return 'bg-green-100 text-green-700';
             case 'RECEBIDA': return 'bg-green-100 text-green-700';
             case 'ATRASADA': return 'bg-red-100 text-red-700';
+            case 'EXCLUIDA': return 'bg-slate-200 text-slate-500 line-through';
             default: return 'bg-slate-100 text-slate-700';
         }
     };
@@ -558,6 +576,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                     <option value="ATRASADA">Atrasada</option>
                                     {filters.type !== 'DESPESA' && <option value="RECEBIDA">Recebida</option>}
                                     {filters.type !== 'RECEITA' && <option value="PAGA">Paga</option>}
+                                    <option value="EXCLUIDA">Excluídas</option>
                                 </select>
                             </div>
                             <div>
@@ -701,7 +720,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                 const isSelected = selectedTransactions.has(t.id);
 
                                 return (
-                                    <tr key={t.id} className={`hover:bg-slate-50 transition-colors group ${isSelected ? 'bg-indigo-50/30' : ''}`}>
+                                    <tr key={t.id} className={`hover:bg-slate-50 transition-colors group ${isSelected ? 'bg-indigo-50/30' : ''} ${t.status === 'EXCLUIDA' ? 'opacity-60 grayscale-[0.5]' : ''}`}>
                                         <td className="px-4 py-4">
                                             <button onClick={() => toggleSelection(t.id)} className={`${isSelected ? 'text-indigo-600' : 'text-slate-300 hover:text-slate-400'}`}>
                                                 {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
@@ -751,16 +770,28 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end space-x-2 items-center">
-                                                {t.status !== 'PAGA' && t.status !== 'RECEBIDA' && (
+                                                {t.status === 'EXCLUIDA' ? (
                                                     <button
-                                                        onClick={() => handleOpenPayModal(t)}
-                                                        className="p-1 px-2 bg-green-50 text-green-600 rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-green-100 transition-colors"
+                                                        onClick={() => handleRestore(t.id)}
+                                                        className="p-1 px-2 bg-indigo-50 text-indigo-600 rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-indigo-100 transition-colors"
+                                                        title="Restaurar"
                                                     >
-                                                        <Check size={14} /> QUITAR
+                                                        <RotateCcw size={14} /> RESTAURAR
                                                     </button>
+                                                ) : (
+                                                    <>
+                                                        {t.status !== 'PAGA' && t.status !== 'RECEBIDA' && (
+                                                            <button
+                                                                onClick={() => handleOpenPayModal(t)}
+                                                                className="p-1 px-2 bg-green-50 text-green-600 rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-green-100 transition-colors"
+                                                            >
+                                                                <Check size={14} /> QUITAR
+                                                            </button>
+                                                        )}
+                                                        <button onClick={() => handleOpenModal(t)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-indigo-600 transition-colors"><Edit size={16} /></button>
+                                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 group-hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                                                    </>
                                                 )}
-                                                <button onClick={() => handleOpenModal(t)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-indigo-600 transition-colors"><Edit size={16} /></button>
-                                                <button onClick={() => handleDelete(t.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 group-hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
                                             </div>
                                         </td>
                                     </tr>
