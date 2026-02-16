@@ -169,6 +169,10 @@ export const DatabaseService = {
                 return (data as any[]).map(t => ({
                     ...t,
                     amount: Number(t.amount || 0),
+                    account_id: t.account_id,
+                    category_id: t.category_id,
+                    card_id: t.card_id,
+                    recurrence_id: t.recurrence_id,
                     installments: t.installments_total ? {
                         current: t.installments_current,
                         total: t.installments_total

@@ -208,7 +208,10 @@ export const StorageService = {
                         return t.date === dateStr;
                     });
 
-                    if (!exists) {
+                    if (exists) {
+                        // console.log(`[Recurring] Skipping ${rec.description} for ${dateStr} - already exists.`);
+                    } else {
+                        console.log(`[Recurring] Creating ${rec.description} for ${dateStr} (Status: ${rec.type === 'FIXO' ? 'CONFIRMADA' : 'PREVISTA'})`);
                         const newTrx: Transaction = {
                             id: generateId(),
                             description: rec.description,
