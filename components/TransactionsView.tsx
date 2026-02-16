@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense, RecurrenceFrequency } from '../types';
 import { StorageService } from '../services/storage';
-import { formatCurrency, formatDate } from '../utils';
+import { formatCurrency, formatDate, toISODate } from '../utils';
 import ExportModal from './ExportModal';
 
 interface TransactionsViewProps {
@@ -31,8 +31,8 @@ const getMonthBounds = (offset = 0) => {
     const start = new Date(now.getFullYear(), now.getMonth() + offset, 1);
     const end = new Date(now.getFullYear(), now.getMonth() + offset + 1, 0);
     return {
-        start: start.toISOString().split('T')[0],
-        end: end.toISOString().split('T')[0]
+        start: toISODate(start),
+        end: toISODate(end)
     };
 };
 
@@ -195,8 +195,8 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             }
 
             // Date Range
-            if (filters.startDate && new Date(t.date) < new Date(filters.startDate)) return false;
-            if (filters.endDate && new Date(t.date) > new Date(filters.endDate)) return false;
+            if (filters.startDate && t.date < filters.startDate) return false;
+            if (filters.endDate && t.date > filters.endDate) return false;
 
             // Amount Range
             if (filters.minAmount && t.amount < Number(filters.minAmount)) return false;
@@ -228,8 +228,9 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
         const currentMonthTrxs = transactions.filter(t => {
-            const date = new Date(t.date);
-            return date >= startOfMonth && date <= endOfMonth;
+            if (!t.date) return false;
+            const [y, m] = t.date.split('-').map(Number);
+            return y === now.getFullYear() && (m - 1) === now.getMonth();
         });
 
         const pendingExpenses = currentMonthTrxs.filter(t => t.type === 'DESPESA' && (t.status === 'PREVISTA' || t.status === 'ATRASADA'));

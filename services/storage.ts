@@ -5,6 +5,7 @@ import {
     Goal, Budget
 } from '../types';
 import { DatabaseService } from './database';
+import { formatCurrency, formatDate, toISODate } from '../utils';
 import { INITIAL_CATEGORIES_DATA } from './initialCategories';
 
 const STORAGE_KEYS = {
@@ -206,10 +207,10 @@ export const StorageService = {
                             break;
                     }
 
-                    const dateStr = targetDate.toISOString().split('T')[0];
+                    const dateStr = toISODate(targetDate);
 
                     // Stop if past end_date
-                    if (rec.end_date && startOfDay(new Date(rec.end_date)) < startOfDay(targetDate)) {
+                    if (rec.end_date && dateStr > rec.end_date) {
                         break;
                     }
 
