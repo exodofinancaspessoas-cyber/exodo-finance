@@ -175,29 +175,31 @@ export const DatabaseService = {
         if (isSupabaseConfigured()) {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { error } = await supabase.from('transactions').upsert({
-                    id: transaction.id,
-                    user_id: user.id,
-                    description: transaction.description,
-                    amount: transaction.amount,
-                    type: transaction.type,
-                    category_id: isValidUUID(transaction.category_id) ? transaction.category_id : null,
-                    account_id: isValidUUID(transaction.account_id) ? transaction.account_id : null,
-                    card_id: isValidUUID(transaction.card_id) ? transaction.card_id : null,
-                    date: transaction.date,
-                    status: transaction.status,
-                    payment_method: transaction.payment_method,
-                    installments_current: transaction.installments?.current,
-                    installments_total: transaction.installments?.total,
-                    recurrence_id: transaction.recurrence_id,
-                    observation: transaction.observation,
-                    created_at: transaction.created_at
-                });
-                if (error) {
-                    console.error('Error saving transaction to Supabase:', error);
-                    throw error;
+                try {
+                    const { error } = await supabase.from('transactions').upsert({
+                        id: transaction.id,
+                        user_id: user.id,
+                        description: transaction.description,
+                        amount: transaction.amount,
+                        type: transaction.type,
+                        category_id: isValidUUID(transaction.category_id) ? transaction.category_id : null,
+                        account_id: isValidUUID(transaction.account_id) ? transaction.account_id : null,
+                        card_id: isValidUUID(transaction.card_id) ? transaction.card_id : null,
+                        date: transaction.date,
+                        status: transaction.status,
+                        payment_method: transaction.payment_method,
+                        installments_current: transaction.installments?.current,
+                        installments_total: transaction.installments?.total,
+                        recurrence_id: transaction.recurrence_id,
+                        observation: transaction.observation,
+                        created_at: transaction.created_at
+                    });
+                    if (error) throw error;
+                    return;
+                } catch (err) {
+                    console.error('Supabase Save Error (falling back to LocalStorage):', err);
+                    // Continue to local storage fallback
                 }
-                return;
             }
         }
         const transactions = await this.getTransactions();
@@ -232,12 +234,13 @@ export const DatabaseService = {
                     created_at: t.created_at
                 }));
 
-                const { error } = await supabase.from('transactions').upsert(mappedTransactions);
-                if (error) {
-                    console.error('Error saving batch transactions to Supabase:', error);
-                    throw error;
+                try {
+                    const { error } = await supabase.from('transactions').upsert(mappedTransactions);
+                    if (error) throw error;
+                    return;
+                } catch (err) {
+                    console.error('Supabase Batch Save Error:', err);
                 }
-                return;
             }
         }
 

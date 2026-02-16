@@ -112,7 +112,11 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     }, []);
 
     const loadData = async () => {
-        await StorageService.processRecurringExpenses();
+        try {
+            await StorageService.processRecurringExpenses();
+        } catch (error) {
+            console.error('Erro ao processar recorrências:', error);
+        }
         const [trxs, accs, crds, catsRaw] = await Promise.all([
             StorageService.getTransactions(),
             StorageService.getAccounts(),
