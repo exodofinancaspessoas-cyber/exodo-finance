@@ -21,12 +21,14 @@ import AnalyticsView from './components/AnalyticsView';
 import PlanningView from './components/PlanningView';
 import OnboardingFlow from './components/Onboarding';
 import ActionManual from './components/ActionManual';
+import QuickAddView from './components/QuickAddView';
 import { Sparkles } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState('dashboard');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   // Onboarding states
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -34,16 +36,29 @@ export default function App() {
     return !localStorage.getItem('onboarding_completed');
   });
 
+  // Auto-open Quick Add on Mobile or via URL
+  useEffect(() => {
+    if (user) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isMobile = window.innerWidth < 768;
+      const hasQuickAddParam = urlParams.get('view') === 'quick-add';
+      const hasOpenedBefore = sessionStorage.getItem('quick_add_auto_opened');
+
+      if ((hasQuickAddParam || isMobile) && !hasOpenedBefore) {
+        setIsQuickAddOpen(true);
+        sessionStorage.setItem('quick_add_auto_opened', 'true');
+
+        // Clean up URL if present
+        if (hasQuickAddParam) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
+    }
+  }, [user]);
+
   useEffect(() => {
     const loadedUser = StorageService.getUser();
     setUser(loadedUser);
-
-    // Check for Deep Links / Shortcuts
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('view') === 'quick-add') {
-      setCurrentView('dashboard');
-      // The Dashboard component will handle the auto-opening via its own useEffect
-    }
 
     if (loadedUser) {
       (async () => {
@@ -103,18 +118,21 @@ export default function App() {
     }
   };
 
+  const handleLogout = () => {
+    StorageService.logout();
+    setUser(null);
+  };
+
   return (
     <Layout
       currentView={currentView}
       onChangeView={setCurrentView}
       user={user}
-      onLogout={() => {
-        StorageService.logout();
-        setUser(null);
-      }}
+      onLogout={handleLogout}
       onOpenTraining={() => setShowManual(true)}
+      onQuickAdd={() => setIsQuickAddOpen(true)}
     >
-      <div className="p-4 md:p-8 max-w-7xl mx-auto w-full relative">
+      <div className="relative h-full w-full">
         {renderView()}
 
         {/* Manual for those who prefer reading */}
@@ -143,6 +161,19 @@ export default function App() {
           />
         )}
       </div>
+
+      {isQuickAddOpen && (
+        <QuickAddView
+          onClose={() => setIsQuickAddOpen(false)}
+          onSuccess={() => {
+            setIsQuickAddOpen(false);
+            // Full refresh approach to ensure all views update
+            const current = currentView;
+            setCurrentView('loading');
+            setTimeout(() => setCurrentView(current), 10);
+          }}
+        />
+      )}
     </Layout>
   );
 }
