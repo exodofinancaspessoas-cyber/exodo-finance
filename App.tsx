@@ -15,6 +15,7 @@ import ReportsView from './components/ReportsView';
 import GoalsView from './components/GoalsView';
 import BudgetsView from './components/BudgetsView';
 import InvoiceSimulator from './components/InvoiceSimulator';
+import SettingsView from './components/SettingsView';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -46,9 +47,9 @@ export default function App() {
       case 'dashboard':
         return <Dashboard currentMonth={currentMonth} onChangeView={setCurrentView} />;
       case 'incomes':
-        return <TransactionsView initialType="RECEITA" />;
+        return <TransactionsView key="incomes-view" initialType="RECEITA" />;
       case 'expenses':
-        return <TransactionsView initialType="DESPESA" />;
+        return <TransactionsView key="expenses-view" initialType="DESPESA" />;
       case 'accounts':
         return <AccountsView />;
       case 'cards':
@@ -63,6 +64,7 @@ export default function App() {
       case 'goals': return <GoalsView />;
       case 'budgets': return <BudgetsView />;
       case 'simulator': return <InvoiceSimulator />;
+      case 'settings': return <SettingsView />;
       default:
         return <Dashboard currentMonth={currentMonth} onChangeView={setCurrentView} />;
     }

@@ -18,43 +18,40 @@ const isValidUUID = (uuid: string | null | undefined): boolean => {
 export const DatabaseService = {
     // ACCOUNTS
     async getAccounts(): Promise<Account[]> {
+        let supabaseAccounts: Account[] = [];
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('accounts').select('*');
-            console.log(`[Database] Accounts fetch: ${data?.length || 0} rows. Error:`, error);
             if (!error && data) {
-                const supabaseAccounts = (data as any[]).map(acc => ({
+                supabaseAccounts = (data as any[]).map(acc => ({
                     ...acc,
                     initial_balance: Number(acc.initial_balance || 0),
                     current_balance: Number(acc.balance || 0)
                 }));
-
-                // Se o Supabase estiver vazio, tenta recuperar do LocalStorage
-                if (supabaseAccounts.length === 0) {
-                    const stored = localStorage.getItem('exodo_accounts');
-                    if (stored) {
-                        try {
-                            const localAccounts = JSON.parse(stored);
-                            if (localAccounts.length > 0) {
-                                console.warn('[Database] Supabase empty, recovered accounts from LocalStorage');
-                                return localAccounts;
-                            }
-                        } catch (e) { }
-                    }
-                }
-                return supabaseAccounts;
             }
         }
+
+        // Recupera do LocalStorage (onde seus dados antigos podem estar presos)
         const stored = localStorage.getItem('exodo_accounts');
-        try {
-            const parsed = stored ? JSON.parse(stored) : [];
-            return ensureArray<Account>(parsed).map(acc => ({
-                ...acc,
-                initial_balance: Number(acc.initial_balance || 0),
-                current_balance: Number(acc.current_balance || 0)
-            }));
-        } catch {
-            return [];
+        let localAccounts: Account[] = [];
+        if (stored) {
+            try {
+                localAccounts = JSON.parse(stored).map((acc: any) => ({
+                    ...acc,
+                    initial_balance: Number(acc.initial_balance || 0),
+                    current_balance: Number(acc.current_balance || acc.balance || 0)
+                }));
+            } catch (e) { }
         }
+
+        // MESCLAR: Combina o que está na nuvem com o que está no computador
+        const mergedMap = new Map<string, Account>();
+        localAccounts.forEach(acc => mergedMap.set(acc.id, acc));
+        supabaseAccounts.forEach(acc => mergedMap.set(acc.id, acc));
+
+        const finalAccounts = Array.from(mergedMap.values());
+        console.log(`[Database] Recuperando Bancos... Encontrados ${supabaseAccounts.length} na nuvem e ${localAccounts.length} locais. Total: ${finalAccounts.length}`);
+
+        return finalAccounts;
     },
 
     async saveAccount(account: Account): Promise<void> {
@@ -192,10 +189,12 @@ export const DatabaseService = {
     async getTransactions(): Promise<Transaction[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
-            console.log(`[Database] Transactions fetch: ${data?.length || 0} rows. Error:`, error);
             if (error) {
                 console.error('Error fetching transactions from Supabase:', error.message || error);
             } else if (data) {
+                const excludedCount = (data as any[]).filter(t => t.status === 'EXCLUIDA').length;
+                console.log(`[Database] Fetched ${data.length} transactions (${excludedCount} EXCLUIDA) from Supabase`);
+
                 const supabaseTransactions = (data as any[]).map(t => ({
                     ...t,
                     amount: Number(t.amount || 0),
@@ -209,22 +208,44 @@ export const DatabaseService = {
                     } : undefined
                 }));
 
-                // Fallback se estiver vazio
-                if (supabaseTransactions.length === 0) {
-                    const stored = localStorage.getItem('exodo_transactions');
-                    if (stored) {
-                        try {
-                            const localTrxs = JSON.parse(stored);
-                            if (localTrxs.length > 0) {
-                                console.warn('[Database] Supabase empty, recovered transactions from LocalStorage');
-                                return localTrxs;
+                const localStored = localStorage.getItem('exodo_transactions');
+                if (localStored) {
+                    try {
+                        const localTrxs = JSON.parse(localStored) as Transaction[];
+
+                        // Proteção de status (LocalStorage pode estar mais atualizado se a sync for lenta)
+                        supabaseTransactions.forEach(st => {
+                            const lt = localTrxs.find(l => l.id === st.id);
+                            if (lt && lt.status === 'EXCLUIDA' && st.status !== 'EXCLUIDA') {
+                                st.status = 'EXCLUIDA';
+                                console.log(`[Database] Protection: Keeping ${st.description} as EXCLUIDA`);
                             }
-                        } catch (e) { }
+                        });
+
+                        // Itens locais (incluindo EXCLUIDA para evitar que o processador de recorrentes os recrie)
+                        const localOnly = localTrxs.filter(lt =>
+                            !supabaseTransactions.some(st => st.id === lt.id)
+                        );
+
+                        const mergedResult = [...supabaseTransactions, ...localOnly].sort((a, b) => b.date.localeCompare(a.date));
+
+                        // PERSISTÊNCIA: Mantém o cache local sempre completo e atualizado
+                        localStorage.setItem('exodo_transactions', JSON.stringify(mergedResult));
+                        return mergedResult;
+                    } catch (e) {
+                        console.error('[Database] Error merging local transactions:', e);
                     }
                 }
+
+                // Mesmo sem LocalStorage, salva o que veio do Supabase para futuras consultas offline/proteção
+                localStorage.setItem('exodo_transactions', JSON.stringify(supabaseTransactions));
                 return supabaseTransactions;
             }
         }
+        return this._getLocalTransactions();
+    },
+
+    async _getLocalTransactions(): Promise<Transaction[]> {
         const stored = localStorage.getItem('exodo_transactions');
         try {
             const parsed = stored ? JSON.parse(stored) : [];
@@ -261,14 +282,13 @@ export const DatabaseService = {
                         created_at: transaction.created_at
                     });
                     if (error) throw error;
-                    return;
+                    console.log(`[Database] Saved ${transaction.description} to Supabase`);
                 } catch (err) {
                     console.error('Supabase Save Error (falling back to LocalStorage):', err);
-                    // Continue to local storage fallback
                 }
             }
         }
-        const transactions = await this.getTransactions();
+        const transactions = await this._getLocalTransactions();
         const index = transactions.findIndex(t => t.id === transaction.id);
         if (index >= 0) transactions[index] = transaction;
         else transactions.push(transaction);
@@ -281,7 +301,7 @@ export const DatabaseService = {
         if (isSupabaseConfigured()) {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const mappedTransactions = transactions.map(t => ({
+                const mapped = transactions.map(t => ({
                     id: t.id,
                     user_id: user.id,
                     description: t.description,
@@ -301,57 +321,68 @@ export const DatabaseService = {
                 }));
 
                 try {
-                    const { error } = await supabase.from('transactions').upsert(mappedTransactions);
+                    const { error } = await supabase.from('transactions').upsert(mapped);
                     if (error) throw error;
-                    return;
+                    console.log(`[Database] Successfully synced ${transactions.length} transactions to Supabase`);
                 } catch (err) {
                     console.error('Supabase Batch Save Error:', err);
                 }
             }
         }
 
-        const currentTransactions = await this.getTransactions();
-        const updatedList = [...currentTransactions];
-
+        const current = await this._getLocalTransactions();
         transactions.forEach(newT => {
-            const index = updatedList.findIndex(t => t.id === newT.id);
-            if (index >= 0) updatedList[index] = newT;
-            else updatedList.push(newT);
+            const index = current.findIndex(t => t.id === newT.id);
+            if (index >= 0) current[index] = newT;
+            else current.push(newT);
         });
 
-        localStorage.setItem('exodo_transactions', JSON.stringify(updatedList));
+        localStorage.setItem('exodo_transactions', JSON.stringify(current));
     },
 
     async deleteTransaction(id: string): Promise<void> {
-        const transactions = await this.getTransactions();
-        const trx = transactions.find(t => t.id === id);
-        if (!trx) return;
+        await this.deleteTransactions([id]);
+    },
 
-        trx.status = 'EXCLUIDA';
+    async deleteTransactions(ids: string[]): Promise<void> {
+        if (ids.length === 0) return;
 
+        // 1. Sincroniza com Supabase
         if (isSupabaseConfigured()) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                try {
-                    const { error } = await supabase.from('transactions').upsert({
-                        id: trx.id,
-                        user_id: user.id,
-                        description: trx.description,
-                        amount: trx.amount,
-                        type: trx.type,
-                        date: trx.date,
-                        status: 'EXCLUIDA',
-                        created_at: trx.created_at
-                    });
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { error } = await supabase
+                        .from('transactions')
+                        .update({ status: 'EXCLUIDA' })
+                        .in('id', ids)
+                        .eq('user_id', user.id);
                     if (error) throw error;
-                    return;
-                } catch (err) {
-                    console.error('Supabase Soft Delete Error:', err);
+                    console.log(`[Database] Marcado ${ids.length} transações como EXCLUIDA no Supabase`);
                 }
+            } catch (err) {
+                console.error('Erro ao deletar no Supabase:', err);
             }
         }
 
-        localStorage.setItem('exodo_transactions', JSON.stringify(transactions));
+        // 2. Sincroniza LocalStorage (Independente do Supabase)
+        const stored = localStorage.getItem('exodo_transactions');
+        if (stored) {
+            try {
+                const trxs = JSON.parse(stored) as Transaction[];
+                let changed = false;
+                trxs.forEach(t => {
+                    if (ids.includes(t.id) && t.status !== 'EXCLUIDA') {
+                        t.status = 'EXCLUIDA';
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    localStorage.setItem('exodo_transactions', JSON.stringify(trxs));
+                    console.log(`[Database] Marcado ${ids.length} transações como EXCLUIDA no LocalStorage`);
+                }
+            } catch (e) { }
+        }
     },
 
     // TRANSFERS
@@ -570,6 +601,7 @@ export const DatabaseService = {
                 return (data as any[]).map(rec => ({
                     ...rec,
                     amount: Number(rec.amount || 0),
+                    programmed_amount: Number(rec.programmed_amount || rec.amount || 0),
                     type: rec.type as any, // FIXO or VARIAVEL
                     start_date: rec.start_date,
                     end_date: rec.end_date,
@@ -583,7 +615,8 @@ export const DatabaseService = {
             const parsed = stored ? JSON.parse(stored) : [];
             return ensureArray<RecurringExpense>(parsed).map(rec => ({
                 ...rec,
-                amount: Number(rec.amount || 0)
+                amount: Number(rec.amount || 0),
+                programmed_amount: Number(rec.programmed_amount || rec.amount || 0)
             }));
         } catch {
             return [];
@@ -594,7 +627,7 @@ export const DatabaseService = {
         if (isSupabaseConfigured()) {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { error } = await supabase.from('recurring_expenses').upsert({
+                const payload: any = {
                     id: expense.id,
                     user_id: user.id,
                     description: expense.description,
@@ -610,16 +643,28 @@ export const DatabaseService = {
                     start_date: expense.start_date || null,
                     end_date: expense.end_date || null,
                     payment_method: expense.payment_method || null,
-                    duration_count: expense.duration_count || null,
-                    card_id: isValidUUID(expense.card_id) ? expense.card_id : null
-                });
-                if (error) {
-                    console.error('Error saving recurring expense to Supabase:', JSON.stringify(error));
-                    if (error.code === '42703' || error.message?.includes('card_id') || error.message?.includes('start_date')) {
-                        console.warn('[Supabase] Missing columns in recurring_expenses. Proceeding with LocalStorage.');
+                    duration_count: expense.duration_count || null
+                };
+
+                // Add optional columns only if they don't cause errors (handled in catch)
+                payload.programmed_amount = expense.programmed_amount || expense.amount;
+                if (isValidUUID(expense.card_id)) payload.card_id = expense.card_id;
+
+                try {
+                    const { error } = await supabase.from('recurring_expenses').upsert(payload);
+                    if (error) {
+                        // Fallback: If programmed_amount column is missing, try without it
+                        if (error.code === '42703' || error.message?.includes('programmed_amount')) {
+                            console.warn('[Supabase] Missing programmed_amount column, retrying without it...');
+                            const { programmed_amount, ...fallbackPayload } = payload;
+                            const { error: error2 } = await supabase.from('recurring_expenses').upsert(fallbackPayload);
+                            if (!error2) return;
+                        }
+                        throw error;
                     }
-                } else {
                     return;
+                } catch (err) {
+                    console.error('Error saving recurring expense to Supabase:', err);
                 }
             }
         }
@@ -639,5 +684,66 @@ export const DatabaseService = {
         const list = await this.getRecurringExpenses();
         const filtered = list.filter(i => i.id !== id);
         localStorage.setItem('exodo_recurring', JSON.stringify(filtered));
+    },
+
+    async deleteAllUserData(): Promise<void> {
+        if (isSupabaseConfigured()) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const tables = [
+                    'transactions',
+                    'recurring_expenses',
+                    'transfers',
+                    'budgets',
+                    'goals',
+                    'cards',
+                    'accounts',
+                    'categories'
+                ];
+                console.log(`[Database] Starting nuclear reset for user ${user.id}...`);
+                for (const table of tables) {
+                    try {
+                        const { error } = await supabase.from(table).delete().eq('user_id', user.id);
+                        if (error) console.warn(`[Database] Error clearing table ${table}:`, error.message);
+                        else console.log(`[Database] Table ${table} cleared.`);
+                    } catch (e) {
+                        console.error(`[Database] Failed to clear ${table}:`, e);
+                    }
+                }
+            }
+        }
+    },
+
+    async deletePartialUserData(): Promise<void> {
+        if (isSupabaseConfigured()) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                console.log(`[Database] Starting partial reset (Transactions & Recurring) for user ${user.id}...`);
+                try {
+                    await supabase.from('transactions').delete().eq('user_id', user.id);
+                    await supabase.from('recurring_expenses').delete().eq('user_id', user.id);
+                    console.log(`[Database] Transactions and Recurring rules cleared.`);
+                } catch (e) {
+                    console.error(`[Database] Failed partial clear:`, e);
+                }
+            }
+        }
+    },
+
+    async deleteCustomUserData(tables: string[]): Promise<void> {
+        if (isSupabaseConfigured()) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && tables.length > 0) {
+                console.log(`[Database] Starting custom reset for ${tables.length} modules...`);
+                for (const table of tables) {
+                    try {
+                        await supabase.from(table).delete().eq('user_id', user.id);
+                        console.log(`[Database] Table ${table} cleared.`);
+                    } catch (e) {
+                        console.error(`[Database] Failed clear for ${table}:`, e);
+                    }
+                }
+            }
+        }
     }
 };

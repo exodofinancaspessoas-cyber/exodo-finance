@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import {
     Repeat, Plus, Edit2, Trash2, CheckCircle, AlertCircle,
-    Calendar, RotateCw, DollarSign
+    Calendar, RotateCw, DollarSign, ArrowUpCircle, ArrowDownCircle
 } from 'lucide-react';
-import { RecurringExpense, Category, Account, Card, RecurrenceFrequency } from '../types';
+import { RecurringExpense, Category, Account, Card, RecurrenceFrequency, TransactionType } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency } from '../utils';
 
@@ -13,6 +13,7 @@ export default function RecurringExpensesView() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [cards, setCards] = useState<Card[]>([]);
+    const [activeTab, setActiveTab] = useState<TransactionType>('DESPESA');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -71,6 +72,11 @@ export default function RecurringExpensesView() {
         }
     };
 
+    const filteredExpenses = expenses.filter(exp => {
+        const cat = categories.find(c => c.id === exp.category_id);
+        return (cat?.type || 'DESPESA') === activeTab;
+    });
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isSaving) return;
@@ -115,24 +121,40 @@ export default function RecurringExpensesView() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <Repeat className="text-orange-600" /> Despesas Recorrentes
+                        <Repeat className="text-indigo-600" /> Lançamentos Recorrentes
                     </h2>
-                    <p className="text-slate-500">Gerencie seus gastos mensais fixos e variáveis</p>
+                    <p className="text-slate-500">Gerencie suas receitas e despesas automáticas</p>
                 </div>
-                <button
-                    onClick={() => { setEditingId(null); setIsModalOpen(true); }}
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg flex items-center shadow-md transition-colors"
-                >
-                    <Plus size={20} className="mr-2" />
-                    Nova Recorrência
-                </button>
+                <div className="flex gap-2 w-full md:w-auto">
+                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => setActiveTab('DESPESA')}
+                            className={`px-4 py-2 text-sm font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'DESPESA' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}
+                        >
+                            <ArrowDownCircle size={16} /> Despesas
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('RECEITA')}
+                            className={`px-4 py-2 text-sm font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'RECEITA' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-400'}`}
+                        >
+                            <ArrowUpCircle size={16} /> Receitas
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => { setEditingId(null); setIsModalOpen(true); }}
+                        className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg flex items-center shadow-md transition-colors font-bold text-sm"
+                    >
+                        <Plus size={18} className="mr-2" />
+                        Novo
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {expenses.map(exp => {
+                {filteredExpenses.map(exp => {
                     const cat = categories.find(c => c.id === exp.category_id);
                     return (
                         <div key={exp.id} className={`bg-white rounded-xl shadow-sm border ${exp.active ? 'border-slate-100' : 'border-slate-200 bg-slate-50 opacity-75'} p-5 relative group`}>
@@ -142,29 +164,34 @@ export default function RecurringExpensesView() {
                             </div>
 
                             <div className="flex items-center space-x-3 mb-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${exp.active ? 'bg-orange-100 text-orange-600' : 'bg-slate-200 text-slate-400'}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${exp.active ? (activeTab === 'RECEITA' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600') : 'bg-slate-200 text-slate-400'}`}>
                                     <RotateCw size={20} />
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-slate-800">{exp.description}</h3>
-                                    <span className="text-xs text-slate-500 uppercase font-medium tracking-wide">{cat?.name}</span>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-slate-800 truncate">{exp.description}</h3>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat?.color }}></span>
+                                        <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{cat?.name}</span>
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 <div className="flex justify-between text-sm border-b border-slate-50 pb-2">
                                     <span className="text-slate-500">Valor Estimado</span>
-                                    <span className="font-bold text-slate-800">{formatCurrency(exp.amount)}</span>
+                                    <span className={`font-bold ${activeTab === 'RECEITA' ? 'text-green-600' : 'text-slate-800'}`}>
+                                        {formatCurrency(exp.amount)}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between text-sm border-b border-slate-50 pb-2">
                                     <span className="text-slate-500">Vencimento</span>
-                                    <span className="text-slate-800">Dia {exp.day_of_month}</span>
+                                    <span className="text-slate-800 font-medium">Dia {exp.day_of_month}</span>
                                 </div>
                                 <div className="flex justify-between items-center pt-1">
-                                    <span className={`text-xs px-2 py-1 rounded-full ${exp.auto_create ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${exp.auto_create ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                                         {exp.auto_create ? 'Automático' : 'Lembrete'}
                                     </span>
-                                    <span className={`text-xs font-medium ${exp.type === 'FIXO' ? 'text-blue-600' : 'text-purple-600'}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${exp.type === 'FIXO' ? 'text-blue-600' : 'text-purple-600'}`}>
                                         {exp.type}
                                     </span>
                                 </div>
@@ -173,55 +200,59 @@ export default function RecurringExpensesView() {
                     );
                 })}
 
-                {expenses.length === 0 && (
-                    <div className="col-span-full py-12 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        <Repeat size={48} className="mx-auto mb-4 opacity-20" />
-                        <p>Nenhuma despesa recorrente cadastrada.</p>
-                        <button onClick={() => setIsModalOpen(true)} className="text-orange-600 font-medium mt-2 hover:underline">Criar a primeira</button>
+                {filteredExpenses.length === 0 && (
+                    <div className="col-span-full py-16 text-center text-slate-400 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                        <Repeat size={48} className="mx-auto mb-4 opacity-10" />
+                        <p className="font-bold text-slate-500">Nenhuma {activeTab.toLowerCase()} recorrente cadastrada.</p>
+                        <p className="text-xs mt-1">Clique em "Novo" para programar um lançamento.</p>
+                        <button onClick={() => setIsModalOpen(true)} className="text-indigo-600 font-black text-[10px] uppercase tracking-widest mt-4 hover:underline">Criar a primeira</button>
                     </div>
                 )}
             </div>
 
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-                        <h3 className="font-bold text-xl text-slate-800 mb-6 border-b pb-4">
-                            {editingId ? 'Editar Recorrência' : 'Nova Despesa Recorrente'}
-                        </h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto transform animate-scale-up border border-slate-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">
+                                {editingId ? 'Editar Lançamento' : `Novo Lançamento ${activeTab === 'RECEITA' ? 'de Receita' : 'de Despesa'}`}
+                            </h3>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                        </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Type Selection */}
-                            <div className="flex bg-slate-100 p-1 rounded-lg">
+                            <div className="flex bg-slate-100 p-1 rounded-xl">
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, type: 'FIXO' })}
-                                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${formData.type === 'FIXO' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
+                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${formData.type === 'FIXO' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'}`}
                                 >
                                     Valor Fixo
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, type: 'VARIAVEL' })}
-                                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${formData.type === 'VARIAVEL' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
+                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${formData.type === 'VARIAVEL' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'}`}
                                 >
                                     Valor Variável
                                 </button>
                             </div>
 
-                            <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <div className="text-[10px] uppercase tracking-wider leading-relaxed text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100 italic">
                                 {formData.type === 'FIXO' ? (
-                                    <p><span className="font-bold text-slate-700">Valor Fixo:</span> Ideal para aluguel, assinaturas (Netflix) ou mensalidades. A despesa será criada já como <span className="text-green-600 font-bold">confirmada</span>.</p>
+                                    <p><span className="font-black text-slate-700">Valor Fixo:</span> Ideal para aluguel, assinaturas (Netflix) ou mensalidades. A despesa será criada já como <span className="text-green-600 font-black">confirmada</span>.</p>
                                 ) : (
-                                    <p><span className="font-bold text-slate-700">Valor Variável:</span> Ideal para água, luz ou cartão. O sistema criará a despesa como <span className="text-blue-600 font-bold">prevista</span> para você confirmar o valor exato depois.</p>
+                                    <p><span className="font-black text-slate-700">Valor Variável:</span> Ideal para água, luz ou cartão. O sistema criará a despesa como <span className="text-blue-600 font-black">prevista</span> para você confirmar o valor exato depois.</p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Descrição</label>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Descrição</label>
                                 <input
                                     type="text"
-                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500/20"
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all font-medium text-slate-800"
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                     placeholder="Ex: Aluguel, Netflix, Luz..."
@@ -231,13 +262,13 @@ export default function RecurringExpensesView() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Valor {formData.type === 'VARIAVEL' ? '(Estimado)' : ''}</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Valor {formData.type === 'VARIAVEL' ? '(Estimado)' : ''}</label>
                                     <div className="relative">
-                                        <DollarSign size={16} className="absolute left-3 top-3 text-slate-400" />
+                                        <DollarSign size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold" />
                                         <input
                                             type="number"
                                             step="0.01"
-                                            className="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-orange-500/20"
+                                            className="w-full border border-slate-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all font-bold text-slate-800"
                                             value={formData.amount}
                                             onChange={e => setFormData({ ...formData, amount: e.target.value })}
                                             required
@@ -245,26 +276,26 @@ export default function RecurringExpensesView() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Categoria</label>
                                     <select
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all font-medium text-slate-700"
                                         value={formData.category_id}
                                         onChange={e => setFormData({ ...formData, category_id: e.target.value })}
                                         required
                                     >
                                         <option value="">Selecione...</option>
-                                        {categories.filter(c => c.type === 'DESPESA').map(c => (
+                                        {categories.filter(c => c.type === activeTab).map(c => (
                                             <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
                                         ))}
                                     </select>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-6 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Frequência</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Frequência</label>
                                     <select
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none bg-white font-medium text-slate-700"
                                         value={formData.frequency}
                                         onChange={e => setFormData({ ...formData, frequency: e.target.value as RecurrenceFrequency })}
                                         required
@@ -277,9 +308,9 @@ export default function RecurringExpensesView() {
                                 </div>
                                 {formData.frequency === 'MENSAL' && (
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Dia do Vencimento</label>
+                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Dia Venc/Receb</label>
                                         <select
-                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
+                                            className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none bg-white font-medium text-slate-700"
                                             value={formData.day_of_month}
                                             onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
                                             required
@@ -291,20 +322,22 @@ export default function RecurringExpensesView() {
                                     </div>
                                 )}
                                 <div className={formData.frequency !== 'MENSAL' ? 'col-span-2' : ''}>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Duração (Repetições)</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Duração (Repetições)</label>
                                     <input
                                         type="number"
                                         min="1"
                                         placeholder="Infinito"
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none bg-white font-medium text-slate-700"
                                         value={formData.duration_count || ''}
                                         onChange={e => setFormData({ ...formData, duration_count: e.target.value ? Number(e.target.value) : undefined })}
                                     />
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Conta para Debitar</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">
+                                        {activeTab === 'RECEITA' ? 'Conta para Recebimento' : 'Conta para Débito'}
+                                    </label>
                                     <select
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none mb-3"
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none mb-4 bg-white font-medium text-slate-700"
                                         value={formData.account_id}
                                         onChange={e => setFormData({ ...formData, account_id: e.target.value, card_id: '' })}
                                     >
@@ -312,57 +345,61 @@ export default function RecurringExpensesView() {
                                         {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                                     </select>
 
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Ou no Cartão de Crédito</label>
-                                    <select
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none"
-                                        value={formData.card_id}
-                                        onChange={e => setFormData({ ...formData, card_id: e.target.value, account_id: '' })}
-                                    >
-                                        <option value="">Não usar cartão</option>
-                                        {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
+                                    {activeTab === 'DESPESA' && (
+                                        <>
+                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Ou no Cartão de Crédito</label>
+                                            <select
+                                                className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none bg-white font-medium text-slate-700"
+                                                value={formData.card_id}
+                                                onChange={e => setFormData({ ...formData, card_id: e.target.value, account_id: '' })}
+                                            >
+                                                <option value="">Não usar cartão</option>
+                                                {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                            </select>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-slate-100 space-y-3">
-                                <label className="flex items-center space-x-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <div className="pt-4 space-y-3">
+                                <label className="flex items-center space-x-4 p-4 border border-slate-100 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all group">
                                     <input
                                         type="checkbox"
                                         checked={formData.auto_create}
                                         onChange={e => setFormData({ ...formData, auto_create: e.target.checked })}
-                                        className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                                        className="w-5 h-5 text-indigo-600 rounded-lg focus:ring-indigo-500 border-slate-300 transition-all group-hover:scale-110"
                                     />
                                     <div>
-                                        <span className="block font-medium text-slate-800">Criar Automaticamente</span>
-                                        <span className="block text-xs text-slate-500">O sistema cria a despesa no dia 1º de cada mês</span>
+                                        <span className="block font-bold text-slate-800 text-sm">Criar Automaticamente</span>
+                                        <span className="block text-[10px] uppercase font-black tracking-widest text-slate-400">Geração automática no dia programado</span>
                                     </div>
                                 </label>
 
-                                <label className="flex items-center space-x-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                                <label className="flex items-center space-x-4 p-4 border border-slate-100 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all group">
                                     <input
                                         type="checkbox"
                                         checked={formData.active}
                                         onChange={e => setFormData({ ...formData, active: e.target.checked })}
-                                        className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                                        className="w-5 h-5 text-indigo-600 rounded-lg focus:ring-indigo-500 border-slate-300 transition-all group-hover:scale-110"
                                     />
                                     <div>
-                                        <span className="block font-medium text-slate-800">Recorrência Ativa</span>
-                                        <span className="block text-xs text-slate-500">Desative para pausar temporariamente</span>
+                                        <span className="block font-bold text-slate-800 text-sm">Recorrência Ativa</span>
+                                        <span className="block text-[10px] uppercase font-black tracking-widest text-slate-400">Pause para interromper lançamentos</span>
                                     </div>
                                 </label>
                             </div>
 
-                            <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-slate-100">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium">Cancelar</button>
+                            <div className="flex gap-4 pt-4 border-t border-slate-100">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 text-slate-500 font-bold text-sm bg-slate-50 hover:bg-slate-100 rounded-xl transition-all">Cancelar</button>
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10 disabled:opacity-50 flex items-center gap-2"
+                                    className="flex-[2] py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-xl shadow-slate-900/20 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? (
                                         <>
                                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            Salvando...
+                                            Processando...
                                         </>
                                     ) : (
                                         editingId ? 'Salvar Alterações' : 'Criar Recorrência'

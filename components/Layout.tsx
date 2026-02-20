@@ -4,7 +4,7 @@ import {
     Menu, LogOut, LayoutDashboard, Wallet, CreditCard,
     ArrowRightLeft, User as UserIcon, ArrowDownCircle,
     TrendingUp, Repeat, Target, PieChart, Calculator,
-    BarChart3
+    BarChart3, Settings
 } from 'lucide-react';
 import { User } from '../types';
 import { VersionInfo } from '../version';
@@ -33,6 +33,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, chil
         { id: 'simulator', icon: Calculator, label: 'Simulador' },
         { id: 'cards', icon: CreditCard, label: 'Meus Cartões' },
         { id: 'transfers', icon: ArrowRightLeft, label: 'Transferências' },
+        { id: 'settings', icon: Settings, label: 'Configurações' },
     ];
 
     return (

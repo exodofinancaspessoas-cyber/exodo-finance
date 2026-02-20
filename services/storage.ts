@@ -159,6 +159,44 @@ export const StorageService = {
         StorageService.clearCache();
     },
 
+    async nuclearReset() {
+        await DatabaseService.deleteAllUserData();
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.reload();
+    },
+
+    async partialReset() {
+        await DatabaseService.deletePartialUserData();
+        localStorage.removeItem('exodo_transactions');
+        localStorage.removeItem('exodo_recurring');
+        StorageService.clearCache();
+        window.location.reload();
+    },
+
+    async customReset(tables: string[]) {
+        await DatabaseService.deleteCustomUserData(tables);
+
+        // Map table names to LocalStorage keys
+        const keyMap: Record<string, string> = {
+            'transactions': 'exodo_transactions',
+            'recurring_expenses': 'exodo_recurring',
+            'transfers': 'exodo_transfers',
+            'goals': 'exodo_goals',
+            'budgets': 'exodo_budgets',
+            'accounts': 'exodo_accounts',
+            'cards': 'exodo_cards'
+        };
+
+        tables.forEach(table => {
+            const key = keyMap[table];
+            if (key) localStorage.removeItem(key);
+        });
+
+        StorageService.clearCache();
+        window.location.reload();
+    },
+
     async processRecurringExpenses() {
         if (StorageService._isProcessingRecurring) return;
         StorageService._isProcessingRecurring = true;
@@ -175,8 +213,13 @@ export const StorageService = {
 
             const defaultHorizon = 12;
 
+            const categories = await StorageService.getCategories();
+
             for (const rec of recurring) {
                 if (!rec.active || !rec.auto_create) continue;
+
+                const cat = categories.find(c => c.id === rec.category_id);
+                const entryType = cat?.type || 'DESPESA';
 
                 const count = rec.duration_count || defaultHorizon;
                 const startDate = rec.start_date ? new Date(rec.start_date) : today;
@@ -200,26 +243,40 @@ export const StorageService = {
                     if (rec.end_date && dateStr > rec.end_date) break;
 
                     const exists = transactions.some(t => {
-                        if (t.recurrence_id !== rec.id || t.status === 'EXCLUIDA' || !t.date) return false;
+                        if (t.recurrence_id !== rec.id || !t.date) return false;
+
+                        // Consider it "exists" even if EXCLUIDA, to prevent re-creation of deleted items
+                        let isSamePeriod = false;
                         if (rec.frequency === 'MENSAL') {
                             const [ty, tm] = t.date.split('-').map(Number);
-                            return ty === targetDate.getFullYear() && (tm - 1) === targetDate.getMonth();
+                            isSamePeriod = ty === targetDate.getFullYear() && (tm - 1) === targetDate.getMonth();
+                        } else {
+                            isSamePeriod = t.date === dateStr;
                         }
-                        return t.date === dateStr;
+
+                        return isSamePeriod;
                     });
 
                     if (exists) {
                         // console.log(`[Recurring] Skipping ${rec.description} for ${dateStr} - already exists.`);
                     } else {
-                        console.log(`[Recurring] Creating ${rec.description} for ${dateStr} (Status: ${rec.type === 'FIXO' ? 'CONFIRMADA' : 'PREVISTA'})`);
+                        const targetAmount = rec.programmed_amount ?? rec.amount;
+                        const isFuture = dateStr > toISODate(today);
+
+                        // Logic: Future transactions are ALWAYS 'PREVISTA' to allow user adjustment and accurate projections.
+                        // Only FIXED transactions for TODAY or PAST are marked as PAID/RECEIVED.
+                        const finalStatus = (rec.type === 'FIXO' && !isFuture)
+                            ? (entryType === 'RECEITA' ? 'RECEBIDA' : 'PAGA')
+                            : 'PREVISTA';
+
                         const newTrx: Transaction = {
                             id: generateId(),
                             description: rec.description,
-                            amount: rec.amount,
-                            type: 'DESPESA',
+                            amount: targetAmount,
+                            type: entryType,
                             category_id: rec.category_id,
                             date: dateStr,
-                            status: rec.type === 'FIXO' ? 'CONFIRMADA' : 'PREVISTA',
+                            status: finalStatus,
                             account_id: rec.account_id,
                             card_id: rec.card_id,
                             payment_method: rec.payment_method,
@@ -234,7 +291,7 @@ export const StorageService = {
                         if (matchesYearMonth(dateStr, today)) {
                             StorageService.addNotification({
                                 id: generateId(),
-                                title: 'Pagamento Programado',
+                                title: entryType === 'RECEITA' ? 'Receita Programada' : 'Pagamento Programado',
                                 message: `${rec.description} (R$ ${rec.amount}) para ${dateStr}.`,
                                 type: 'INFO',
                                 read: false,
@@ -377,7 +434,7 @@ export const StorageService = {
             const toUpdate: Transaction[] = [];
 
             trxs.forEach(t => {
-                if ((t.status === 'PREVISTA' || t.status === 'CONFIRMADA') && t.type === 'DESPESA' && t.date < todayStr) {
+                if ((t.status === 'PREVISTA' || t.status === 'CONFIRMADA') && t.date < todayStr) {
                     t.status = 'ATRASADA';
                     toUpdate.push(t);
                 }
@@ -404,6 +461,11 @@ export const StorageService = {
 
     async deleteTransaction(id: string) {
         await DatabaseService.deleteTransaction(id);
+        StorageService.clearCache();
+    },
+
+    async deleteTransactions(ids: string[]) {
+        await DatabaseService.deleteTransactions(ids);
         StorageService.clearCache();
     },
 
@@ -447,6 +509,24 @@ export const StorageService = {
         if (!force && existing.length > 10) return;
 
         const allToSave: Category[] = [];
+
+        // Adicionar categorias de RECEITA primeiro
+        const incomeCategories = [
+            { name: 'SALÁRIO', color: '#16a34a', sub: ['Pró-labore', 'Bônus', 'Décimo Terceiro', 'Férias', 'Comissões', 'PLR'] },
+            { name: 'FREELANCE', color: '#22c55e', sub: ['Projetos TI', 'Consultoria', 'Aulas', 'Vendas diretas'] },
+            { name: 'INVESTIMENTOS', color: '#0ea5e9', sub: ['Dividendos', 'Juros sobre Capital', 'Rendimentos Poupança', 'Rendimentos CDB'] },
+            { name: 'OUTROS', color: '#94a3b8', sub: ['Presentes', 'Reembolsos', 'Venda de itens usados'] }
+        ];
+
+        for (const mainCat of incomeCategories) {
+            const parentId = generateId();
+            allToSave.push({ id: parentId, name: mainCat.name, type: 'RECEITA', color: mainCat.color, icon: 'Folder' });
+            for (const subName of mainCat.sub) {
+                allToSave.push({ id: generateId(), name: subName, type: 'RECEITA', color: mainCat.color, icon: 'Tag', parent_id: parentId });
+            }
+        }
+
+        // Adicionar categorias de DESPESA
         for (const mainCat of INITIAL_CATEGORIES_DATA) {
             const parentId = generateId();
             allToSave.push({ id: parentId, name: mainCat.name, type: 'DESPESA', color: mainCat.color, icon: 'Folder' });

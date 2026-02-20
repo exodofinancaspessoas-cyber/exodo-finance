@@ -100,6 +100,7 @@ export interface RecurringExpense {
   card_id?: string;
   payment_method?: PaymentMethod;
   duration_count?: number; // How many times it should repeat in total
+  programmed_amount?: number; // Optional override for future instances
 }
 
 export interface Transfer {

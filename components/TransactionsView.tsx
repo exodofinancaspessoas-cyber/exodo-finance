@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Filter, Plus, Edit, Trash2, CreditCard, X, ChevronDown,
     Download, Trash, Copy, CheckSquare, Square, Calendar, Check, CheckCircle,
-    TrendingDown, AlertTriangle, Clock, Settings, Settings2, RotateCcw
+    TrendingDown, AlertTriangle, Clock, Settings, Settings2, RotateCcw, RefreshCw
 } from 'lucide-react';
 import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense, RecurrenceFrequency } from '../types';
 import { StorageService } from '../services/storage';
@@ -12,6 +12,7 @@ import ExportModal from './ExportModal';
 
 interface TransactionsViewProps {
     initialType?: TransactionType | 'ALL';
+    key?: string;
 }
 
 type FilterState = {
@@ -64,6 +65,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     const [isExportModalOpen, setIsExportModalOpen] = useState(false); // New state for export
     const [filters, setFilters] = useState<FilterState>(() => getInitialFilters(initialType));
     const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
+    const [isSaving, setIsSaving] = useState(false);
 
     // Form State
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -145,7 +147,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         const hasCardPay = cats.find(c => c.name === 'Fatura de Cartão');
         if (!hasCardPay) {
             const newCat: Category = {
-                id: 'cat_card',
+                id: '71060936-cb60-4927-b501-8b9cad0e1f20', // Valid UUID instead of 'cat_card'
                 name: 'Fatura de Cartão',
                 type: 'DESPESA',
                 icon: 'CreditCard',
@@ -223,11 +225,8 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
     const monthStats = useMemo(() => {
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
         const monthlyTransactions = transactions.filter(t => {
-            if (!t.date) return false;
+            if (!t.date || t.status === 'EXCLUIDA') return false;
             const dateParts = parseSafeDate(t.date);
             if (!dateParts) return false;
             const targetYear = now.getFullYear();
@@ -235,18 +234,21 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             return dateParts.y === targetYear && (dateParts.m - 1) === targetMonth;
         });
 
-        const pendingExpenses = monthlyTransactions.filter(t =>
-            t.type === 'DESPESA' &&
+        const activeType = filters.type === 'ALL' ? 'DESPESA' : filters.type;
+
+        const pending = monthlyTransactions.filter(t =>
+            t.type === activeType &&
             (t.status === 'PREVISTA' || t.status === 'ATRASADA' || t.status === 'CONFIRMADA')
         );
-        const overdueCount = transactions.filter(t => t.status === 'ATRASADA').length;
+        const overdueCount = transactions.filter(t => t.status === 'ATRASADA' && t.type === activeType).length;
 
         return {
-            pendingTotal: pendingExpenses.reduce((sum, t) => sum + t.amount, 0),
-            pendingCount: pendingExpenses.length,
-            overdueCount
+            pendingTotal: pending.reduce((sum, t) => sum + t.amount, 0),
+            pendingCount: pending.length,
+            overdueCount,
+            type: activeType
         };
-    }, [transactions]);
+    }, [transactions, filters.type]);
 
     // --- Batch Actions ---
     const toggleSelection = (id: string) => {
@@ -267,12 +269,17 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     const handleBatchDelete = async () => {
         if (!confirm(`Excluir ${selectedTransactions.size} transações selecionadas?`)) return;
 
-        for (const id of Array.from(selectedTransactions)) {
-            await StorageService.deleteTransaction(id as string);
+        setIsSaving(true);
+        try {
+            await StorageService.deleteTransactions(Array.from(selectedTransactions));
+            setSelectedTransactions(new Set());
+            await loadData();
+        } catch (error) {
+            console.error('Erro ao excluir transações:', error);
+            alert('Erro ao excluir selecionados.');
+        } finally {
+            setIsSaving(false);
         }
-
-        setSelectedTransactions(new Set());
-        await loadData();
     };
 
     // --- Form Logic ---
@@ -327,8 +334,13 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
     const handleDelete = async (id: string) => {
         if (confirm('Excluir transação?')) {
-            await StorageService.deleteTransaction(id);
-            await loadData();
+            setIsSaving(true);
+            try {
+                await StorageService.deleteTransaction(id);
+                await loadData();
+            } finally {
+                setIsSaving(false);
+            }
         }
     };
 
@@ -336,89 +348,115 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         const trx = transactions.find(t => t.id === id);
         if (!trx) return;
 
-        const restoredTrx: Transaction = {
-            ...trx,
-            status: 'PREVISTA' // Default to PREVISTA when restored
-        };
+        setIsSaving(true);
+        try {
+            const restoredTrx: Transaction = {
+                ...trx,
+                status: 'PREVISTA' // Default to PREVISTA when restored
+            };
 
-        await StorageService.saveTransaction(restoredTrx);
-        await loadData();
+            await StorageService.saveTransaction(restoredTrx);
+            await loadData();
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const totalAmount = Number(formData.amount);
-        let finalAmount = totalAmount;
-        let installmentsData = undefined;
+        if (isSaving) return;
 
-        if (formData.is_installment && formData.installments_count > 1) {
-            finalAmount = totalAmount / formData.installments_count;
-            installmentsData = {
-                current: 1,
-                total: formData.installments_count
-            };
-        }
+        setIsSaving(true);
+        try {
+            const totalAmount = Number(formData.amount);
+            let finalAmount = totalAmount;
+            let installmentsData = undefined;
 
-        const newTrx: Transaction = {
-            id: editingTransaction ? editingTransaction.id : StorageService.generateId(),
-            description: formData.description,
-            amount: finalAmount,
-            type: formData.type,
-            category_id: formData.category_id || undefined,
-            date: formData.date,
-            status: formData.status,
-            payment_method: formData.payment_method,
-            account_id: formData.account_id || undefined,
-            card_id: formData.card_id || undefined,
-            observation: formData.observation,
-            installments: installmentsData,
-            created_at: new Date().toISOString()
-        };
-
-        // Handle Recurring
-        if (formData.is_recurring && !editingTransaction) {
-            const recurringId = StorageService.generateId();
-            newTrx.recurrence_id = recurringId;
-
-            let endDate = undefined;
-            if (formData.recurring_duration && Number(formData.recurring_duration) > 0) {
-                const duration = Number(formData.recurring_duration);
-                const end = new Date(formData.date);
-                end.setMonth(end.getMonth() + duration - 1);
-                endDate = end.toISOString().split('T')[0];
+            if (formData.is_installment && formData.installments_count > 1) {
+                finalAmount = totalAmount / formData.installments_count;
+                installmentsData = {
+                    current: 1,
+                    total: formData.installments_count
+                };
             }
 
-            const recurringExpense: RecurringExpense = {
-                id: recurringId,
+            const newTrx: Transaction = {
+                id: editingTransaction ? editingTransaction.id : StorageService.generateId(),
                 description: formData.description,
-                amount: formData.programmed_amount ? Number(formData.programmed_amount) : finalAmount,
-                category_id: formData.category_id,
-                type: formData.recurring_type,
-                frequency: formData.frequency,
-                day_of_month: Number(formData.day_of_month),
-                active: true,
-                auto_create: true,
-                account_id: formData.account_id || undefined,
+                amount: finalAmount,
+                type: formData.type,
+                category_id: formData.category_id || undefined,
+                date: formData.date,
+                status: formData.status,
                 payment_method: formData.payment_method,
-                last_generated: new Date().toISOString(),
-                start_date: formData.date,
-                end_date: endDate,
-                duration_count: formData.recurring_duration ? Number(formData.recurring_duration) : undefined
+                account_id: formData.account_id || undefined,
+                card_id: formData.card_id || undefined,
+                observation: formData.observation,
+                installments: installmentsData,
+                created_at: new Date().toISOString()
             };
 
-            // SAVE TRANSACTION FIRST to avoid duplication in processRecurringExpenses
-            await StorageService.saveTransaction(newTrx);
-            // THEN SAVE RECURRING RULE
-            await StorageService.saveRecurringExpense(recurringExpense);
-        } else {
-            await StorageService.saveTransaction(newTrx);
+            // Handle Recurring
+            if (formData.is_recurring && !editingTransaction) {
+                const recurringId = StorageService.generateId();
+                newTrx.recurrence_id = recurringId;
+
+                let endDate = undefined;
+                if (formData.recurring_duration && Number(formData.recurring_duration) > 0) {
+                    const duration = Number(formData.recurring_duration);
+                    const end = new Date(formData.date);
+                    end.setMonth(end.getMonth() + duration - 1);
+                    endDate = end.toISOString().split('T')[0];
+                }
+
+                const recurringExpense: RecurringExpense = {
+                    id: recurringId,
+                    description: formData.description,
+                    amount: finalAmount,
+                    programmed_amount: formData.programmed_amount ? Number(formData.programmed_amount) : finalAmount,
+                    category_id: formData.category_id,
+                    type: formData.recurring_type,
+                    frequency: formData.frequency,
+                    day_of_month: Number(formData.day_of_month),
+                    active: true,
+                    auto_create: true,
+                    account_id: formData.account_id || undefined,
+                    payment_method: formData.payment_method,
+                    last_generated: new Date().toISOString(),
+                    start_date: formData.date,
+                    end_date: endDate,
+                    duration_count: formData.recurring_duration ? Number(formData.recurring_duration) : undefined
+                };
+
+                // SAVE TRANSACTION FIRST to avoid duplication in processRecurringExpenses
+                await StorageService.saveTransaction(newTrx);
+                // THEN SAVE RECURRING RULE
+                await StorageService.saveRecurringExpense(recurringExpense);
+            } else {
+                await StorageService.saveTransaction(newTrx);
+            }
+
+            // Warning if type mismatch
+            if (filters.type !== 'ALL' && formData.type !== filters.type) {
+                const typeText = formData.type === 'RECEITA' ? 'Receita' : 'Despesa';
+                const viewText = filters.type === 'RECEITA' ? 'Receitas' : 'Despesas';
+                if (!confirm(`Você está salvando uma ${typeText} enquanto visualiza a aba de ${viewText}. A transação não aparecerá nesta lista atual. Continuar?`)) {
+                    setIsSaving(false);
+                    return;
+                }
+            }
+
+            // Process all recurring rules (will create future ones)
+            await StorageService.processRecurringExpenses();
+
+            setIsModalOpen(false);
+            await loadData();
+        } catch (error) {
+            console.error('Erro ao salvar transação:', error);
+            alert('Erro ao salvar transação. Tente novamente.');
+        } finally {
+            setIsSaving(false);
         }
-
-        // Process all recurring rules (will create future ones)
-        await StorageService.processRecurringExpenses();
-
-        setIsModalOpen(false);
-        await loadData();
     };
 
     const handleDeleteCategory = async (id: string) => {
@@ -429,22 +467,30 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
     const handleSaveCategory = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!categoryFormData.name) return;
+        if (!categoryFormData.name || isSaving) return;
 
-        const newCat: Category = {
-            id: StorageService.generateId(),
-            name: categoryFormData.name,
-            type: formData.type,
-            color: categoryFormData.color,
-            icon: categoryFormData.icon,
-            is_default: false
-        };
+        setIsSaving(true);
+        try {
+            const newCat: Category = {
+                id: StorageService.generateId(),
+                name: categoryFormData.name,
+                type: formData.type,
+                color: categoryFormData.color,
+                icon: categoryFormData.icon,
+                is_default: false
+            };
 
-        await StorageService.saveCategory(newCat);
-        setCategoryFormData({ name: '', color: '#6366f1', icon: 'Tag' });
-        setIsCategoryModalOpen(false);
-        await loadData();
-        setFormData(prev => ({ ...prev, category_id: newCat.id }));
+            await StorageService.saveCategory(newCat);
+            setCategoryFormData({ name: '', color: '#6366f1', icon: 'Tag' });
+            setIsCategoryModalOpen(false);
+            await loadData();
+            setFormData(prev => ({ ...prev, category_id: newCat.id }));
+        } catch (error) {
+            console.error('Erro ao salvar categoria:', error);
+            alert('Erro ao salvar categoria.');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleResetCategories = async () => {
@@ -473,29 +519,34 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     };
 
     const handleConfirmPay = async () => {
-        if (!payTrx) return;
+        if (!payTrx || isSaving) return;
 
-        const updatedTrx: Transaction = {
-            ...payTrx,
-            status: payTrx.type === 'RECEITA' ? 'RECEBIDA' : 'PAGA',
-            date: payFormData.date,
-            payment_method: payFormData.payment_method,
-            account_id: payFormData.account_id || undefined,
-            card_id: payFormData.card_id || undefined
-        };
+        setIsSaving(true);
+        try {
+            const updatedTrx: Transaction = {
+                ...payTrx,
+                status: payTrx.type === 'RECEITA' ? 'RECEBIDA' : 'PAGA',
+                date: payFormData.date,
+                payment_method: payFormData.payment_method,
+                account_id: payFormData.account_id || undefined,
+                card_id: payFormData.card_id || undefined
+            };
 
-        await StorageService.saveTransaction(updatedTrx);
-        setIsPayModalOpen(false);
-        setPayTrx(null);
-        await loadData();
+            await StorageService.saveTransaction(updatedTrx);
+            setIsPayModalOpen(false);
+            setPayTrx(null);
+            await loadData();
+        } catch (error) {
+            console.error('Erro ao quitar transação:', error);
+            alert('Erro ao processar pagamento.');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // Dynamic Options
     const { parentCategories, subCategories, filteredDirect } = useMemo(() => {
-        const filtered = categories.filter(c => {
-            const matchesType = c.type === formData.type || c.type === 'RECEITA'; // Always show income cats if type is income
-            return matchesType;
-        });
+        const filtered = categories.filter(c => c.type === formData.type);
 
         const parents = filtered.filter(c => !c.parent_id);
         const children = filtered.filter(c => c.parent_id);
@@ -668,12 +719,16 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             {/* QUICK STATS PANEL */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center text-orange-600">
-                        <Clock size={24} />
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${monthStats.type === 'RECEITA' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
+                        {monthStats.type === 'RECEITA' ? <TrendingDown className="rotate-180" size={24} /> : <Clock size={24} />}
                     </div>
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pendentes deste Mês</p>
-                        <p className="text-xl font-bold text-slate-800">{formatCurrency(monthStats.pendingTotal)}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            {monthStats.type === 'RECEITA' ? 'A Receber este Mês' : 'Pendentes deste Mês'}
+                        </p>
+                        <p className={`text-xl font-bold ${monthStats.type === 'RECEITA' ? 'text-green-600' : 'text-slate-800'}`}>
+                            {formatCurrency(monthStats.pendingTotal)}
+                        </p>
                         <p className="text-xs text-slate-500">{monthStats.pendingCount} lançamentos</p>
                     </div>
                 </div>
@@ -707,8 +762,20 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                     <div className="bg-slate-800 text-white p-3 rounded-lg flex items-center justify-between shadow-lg animate-fade-in sticky top-4 z-30">
                         <span className="font-bold text-sm ml-2">{selectedTransactions.size} selecionados</span>
                         <div className="flex gap-2">
-                            <button onClick={handleBatchDelete} className="p-2 hover:bg-slate-700 rounded-lg text-red-300 hover:text-red-200 flex items-center gap-2 text-sm" title="Excluir">
-                                <Trash2 size={16} /> Excluir
+                            <button
+                                onClick={handleBatchDelete}
+                                className="p-2 hover:bg-slate-700 rounded-lg text-red-300 hover:text-red-200 flex items-center gap-2 text-sm disabled:opacity-50"
+                                title="Excluir"
+                                disabled={isSaving}
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-red-300/20 border-t-red-300 rounded-full animate-spin" />
+                                        Excluindo...
+                                    </>
+                                ) : (
+                                    <><Trash2 size={16} /> Excluir</>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -763,6 +830,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                                 <span className="flex items-center gap-1.5">
                                                     {t.description}
                                                     {t.payment_method === 'CREDITO' && <CreditCard size={12} className="text-slate-400" />}
+                                                    {t.recurrence_id && <RefreshCw size={10} className="text-indigo-400" title="Recorrente" />}
                                                 </span>
                                                 {t.installments && (
                                                     <span className="text-[10px] text-slate-400 bg-slate-100 w-fit px-1 rounded flex items-center gap-1">
@@ -787,7 +855,8 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                                 {t.status}
                                             </span>
                                         </td>
-                                        <td className={`px-6 py-4 text-right font-bold ${t.type === 'RECEITA' ? 'text-green-600' : 'text-red-700'}`}>
+                                        <td className={`px-6 py-4 text-right font-bold ${t.type === 'RECEITA' ? 'text-green-600' : 'text-red-700'} ${t.status === 'PREVISTA' && t.recurrence_id ? 'italic opacity-80' : ''}`}>
+                                            {t.status === 'PREVISTA' && t.recurrence_id ? '~ ' : ''}
                                             {t.type === 'RECEITA' ? '+' : '-'}{formatCurrency(t.amount)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -810,8 +879,8 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                                                 <Check size={14} /> QUITAR
                                                             </button>
                                                         )}
-                                                        <button onClick={() => handleOpenModal(t)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-indigo-600 transition-colors"><Edit size={16} /></button>
-                                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 group-hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                                                        <button onClick={() => handleOpenModal(t)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-indigo-600 transition-colors disabled:opacity-50" disabled={isSaving}><Edit size={16} /></button>
+                                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 group-hover:text-red-500 transition-colors disabled:opacity-50" disabled={isSaving}><Trash2 size={16} /></button>
                                                     </>
                                                 )}
                                             </div>
@@ -1054,7 +1123,8 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
                                                         <button
                                                             type="button"
-                                                            onClick={() => {
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
                                                                 setIsCategoryModalOpen(true);
                                                                 setIsCategoryListExpanded(false);
                                                             }}
@@ -1262,9 +1332,27 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                 </div>
 
                                 <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
-                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium">Cancelar</button>
-                                    <button type="submit" className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10">
-                                        {editingTransaction ? 'Salvar Alterações' : 'Criar Transação'}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium disabled:opacity-50"
+                                        disabled={isSaving}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        disabled={isSaving}
+                                    >
+                                        {isSaving ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                                Salvando...
+                                            </>
+                                        ) : (
+                                            editingTransaction ? 'Salvar Alterações' : 'Criar Transação'
+                                        )}
                                     </button>
                                 </div>
                             </form>
