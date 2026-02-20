@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
 import {
-    Menu, LogOut, LayoutDashboard, Wallet, CreditCard,
-    ArrowRightLeft, User as UserIcon, ArrowDownCircle,
-    TrendingUp, Repeat, Target, PieChart, Calculator,
-    BarChart3, Settings
+    Menu, LogOut, LayoutDashboard, Landmark,
+    User as UserIcon, TrendingUp, Target, PieChart, Calculator,
+    BarChart3, Settings, Wallet, LineChart, BookOpen
 } from 'lucide-react';
 import { User } from '../types';
 import { VersionInfo } from '../version';
@@ -20,19 +19,20 @@ interface SidebarProps {
 export default function Layout({ currentView, onChangeView, user, onLogout, children }: SidebarProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    const isActive = (id: string) => {
+        if (id === 'finance') return ['finance', 'accounts', 'cards'].includes(currentView);
+        if (id === 'movements') return ['movements', 'incomes', 'expenses', 'transfers', 'recurring'].includes(currentView);
+        if (id === 'analytics') return ['analytics', 'projection', 'reports'].includes(currentView);
+        if (id === 'planning') return ['planning', 'goals', 'budgets'].includes(currentView);
+        return currentView === id;
+    };
+
     const detailedMenuItems = [
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'accounts', icon: Wallet, label: 'Minhas Contas' },
-        { id: 'projection', icon: TrendingUp, label: 'Projeção (Novo)' },
-        { id: 'recurring', icon: Repeat, label: 'Recorrentes' },
-        { id: 'reports', icon: BarChart3, label: 'Relatórios' },
-        { id: 'incomes', icon: Wallet, label: 'Receitas' },
-        { id: 'expenses', icon: ArrowDownCircle, label: 'Despesas' },
-        { id: 'goals', icon: Target, label: 'Metas' },
-        { id: 'budgets', icon: PieChart, label: 'Orçamentos' },
-        { id: 'simulator', icon: Calculator, label: 'Simulador' },
-        { id: 'cards', icon: CreditCard, label: 'Meus Cartões' },
-        { id: 'transfers', icon: ArrowRightLeft, label: 'Transferências' },
+        { id: 'finance', icon: Landmark, label: 'Contas & Cartões' },
+        { id: 'movements', icon: Wallet, label: 'Movimentações' },
+        { id: 'analytics', icon: LineChart, label: 'Análises' },
+        { id: 'planning', icon: BookOpen, label: 'Planejamento' },
         { id: 'settings', icon: Settings, label: 'Configurações' },
     ];
 
@@ -51,13 +51,13 @@ export default function Layout({ currentView, onChangeView, user, onLogout, chil
                             key={item.id}
                             onClick={() => onChangeView(item.id)}
                             className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-all duration-200 group
-                ${currentView === item.id
+                ${isActive(item.id)
                                     ? 'bg-orange-600/90 text-white shadow-lg shadow-orange-900/20 translate-x-1'
                                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                                 }
               `}
                         >
-                            <item.icon size={20} className={currentView === item.id ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'} />
+                            <item.icon size={20} className={isActive(item.id) ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'} />
                             <span className="font-medium">{item.label}</span>
                         </button>
                     ))}
@@ -123,10 +123,10 @@ export default function Layout({ currentView, onChangeView, user, onLogout, chil
                                 key={item.id}
                                 onClick={() => { onChangeView(item.id); setIsMobileMenuOpen(false); }}
                                 className={`flex items-center space-x-4 w-full p-4 rounded-xl transition-all
-                  ${currentView === item.id ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300'}
+                  ${isActive(item.id) ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300'}
                 `}
                             >
-                                <item.icon size={24} className={currentView === item.id ? 'text-white' : 'text-slate-500'} />
+                                <item.icon size={24} className={isActive(item.id) ? 'text-white' : 'text-slate-500'} />
                                 <span className="text-lg font-medium">{item.label}</span>
                             </button>
                         ))}

@@ -3,9 +3,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     Search, Filter, Plus, Edit, Trash2, CreditCard, X, ChevronDown,
     Download, Trash, Copy, CheckSquare, Square, Calendar, Check, CheckCircle,
-    TrendingDown, AlertTriangle, Clock, Settings, Settings2, RotateCcw, RefreshCw
+    TrendingDown, AlertTriangle, Clock, Settings, Settings2, RotateCcw, RefreshCw, ArrowRightLeft, Repeat, ChevronRight
 } from 'lucide-react';
-import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense, RecurrenceFrequency } from '../types';
+import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense, RecurrenceFrequency, Transfer } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency, formatDate, toISODate, parseSafeDate } from '../utils';
 import ExportModal from './ExportModal';
@@ -66,6 +66,20 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     const [filters, setFilters] = useState<FilterState>(() => getInitialFilters(initialType));
     const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
+
+    // Transfer Mode State
+    const [isTransferMode, setIsTransferMode] = useState(false);
+    const [transferData, setTransferData] = useState({
+        from: '',
+        to: '',
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        description: ''
+    });
+
+    // Recurring Panel State
+    const [showRecurring, setShowRecurring] = useState(false);
+    const [recurringRules, setRecurringRules] = useState<RecurringExpense[]>([]);
 
     // Form State
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -162,6 +176,9 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         setAccounts(accs);
         setCards(crds);
         setCategories(cats);
+        // Load recurring rules too
+        const recs = await StorageService.getRecurringExpenses();
+        setRecurringRules(recs);
         console.log(`[TransactionsView] Loaded ${trxs.length} transactions. Filter type: ${initialType}`);
     };
 
@@ -329,6 +346,14 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                 programmed_amount: ''
             });
         }
+        setIsTransferMode(false);
+        setTransferData({
+            from: '',
+            to: '',
+            amount: '',
+            date: new Date().toISOString().split('T')[0],
+            description: ''
+        });
         setIsModalOpen(true);
     };
 
@@ -454,6 +479,35 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
         } catch (error) {
             console.error('Erro ao salvar transação:', error);
             alert('Erro ao salvar transação. Tente novamente.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleTransferSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (isSaving) return;
+        if (transferData.from === transferData.to) {
+            alert('Contas de origem e destino devem ser diferentes');
+            return;
+        }
+        setIsSaving(true);
+        try {
+            const newTransfer: Transfer = {
+                id: StorageService.generateId(),
+                from_account_id: transferData.from,
+                to_account_id: transferData.to,
+                amount: Number(transferData.amount),
+                date: transferData.date,
+                description: transferData.description,
+                created_at: new Date().toISOString()
+            };
+            await StorageService.saveTransfer(newTransfer);
+            setIsModalOpen(false);
+            await loadData();
+        } catch (error) {
+            console.error('Erro ao salvar transferência:', error);
+            alert('Erro ao salvar transferência.');
         } finally {
             setIsSaving(false);
         }
@@ -756,6 +810,79 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                 </div>
             </div>
 
+            {/* RECURRING RULES ACCORDION */}
+            {recurringRules.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                    <button
+                        onClick={() => setShowRecurring(!showRecurring)}
+                        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <Repeat size={16} className="text-indigo-500" />
+                            <span className="text-sm font-semibold text-slate-700">Regras Recorrentes</span>
+                            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                {recurringRules.filter(r => r.active).length} ativas
+                            </span>
+                        </div>
+                        <ChevronRight size={16} className={`text-slate-400 transition-transform duration-200 ${showRecurring ? 'rotate-90' : ''}`} />
+                    </button>
+
+                    {showRecurring && (
+                        <div className="border-t border-slate-100 divide-y divide-slate-50">
+                            {recurringRules.map(rule => {
+                                const cat = categories.find(c => c.id === rule.category_id);
+                                const freqLabel: Record<string, string> = { DIARIO: 'Diário', SEMANAL: 'Semanal', MENSAL: 'Mensal', ANUAL: 'Anual' };
+                                return (
+                                    <div key={rule.id} className={`flex items-center justify-between px-5 py-3 ${!rule.active ? 'opacity-50' : ''}`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color || '#94a3b8' }} />
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-800">{rule.description}</p>
+                                                <p className="text-xs text-slate-400">
+                                                    {freqLabel[rule.frequency] || rule.frequency}
+                                                    {rule.day_of_month ? ` · Dia ${rule.day_of_month}` : ''}
+                                                    {cat ? ` · ${cat.name}` : ''}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`text-sm font-bold ${rule.type === 'FIXO' ? 'text-slate-700' : 'text-orange-600'}`}>
+                                                {formatCurrency(rule.amount)}
+                                            </span>
+                                            <button
+                                                onClick={async () => {
+                                                    await StorageService.saveRecurringExpense({ ...rule, active: !rule.active });
+                                                    await loadData();
+                                                }}
+                                                className={`text-xs px-2.5 py-1 rounded-full font-bold transition-colors ${rule.active
+                                                        ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700'
+                                                        : 'bg-slate-100 text-slate-500 hover:bg-green-100 hover:text-green-700'
+                                                    }`}
+                                                title={rule.active ? 'Pausar' : 'Reativar'}
+                                            >
+                                                {rule.active ? 'Ativa' : 'Pausada'}
+                                            </button>
+                                            <button
+                                                onClick={async () => {
+                                                    if (confirm(`Excluir regra recorrente "${rule.description}"?`)) {
+                                                        await StorageService.deleteRecurringExpense(rule.id);
+                                                        await loadData();
+                                                    }
+                                                }}
+                                                className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                                                title="Excluir regra"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Batch Actions Bar */}
             {
                 selectedTransactions.size > 0 && (
@@ -912,30 +1039,37 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                 <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">&times;</button>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                                {/* Type Toggle */}
-                                <div className="flex p-1 bg-slate-100 rounded-xl">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setFormData({ ...formData, type: 'RECEITA' });
-                                            setSelectedParentId(null);
-                                        }}
-                                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${formData.type === 'RECEITA' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-400'}`}
-                                    >
-                                        Receita
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setFormData({ ...formData, type: 'DESPESA' });
-                                            setSelectedParentId(null);
-                                        }}
-                                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${formData.type === 'DESPESA' ? 'bg-white text-red-700 shadow-sm' : 'text-slate-400'}`}
-                                    >
-                                        Despesa
-                                    </button>
-                                </div>
+                            <form onSubmit={isTransferMode ? handleTransferSubmit : handleSubmit} className="p-6 space-y-5">
+                                {/* Type Toggle — 3 options */}
+                                {!editingTransaction && (
+                                    <div className="flex p-1 bg-slate-100 rounded-xl gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setIsTransferMode(false); setFormData({ ...formData, type: 'RECEITA' }); setSelectedParentId(null); }}
+                                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!isTransferMode && formData.type === 'RECEITA' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-400'
+                                                }`}
+                                        >
+                                            Receita
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setIsTransferMode(false); setFormData({ ...formData, type: 'DESPESA' }); setSelectedParentId(null); }}
+                                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!isTransferMode && formData.type === 'DESPESA' ? 'bg-white text-red-700 shadow-sm' : 'text-slate-400'
+                                                }`}
+                                        >
+                                            Despesa
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setIsTransferMode(true); setSelectedParentId(null); }}
+                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${isTransferMode ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-400'
+                                                }`}
+                                        >
+                                            <ArrowRightLeft size={13} />
+                                            Transferência
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Basic Info */}
                                 <div>
@@ -1331,30 +1465,104 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsModalOpen(false)}
-                                        className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium disabled:opacity-50"
-                                        disabled={isSaving}
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                        disabled={isSaving}
-                                    >
-                                        {isSaving ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                                                Salvando...
-                                            </>
-                                        ) : (
-                                            editingTransaction ? 'Salvar Alterações' : 'Criar Transação'
-                                        )}
-                                    </button>
-                                </div>
+                                {/* ── TRANSFER FORM ── */}
+                                {isTransferMode ? (
+                                    <div className="space-y-4 animate-fade-in">
+                                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700 font-medium">
+                                            Mova dinheiro entre suas contas sem afetar receitas ou despesas.
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">De (Origem)</label>
+                                                <select
+                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-blue-500/20"
+                                                    value={transferData.from}
+                                                    onChange={e => setTransferData({ ...transferData, from: e.target.value })}
+                                                    required
+                                                >
+                                                    <option value="">Selecione...</option>
+                                                    {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Para (Destino)</label>
+                                                <select
+                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-blue-500/20"
+                                                    value={transferData.to}
+                                                    onChange={e => setTransferData({ ...transferData, to: e.target.value })}
+                                                    required
+                                                >
+                                                    <option value="">Selecione...</option>
+                                                    {accounts.filter(a => a.id !== transferData.from).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Valor</label>
+                                                <input
+                                                    type="number" step="0.01" min="0.01"
+                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none font-mono text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500/20"
+                                                    value={transferData.amount}
+                                                    onChange={e => setTransferData({ ...transferData, amount: e.target.value })}
+                                                    placeholder="0,00"
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Data</label>
+                                                <input
+                                                    type="date"
+                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-blue-500/20"
+                                                    value={transferData.date}
+                                                    onChange={e => setTransferData({ ...transferData, date: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Descrição (Opcional)</label>
+                                            <input
+                                                type="text"
+                                                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-blue-500/20"
+                                                value={transferData.description}
+                                                onChange={e => setTransferData({ ...transferData, description: e.target.value })}
+                                                placeholder="Ex: Reserva de emergência"
+                                            />
+                                        </div>
+                                        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                                            <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium" disabled={isSaving}>Cancelar</button>
+                                            <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-lg shadow-blue-600/20 disabled:opacity-50 flex items-center gap-2" disabled={isSaving}>
+                                                {isSaving ? <><div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />Salvando...</> : <><ArrowRightLeft size={16} />Transferir</>}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsModalOpen(false)}
+                                            className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium disabled:opacity-50"
+                                            disabled={isSaving}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                            disabled={isSaving}
+                                        >
+                                            {isSaving ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                                    Salvando...
+                                                </>
+                                            ) : (
+                                                editingTransaction ? 'Salvar Alterações' : 'Criar Transação'
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
                             </form>
                         </div>
                     </div>

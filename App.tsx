@@ -15,7 +15,10 @@ import ReportsView from './components/ReportsView';
 import GoalsView from './components/GoalsView';
 import BudgetsView from './components/BudgetsView';
 import InvoiceSimulator from './components/InvoiceSimulator';
+import FinanceView from './components/FinanceView';
 import SettingsView from './components/SettingsView';
+import AnalyticsView from './components/AnalyticsView';
+import PlanningView from './components/PlanningView';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -46,23 +49,36 @@ export default function App() {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard currentMonth={currentMonth} onChangeView={setCurrentView} />;
+      case 'movements':
+        return <TransactionsView key="movements-view" initialType="ALL" />;
       case 'incomes':
         return <TransactionsView key="incomes-view" initialType="RECEITA" />;
       case 'expenses':
         return <TransactionsView key="expenses-view" initialType="DESPESA" />;
-      case 'accounts':
-        return <AccountsView />;
-      case 'cards':
-        return <CardsView />;
       case 'transfers':
-        return <TransfersView />;
+        return <TransactionsView key="transfers-view" initialType="ALL" />;
+      case 'finance':
+        return <FinanceView />;
+      case 'accounts':
+        return <FinanceView initialTab="accounts" />;
+      case 'cards':
+        return <FinanceView initialTab="cards" />;
       case 'projection':
         return <ProjectionView />;
       case 'recurring':
         return <RecurringExpensesView />;
-      case 'reports': return <ReportsView />;
-      case 'goals': return <GoalsView />;
-      case 'budgets': return <BudgetsView />;
+      case 'analytics':
+        return <AnalyticsView />;
+      case 'projection':
+        return <AnalyticsView initialTab="projection" />;
+      case 'reports':
+        return <AnalyticsView initialTab="reports" />;
+      case 'planning':
+        return <PlanningView />;
+      case 'goals':
+        return <PlanningView initialTab="goals" />;
+      case 'budgets':
+        return <PlanningView initialTab="budgets" />;
       case 'simulator': return <InvoiceSimulator />;
       case 'settings': return <SettingsView />;
       default:
