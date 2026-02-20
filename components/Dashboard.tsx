@@ -10,8 +10,10 @@ import {
 } from 'recharts';
 import { StorageService } from '../services/storage';
 import { formatCurrency, formatDate, toISODate, parseSafeDate } from '../utils';
-import { Account, Card, Transaction, Category, Transfer } from '../types';
+import { Account, Card, Transaction, Category, Transfer, TransactionStatus } from '../types';
 import SupabaseSync from './SupabaseSync';
+import QuickAddView from './QuickAddView';
+import { AlertCircle, Smartphone } from 'lucide-react';
 
 interface DashboardProps {
   currentMonth: Date;
@@ -30,6 +32,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
   }>({ transactions: [], categories: [], accounts: [], cards: [], transfers: [] });
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   // Carrega os dados apenas uma vez
   useEffect(() => {
@@ -40,6 +43,15 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
   useEffect(() => {
     setIsTransitioning(true);
     const timer = setTimeout(() => setIsTransitioning(false), 300);
+
+    // Auto-open Quick Add from URL
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('view') === 'quick-add') {
+      setIsQuickAddOpen(true);
+      // Clean up URL to avoid re-opening on refresh if user doesn't want to
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
     return () => clearTimeout(timer);
   }, [currentMonth]);
 
@@ -256,6 +268,11 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
   const totalCardLimit = useMemo(() => data.cards.reduce((s, c) => s + (c.limit || 0), 0), [data.cards]);
   const cardUsagePct = totalCardLimit > 0 ? Math.min((monthlyCardUsed / totalCardLimit) * 100, 100) : 0;
 
+  // ── Transações Incompletas (Status: INCOMPLETA) ───────────────────────────
+  const incompleteTransactions = useMemo(() => {
+    return transactions.filter(t => t.status === 'INCOMPLETA').sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }, [transactions]);
+
   // ── Progress do saldo entre inicial → atual → previsto ───────────────────
   // Para evitar saltos visuais estranhos, usamos o saldo de início como base 0 na barra se necessário, 
   // mas aqui mantemos a lógica de progressão absoluta.
@@ -279,6 +296,27 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
 
   return (
     <div className={`animate-fade-in space-y-6 pb-20 transition-all duration-300 ${isTransitioning ? 'opacity-50 scale-[0.99] grayscale-[0.2]' : 'opacity-100 scale-100'}`}>
+
+      {/* ── ALERTA: Lançamentos Incompletos ───────────────────────────────── */}
+      {incompleteTransactions.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-pulse-subtle">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-amber-900 uppercase tracking-tight">Lançamentos Incompletos</h4>
+              <p className="text-xs text-amber-700 font-medium">{incompleteTransactions.length} item(s) aguardando detalhes (categoria, conta, etc)</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onChangeView('movements_incomplete')}
+            className="px-4 py-2 bg-amber-600 text-white text-[10px] font-black rounded-xl hover:bg-amber-700 transition-all uppercase tracking-widest shadow-lg shadow-amber-900/10"
+          >
+            Completar agora
+          </button>
+        </div>
+      )}
 
       {/* ── HERO: Linha de Saldo ─────────────────────────────────────────── */}
       <div id="hero-balance" className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 overflow-hidden shadow-2xl shadow-slate-900/30">
@@ -327,6 +365,12 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
               </div>
 
               <div className="hidden md:flex gap-2">
+                <button
+                  onClick={() => setIsQuickAddOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-all border border-slate-700 active:scale-95"
+                >
+                  <Smartphone size={13} className="text-orange-500" /> Modo Mobile
+                </button>
                 <button onClick={() => onChangeView('movements')} className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-orange-900/20 active:scale-95">
                   <Plus size={13} /> Novo Lançamento
                 </button>
@@ -666,6 +710,29 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       </div>
 
       <SupabaseSync />
+
+      {/* ── WIDGET / MOBILE ACTION ──────────────────────────────────────── */}
+      <div className="fixed bottom-6 right-6 z-[60] flex flex-col gap-3 md:hidden">
+        <button
+          onClick={() => setIsQuickAddOpen(true)}
+          className="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 border border-slate-700 active:scale-90 transition-all"
+        >
+          <div className="relative">
+            <Smartphone size={24} />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-600 rounded-full border-2 border-slate-900" />
+          </div>
+        </button>
+      </div>
+
+      {isQuickAddOpen && (
+        <QuickAddView
+          onClose={() => setIsQuickAddOpen(false)}
+          onSuccess={() => {
+            setIsQuickAddOpen(false);
+            loadAllData();
+          }}
+        />
+      )}
     </div>
   );
 }

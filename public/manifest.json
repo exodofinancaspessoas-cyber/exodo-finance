@@ -1,0 +1,30 @@
+{
+    "name": "Êxodo Finance",
+    "short_name": "Êxodo",
+    "description": "Gestão Financeira Inteligente",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#0f172a",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/2845/2845811.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Lançamento Rápido",
+            "short_name": "Lançar",
+            "description": "Adicionar despesa ou receita rapidamente",
+            "url": "/?view=quick-add",
+            "icons": [
+                {
+                    "src": "https://cdn-icons-png.flaticon.com/512/2845/2845811.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ]
+}

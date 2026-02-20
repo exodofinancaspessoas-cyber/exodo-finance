@@ -37,6 +37,14 @@ export default function App() {
   useEffect(() => {
     const loadedUser = StorageService.getUser();
     setUser(loadedUser);
+
+    // Check for Deep Links / Shortcuts
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('view') === 'quick-add') {
+      setCurrentView('dashboard');
+      // The Dashboard component will handle the auto-opening via its own useEffect
+    }
+
     if (loadedUser) {
       (async () => {
         try {
@@ -58,6 +66,8 @@ export default function App() {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard currentMonth={currentMonth} onChangeMonth={setCurrentMonth} onChangeView={setCurrentView} />;
+      case 'movements_incomplete':
+        return <TransactionsView key="movements-view-incomplete" initialType="ALL" initialStatus="INCOMPLETA" />;
       case 'movements':
         return <TransactionsView key="movements-view" initialType="ALL" />;
       case 'incomes':

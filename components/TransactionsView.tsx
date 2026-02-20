@@ -12,6 +12,7 @@ import ExportModal from './ExportModal';
 
 interface TransactionsViewProps {
     initialType?: TransactionType | 'ALL';
+    initialStatus?: TransactionStatus | 'ALL';
     key?: string;
 }
 
@@ -37,12 +38,12 @@ const getMonthBounds = (offset = 0) => {
     };
 };
 
-const getInitialFilters = (type: TransactionType | 'ALL' = 'ALL'): FilterState => {
+const getInitialFilters = (type: TransactionType | 'ALL' = 'ALL', status: TransactionStatus | 'ALL' = 'ALL'): FilterState => {
     const bounds = getMonthBounds();
     return {
         search: '',
         type,
-        status: 'ALL',
+        status,
         category: 'ALL',
         account: 'ALL',
         startDate: bounds.start,
@@ -52,7 +53,7 @@ const getInitialFilters = (type: TransactionType | 'ALL' = 'ALL'): FilterState =
     };
 };
 
-export default function TransactionsView({ initialType = 'ALL' }: TransactionsViewProps) {
+export default function TransactionsView({ initialType = 'ALL', initialStatus = 'ALL' }: TransactionsViewProps) {
     // Data State
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
@@ -63,7 +64,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false); // New state for export
-    const [filters, setFilters] = useState<FilterState>(() => getInitialFilters(initialType));
+    const [filters, setFilters] = useState<FilterState>(() => getInitialFilters(initialType, initialStatus));
     const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
 
@@ -639,6 +640,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
             case 'PAGA': return 'bg-green-100 text-green-700';
             case 'RECEBIDA': return 'bg-green-100 text-green-700';
             case 'ATRASADA': return 'bg-red-100 text-red-700';
+            case 'INCOMPLETA': return 'bg-amber-100 text-amber-700 border border-amber-200';
             case 'EXCLUIDA': return 'bg-slate-200 text-slate-500 line-through';
             default: return 'bg-slate-100 text-slate-700';
         }
@@ -701,6 +703,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                     <option value="PREVISTA">Prevista</option>
                                     <option value="CONFIRMADA">Confirmada</option>
                                     <option value="ATRASADA">Atrasada</option>
+                                    <option value="INCOMPLETA">Incompletas</option>
                                     {filters.type !== 'DESPESA' && <option value="RECEBIDA">Recebida</option>}
                                     {filters.type !== 'RECEITA' && <option value="PAGA">Paga</option>}
                                     <option value="EXCLUIDA">Excluídas</option>
