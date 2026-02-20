@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowUpCircle, ArrowDownCircle, Wallet, Activity,
   Plus, ArrowRight, Loader2, ArrowRightLeft, TrendingUp,
-  TrendingDown, Landmark, CreditCard
+  TrendingDown, Landmark, CreditCard, ChevronLeft, ChevronRight, Calendar
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
@@ -15,10 +15,11 @@ import SupabaseSync from './SupabaseSync';
 
 interface DashboardProps {
   currentMonth: Date;
+  onChangeMonth: (date: Date) => void;
   onChangeView: (view: string) => void;
 }
 
-export default function Dashboard({ currentMonth, onChangeView }: DashboardProps) {
+export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }: DashboardProps) {
   const [user] = useState(() => StorageService.getUser());
   const [data, setData] = useState<{
     transactions: Transaction[];
@@ -28,11 +29,23 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
     transfers: Transfer[];
   }>({ transactions: [], categories: [], accounts: [], cards: [], transfers: [] });
   const [loading, setLoading] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  useEffect(() => { loadAllData(); }, [currentMonth]);
+  // Carrega os dados apenas uma vez
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  // Efeito de transição visual ao mudar o mês
+  useEffect(() => {
+    setIsTransitioning(true);
+    const timer = setTimeout(() => setIsTransitioning(false), 300);
+    return () => clearTimeout(timer);
+  }, [currentMonth]);
 
   const loadAllData = async () => {
-    setLoading(true);
+    // Só mostra o loading na primeira carga
+    if (data.transactions.length === 0) setLoading(true);
     try {
       const [trxs, cats, accs, crds, trs] = await Promise.all([
         StorageService.getTransactions(),
@@ -49,21 +62,96 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
     }
   };
 
+  const handlePrevMonth = () => {
+    const next = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+    onChangeMonth(next);
+  };
+
+  const handleNextMonth = () => {
+    const next = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+    onChangeMonth(next);
+  };
+
+  const handleCurrentMonth = () => {
+    onChangeMonth(new Date());
+  };
+
   const { transactions, categories, accounts, transfers } = data;
 
-  // ── Saldo Inicial (inicial_balance sum) ─────────────────────────────────────
-  const initialBalance = useMemo(
+  // ── Cálculos Históricos Baseados no Mês Selecionado ──────────────────────────
+
+  // Helper para identificar transações "realizadas" (que afetam o saldo atual)
+  const isRealized = (t: Transaction) => {
+    if (t.status === 'EXCLUIDA') return false;
+    if (t.type === 'RECEITA') return t.status === 'RECEBIDA' || t.status === 'CONFIRMADA';
+    if (t.type === 'DESPESA') return t.status === 'PAGA';
+    return false;
+  };
+
+  // 1. Saldo Absoluto Inicial do Sistema (Soma dos saldos iniciais de todas as contas)
+  const totalSystemInitialBalance = useMemo(
     () => accounts.reduce((s, a) => s + (a.initial_balance || 0), 0),
     [accounts]
   );
 
-  // ── Saldo Atual ──────────────────────────────────────────────────────────────
-  const currentBalance = useMemo(
-    () => accounts.reduce((s, a) => s + (a.current_balance || 0), 0),
-    [accounts]
-  );
+  // 2. Saldo no INÍCIO do mês selecionado (Todas realizadas ANTES do dia 1 do mês)
+  const monthBeginBalance = useMemo(() => {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    const firstDayOfMonth = new Date(y, m, 1);
 
-  // ── Stats do mês ─────────────────────────────────────────────────────────────
+    // Transações antes do mês
+    const beforeTrx = transactions.filter(t => {
+      const p = parseSafeDate(t.date);
+      if (!p) return false;
+      const tDate = new Date(p.y, p.m - 1, p.d);
+      return tDate < firstDayOfMonth && isRealized(t);
+    });
+
+    const income = beforeTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
+    const expense = beforeTrx.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
+
+    // Transferências antes do mês (não mudam o saldo TOTAL do sistema, mas poderiam se filtrássemos por conta)
+    // Como estamos no saldo TOTAL, transferências se anulam entre contas.
+    // Mas se o sistema tiver transferências para "fora" (não implementado), teríamos que ver.
+
+    return totalSystemInitialBalance + income - expense;
+  }, [transactions, totalSystemInitialBalance, currentMonth]);
+
+  // 3. Saldo no FINAL do mês selecionado (Saldo de início + Realizadas do mês)
+  const monthEndBalance = useMemo(() => {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+
+    const withinTrx = transactions.filter(t => {
+      const p = parseSafeDate(t.date);
+      return p && p.y === y && (p.m - 1) === m && isRealized(t);
+    });
+
+    const income = withinTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
+    const expense = withinTrx.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
+
+    return monthBeginBalance + income - expense;
+  }, [transactions, monthBeginBalance, currentMonth]);
+
+  // 4. Saldo PREVISTO no Final do mês selecionado (Realizadas + Previstas/Atrasadas do mês)
+  const monthProjectedBalance = useMemo(() => {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+
+    const pendingTrx = transactions.filter(t => {
+      const p = parseSafeDate(t.date);
+      const isPending = t.status === 'PREVISTA' || t.status === 'ATRASADA';
+      return p && p.y === y && (p.m - 1) === m && isPending && t.status !== 'EXCLUIDA';
+    });
+
+    const pendingIncome = pendingTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
+    const pendingExpense = pendingTrx.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
+
+    return monthEndBalance + pendingIncome - pendingExpense;
+  }, [transactions, monthEndBalance, currentMonth]);
+
+  // ── Stats do mês (Fluxo de Lançamentos) ──────────────────────────────────────
   const monthlyStats = useMemo(() => {
     const y = currentMonth.getFullYear();
     const m = currentMonth.getMonth();
@@ -82,48 +170,61 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
     const m = currentMonth.getMonth();
     return transfers
       .filter(t => {
-        if (!t.date) return false;
-        const d = new Date(t.date);
-        return d.getFullYear() === y && d.getMonth() === m;
+        const p = parseSafeDate(t.date);
+        return p && p.y === y && (p.m - 1) === m;
       })
       .reduce((s, t) => s + t.amount, 0);
   }, [transfers, currentMonth]);
 
-  // ── Saldo previsto ────────────────────────────────────────────────────────
-  const projectedBalance = useMemo(() => {
+  // ── Gráfico: evolução das despesas (Mês Completo) ─────────────────────────
+  const chartData = useMemo(() => {
+    const days: { label: string; despesas: number; receitas: number }[] = [];
     const y = currentMonth.getFullYear();
     const m = currentMonth.getMonth();
-    const pending = transactions.filter(t => {
-      const p = parseSafeDate(t.date);
-      return p && p.y === y && (p.m - 1) === m && t.status === 'PREVISTA';
-    });
-    const pendingIncome = pending.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
-    const pendingExpense = pending.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
-    return currentBalance + pendingIncome - pendingExpense;
-  }, [transactions, accounts, currentBalance, currentMonth]);
 
-  // ── Gráfico: evolução das despesas (últimos 7 dias) ───────────────────────
-  const last7DaysData = useMemo(() => {
-    const days: { label: string; despesas: number; receitas: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const iso = toISODate(d);
-      const label = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      const despesas = transactions.filter(t => t.date === iso && t.type === 'DESPESA' && t.status !== 'EXCLUIDA').reduce((s, t) => s + t.amount, 0);
-      const receitas = transactions.filter(t => t.date === iso && t.type === 'RECEITA' && t.status !== 'EXCLUIDA').reduce((s, t) => s + t.amount, 0);
+    // Calcula quantos dias mostrar (último dia do mês ou hoje se for o mês atual)
+    const lastDayOfMonth = new Date(y, m + 1, 0).getDate();
+    const isTodayMonth = new Date().getFullYear() === y && new Date().getMonth() === m;
+    const maxDay = isTodayMonth ? new Date().getDate() : lastDayOfMonth;
+
+    // Se o mês ainda não começou (futuro distante), mostra os primeiros 7 dias como 0
+    // Se o mês já passou, mostra o mês todo ou agrupado? Vamos mostrar o mês todo.
+    // Para não sobrecarregar o gráfico, vamos pegar pontos estratégicos se for muito longo, 
+    // mas 31 dias é aceitável para o Recharts.
+
+    for (let i = 1; i <= maxDay; i++) {
+      const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      const label = `${i}/${m + 1}`;
+
+      const dayTrxs = transactions.filter(t => t.date === dateStr && t.status !== 'EXCLUIDA');
+      const despesas = dayTrxs.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
+      const receitas = dayTrxs.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
+
       days.push({ label, despesas, receitas });
     }
-    return days;
-  }, [transactions]);
 
-  // ── Atividade recente ─────────────────────────────────────────────────────
-  const recentTransactions = useMemo(() =>
-    [...transactions]
-      .filter(t => t.status !== 'EXCLUIDA')
+    // Se for vazio (mês futuro sem dados), garante ao menos 7 dias de visualização
+    if (days.length < 7) {
+      for (let i = days.length + 1; i <= 7; i++) {
+        days.push({ label: `${i}/${m + 1}`, despesas: 0, receitas: 0 });
+      }
+    }
+
+    return days;
+  }, [transactions, currentMonth]);
+
+  // ── Atividade recente (Filtrada por mês) ──────────────────────────────────
+  const recentTransactions = useMemo(() => {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    return [...transactions]
+      .filter(t => {
+        const p = parseSafeDate(t.date);
+        return p && p.y === y && (p.m - 1) === m && t.status !== 'EXCLUIDA';
+      })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 6),
-    [transactions]
+      .slice(0, 6);
+  }, [transactions, currentMonth]
   );
 
   // ── Maiores gastos por categoria ──────────────────────────────────────────
@@ -142,13 +243,24 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
   }, [transactions, categories, currentMonth]);
 
   // ── Gastos em cartões ─────────────────────────────────────────────────────
-  const totalCardUsed = useMemo(() => data.cards.reduce((s, c) => s + (c.limit_used || 0), 0), [data.cards]);
+  // ── Gastos em cartões (no mês selecionado) ────────────────────────────────
+  const monthlyCardUsed = useMemo(() => {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    return transactions.filter(t => {
+      const p = parseSafeDate(t.date);
+      return p && p.y === y && (p.m - 1) === m && t.card_id && t.type === 'DESPESA' && t.status !== 'EXCLUIDA';
+    }).reduce((s, t) => s + t.amount, 0);
+  }, [transactions, currentMonth]);
+
   const totalCardLimit = useMemo(() => data.cards.reduce((s, c) => s + (c.limit || 0), 0), [data.cards]);
-  const cardUsagePct = totalCardLimit > 0 ? Math.min((totalCardUsed / totalCardLimit) * 100, 100) : 0;
+  const cardUsagePct = totalCardLimit > 0 ? Math.min((monthlyCardUsed / totalCardLimit) * 100, 100) : 0;
 
   // ── Progress do saldo entre inicial → atual → previsto ───────────────────
-  const maxVal = Math.max(Math.abs(initialBalance), Math.abs(currentBalance), Math.abs(projectedBalance), 1);
-  const currentPct = Math.max(0, Math.min(100, ((currentBalance - initialBalance) / (maxVal * 2 + 1)) * 100 + 50));
+  // Para evitar saltos visuais estranhos, usamos o saldo de início como base 0 na barra se necessário, 
+  // mas aqui mantemos a lógica de progressão absoluta.
+  const maxVal = Math.max(Math.abs(monthBeginBalance), Math.abs(monthEndBalance), Math.abs(monthProjectedBalance), 1);
+  const currentPct = Math.max(0, Math.min(100, ((monthEndBalance - monthBeginBalance) / (maxVal * 2 + 1)) * 100 + 50));
 
   if (loading) {
     return (
@@ -162,11 +274,11 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
   const monthLabel = currentMonth.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 
   // ── Saldo atual positivo ou negativo ─────────────────────────────────────
-  const isPositive = currentBalance >= 0;
+  const isPositive = monthEndBalance >= 0;
   const monthBalance = monthlyStats.income - monthlyStats.expense;
 
   return (
-    <div className="animate-fade-in space-y-6 pb-20">
+    <div className={`animate-fade-in space-y-6 pb-20 transition-all duration-300 ${isTransitioning ? 'opacity-50 scale-[0.99] grayscale-[0.2]' : 'opacity-100 scale-100'}`}>
 
       {/* ── HERO: Linha de Saldo ─────────────────────────────────────────── */}
       <div id="hero-balance" className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 overflow-hidden shadow-2xl shadow-slate-900/30">
@@ -177,28 +289,60 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
         <div className="relative z-10">
           {/* Header do hero */}
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-slate-400 text-sm font-medium capitalize">{monthLabel}</p>
-              <h1 className="text-white font-bold text-lg">
-                Olá, {user?.name?.split(' ')[0] || 'Visitante'} 👋
-              </h1>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => onChangeView('movements')} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg transition-colors backdrop-blur-sm">
-                <Plus size={13} /> Adicionar
-              </button>
+            <div className="flex items-center justify-between w-full">
+              <div>
+                <h1 className="text-white font-bold text-lg">
+                  Olá, {user?.name?.split(' ')[0] || 'Visitante'} 👋
+                </h1>
+                <p className="text-slate-400 text-[10px] font-medium uppercase tracking-wider">Seu resumo financeiro</p>
+              </div>
+
+              {/* Seletor de Mês Simplificado */}
+              <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 backdrop-blur-md">
+                <button
+                  onClick={handlePrevMonth}
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all active:scale-90"
+                  title="Mês Anterior"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                <button
+                  onClick={handleCurrentMonth}
+                  className="px-3 py-1.5 flex items-center gap-2 group transition-all"
+                >
+                  <Calendar size={14} className="text-orange-500 group-hover:scale-110 transition-transform" />
+                  <span className="text-white text-xs font-black capitalize min-w-[100px] text-center">
+                    {monthLabel}
+                  </span>
+                </button>
+
+                <button
+                  onClick={handleNextMonth}
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all active:scale-90"
+                  title="Próximo Mês"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              <div className="hidden md:flex gap-2">
+                <button onClick={() => onChangeView('movements')} className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-orange-900/20 active:scale-95">
+                  <Plus size={13} /> Novo Lançamento
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Saldo atual central */}
           <div className="text-center mb-6">
-            <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Saldo Atual</p>
+            <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Saldo Final do Mês</p>
             <h2 className={`text-4xl font-black tracking-tight ${isPositive ? 'text-white' : 'text-red-400'}`}>
-              {formatCurrency(currentBalance)}
+              {formatCurrency(monthEndBalance)}
             </h2>
             <div className={`inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full text-xs font-bold ${monthBalance >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
               {monthBalance >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-              {monthBalance >= 0 ? '+' : ''}{formatCurrency(monthBalance)} este mês
+              {monthBalance >= 0 ? '+' : ''}{formatCurrency(monthBalance)} no mês
             </div>
           </div>
 
@@ -223,8 +367,8 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
                 <div className="w-7 h-7 rounded-full bg-indigo-500 border-2 border-indigo-300 flex items-center justify-center shadow-lg shadow-indigo-500/40">
                   <div className="w-2 h-2 rounded-full bg-white" />
                 </div>
-                <p className="text-slate-400 text-[10px] font-medium">Inicial</p>
-                <p className="text-white text-xs font-bold">{formatCurrency(initialBalance)}</p>
+                <p className="text-slate-400 text-[10px] font-medium">Início Mês</p>
+                <p className="text-white text-xs font-bold">{formatCurrency(monthBeginBalance)}</p>
               </div>
 
               {/* Atual */}
@@ -232,8 +376,8 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
                 <div className="w-7 h-7 rounded-full bg-emerald-500 border-2 border-emerald-300 flex items-center justify-center shadow-lg shadow-emerald-500/40 ring-4 ring-emerald-500/20">
                   <div className="w-2 h-2 rounded-full bg-white" />
                 </div>
-                <p className="text-slate-400 text-[10px] font-medium">Saldo Atual</p>
-                <p className="text-white text-xs font-bold">{formatCurrency(currentBalance)}</p>
+                <p className="text-slate-400 text-[10px] font-medium">Fim Mês</p>
+                <p className="text-white text-xs font-bold">{formatCurrency(monthEndBalance)}</p>
               </div>
 
               {/* Previsto */}
@@ -241,8 +385,8 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
                 <div className="w-7 h-7 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center">
                   <div className="w-2 h-2 rounded-full bg-white/40" />
                 </div>
-                <p className="text-slate-400 text-[10px] font-medium">Previsto</p>
-                <p className="text-slate-300 text-xs font-bold">{formatCurrency(projectedBalance)}</p>
+                <p className="text-slate-400 text-[10px] font-medium">Projetado</p>
+                <p className="text-white text-xs font-bold">{formatCurrency(monthProjectedBalance)}</p>
               </div>
             </div>
           </div>
@@ -268,8 +412,8 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
               <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center mb-3">
                 <Landmark size={17} className="text-blue-600" />
               </div>
-              <p className="text-xs text-slate-400 font-medium mb-0.5">Contas</p>
-              <p className="text-lg font-black text-slate-800 leading-tight">{formatCurrency(currentBalance)}</p>
+              <p className="text-xs text-slate-400 font-medium mb-0.5">Saldo do Mês</p>
+              <p className="text-lg font-black text-slate-800 leading-tight">{formatCurrency(monthEndBalance)}</p>
               <div className="flex items-center gap-1 mt-2 text-blue-500 text-xs font-semibold">
                 <span>Ver contas</span>
                 <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
@@ -325,8 +469,8 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
               <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center mb-3">
                 <CreditCard size={17} className="text-orange-500" />
               </div>
-              <p className="text-xs text-slate-400 font-medium mb-0.5">Cartões (gasto)</p>
-              <p className="text-lg font-black text-slate-800 leading-tight">{formatCurrency(totalCardUsed)}</p>
+              <p className="text-xs text-slate-400 font-medium mb-0.5">Gasto em Cartão</p>
+              <p className="text-lg font-black text-slate-800 leading-tight">{formatCurrency(monthlyCardUsed)}</p>
               {totalCardLimit > 0 && (
                 <div className="mt-2">
                   <div className="w-full bg-slate-100 rounded-full h-1 overflow-hidden">
@@ -336,7 +480,7 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
                       style={{ width: `${cardUsagePct}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1">{cardUsagePct.toFixed(0)}% do limite usado</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{cardUsagePct.toFixed(0)}% do limite total</p>
                 </div>
               )}
               <div className="flex items-center gap-1 mt-1.5 text-orange-500 text-xs font-semibold">
@@ -403,7 +547,7 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
         <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
           <div>
             <h3 className="font-bold text-slate-800">Evolução das despesas</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Últimos 7 dias</p>
+            <p className="text-xs text-slate-400 mt-0.5">Visão de {monthLabel}</p>
           </div>
           <button onClick={() => onChangeView('analytics')} className="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1">
             Ver análise <ArrowRight size={12} />
@@ -411,7 +555,7 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
         </div>
         <div className="p-4 h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={last7DaysData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradDespesa" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15} />

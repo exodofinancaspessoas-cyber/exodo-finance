@@ -57,7 +57,7 @@ export default function App() {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard currentMonth={currentMonth} onChangeView={setCurrentView} />;
+        return <Dashboard currentMonth={currentMonth} onChangeMonth={setCurrentMonth} onChangeView={setCurrentView} />;
       case 'movements':
         return <TransactionsView key="movements-view" initialType="ALL" />;
       case 'incomes':
@@ -89,7 +89,7 @@ export default function App() {
       case 'simulator': return <InvoiceSimulator />;
       case 'settings': return <SettingsView onRestartTour={() => setShowManual(true)} />;
       default:
-        return <Dashboard currentMonth={currentMonth} onChangeView={setCurrentView} />;
+        return <Dashboard currentMonth={currentMonth} onChangeMonth={setCurrentMonth} onChangeView={setCurrentView} />;
     }
   };
 
