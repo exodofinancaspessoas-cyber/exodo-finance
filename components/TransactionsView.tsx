@@ -855,8 +855,8 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
                                                     await loadData();
                                                 }}
                                                 className={`text-xs px-2.5 py-1 rounded-full font-bold transition-colors ${rule.active
-                                                        ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700'
-                                                        : 'bg-slate-100 text-slate-500 hover:bg-green-100 hover:text-green-700'
+                                                    ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700'
+                                                    : 'bg-slate-100 text-slate-500 hover:bg-green-100 hover:text-green-700'
                                                     }`}
                                                 title={rule.active ? 'Pausar' : 'Reativar'}
                                             >
@@ -1835,6 +1835,7 @@ export default function TransactionsView({ initialType = 'ALL' }: TransactionsVi
 
             <div className="fixed bottom-6 right-6 z-40">
                 <button
+                    id="trigger-new-transaction"
                     onClick={() => handleOpenModal()}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-lg shadow-indigo-600/30 transition-transform hover:scale-105 active:scale-95"
                 >

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, ShieldAlert, Trash2, RotateCcw, Database, AlertTriangle, CheckSquare, Square, X } from 'lucide-react';
+import { Settings, ShieldAlert, Trash2, RotateCcw, Database, AlertTriangle, CheckSquare, Square, X, Play, Sparkles } from 'lucide-react';
 import { StorageService } from '../services/storage';
 
 type ResetOption = {
@@ -19,7 +19,7 @@ const RESET_OPTIONS: ResetOption[] = [
     { id: 'cards', label: 'Cartões de Crédito', description: 'Configurações de cartões e limites.', table: 'cards' },
 ];
 
-export default function SettingsView() {
+export default function SettingsView({ onRestartTour }: { onRestartTour: () => void }) {
     const [isSaving, setIsSaving] = useState(false);
     const [isPartialModalOpen, setIsPartialModalOpen] = useState(false);
     const [selectedOptions, setSelectedOptions] = useState<Set<string>>(new Set(['transactions', 'recurring']));
@@ -132,6 +132,35 @@ export default function SettingsView() {
                         </div>
                     </div>
                 </div>
+
+                {/* Training & Onboarding Section */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                            <Sparkles size={18} className="text-orange-600" /> Treinamento & Tour
+                        </h3>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border border-blue-100 bg-blue-50/30">
+                            <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                                    <Play size={20} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-slate-800">Reiniciar Tour do Sistema</h4>
+                                    <p className="text-sm text-slate-600 font-sans">Reveja os passos fundamentais para otimizar seu controle financeiro.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={onRestartTour}
+                                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-sm"
+                            >
+                                Iniciar Tour
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Partial Reset Modal */}
@@ -159,8 +188,8 @@ export default function SettingsView() {
                                     key={option.id}
                                     onClick={() => toggleOption(option.id)}
                                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left group ${selectedOptions.has(option.id)
-                                            ? 'border-orange-200 bg-orange-50/50 ring-2 ring-orange-500/10'
-                                            : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'
+                                        ? 'border-orange-200 bg-orange-50/50 ring-2 ring-orange-500/10'
+                                        : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'
                                         }`}
                                 >
                                     <div className={`shrink-0 ${selectedOptions.has(option.id) ? 'text-orange-600' : 'text-slate-300 group-hover:text-slate-400'}`}>

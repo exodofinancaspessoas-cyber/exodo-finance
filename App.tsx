@@ -19,11 +19,20 @@ import FinanceView from './components/FinanceView';
 import SettingsView from './components/SettingsView';
 import AnalyticsView from './components/AnalyticsView';
 import PlanningView from './components/PlanningView';
+import OnboardingFlow from './components/Onboarding';
+import ActionManual from './components/ActionManual';
+import { Sparkles } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState('dashboard');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // Onboarding states
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showManual, setShowManual] = useState(() => {
+    return !localStorage.getItem('onboarding_completed');
+  });
 
   useEffect(() => {
     const loadedUser = StorageService.getUser();
@@ -63,8 +72,6 @@ export default function App() {
         return <FinanceView initialTab="accounts" />;
       case 'cards':
         return <FinanceView initialTab="cards" />;
-      case 'projection':
-        return <ProjectionView />;
       case 'recurring':
         return <RecurringExpensesView />;
       case 'analytics':
@@ -80,7 +87,7 @@ export default function App() {
       case 'budgets':
         return <PlanningView initialTab="budgets" />;
       case 'simulator': return <InvoiceSimulator />;
-      case 'settings': return <SettingsView />;
+      case 'settings': return <SettingsView onRestartTour={() => setShowManual(true)} />;
       default:
         return <Dashboard currentMonth={currentMonth} onChangeView={setCurrentView} />;
     }
@@ -95,9 +102,36 @@ export default function App() {
         StorageService.logout();
         setUser(null);
       }}
+      onOpenTraining={() => setShowManual(true)}
     >
-      <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto w-full relative">
         {renderView()}
+
+        {/* Manual for those who prefer reading */}
+        {showManual && (
+          <ActionManual
+            onClose={() => {
+              setShowManual(false);
+              localStorage.setItem('onboarding_completed', 'true');
+            }}
+            onStartTour={() => {
+              setShowManual(false);
+              setShowOnboarding(true);
+            }}
+          />
+        )}
+
+        {/* Interactive Onboarding Flow */}
+        {showOnboarding && (
+          <OnboardingFlow
+            onStageChange={setCurrentView}
+            onComplete={() => {
+              setShowOnboarding(false);
+              localStorage.setItem('onboarding_completed', 'true');
+              setCurrentView('dashboard');
+            }}
+          />
+        )}
       </div>
     </Layout>
   );

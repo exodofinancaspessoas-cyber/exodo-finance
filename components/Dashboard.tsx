@@ -169,7 +169,7 @@ export default function Dashboard({ currentMonth, onChangeView }: DashboardProps
     <div className="animate-fade-in space-y-6 pb-20">
 
       {/* ── HERO: Linha de Saldo ─────────────────────────────────────────── */}
-      <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 overflow-hidden shadow-2xl shadow-slate-900/30">
+      <div id="hero-balance" className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 overflow-hidden shadow-2xl shadow-slate-900/30">
         {/* Orbs decorativos */}
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />

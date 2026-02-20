@@ -171,6 +171,7 @@ export const StorageService = {
         localStorage.removeItem('exodo_transactions');
         localStorage.removeItem('exodo_recurring');
         StorageService.clearCache();
+        localStorage.removeItem('onboarding_completed');
         window.location.reload();
     },
 
@@ -194,6 +195,7 @@ export const StorageService = {
         });
 
         StorageService.clearCache();
+        localStorage.removeItem('onboarding_completed');
         window.location.reload();
     },
 

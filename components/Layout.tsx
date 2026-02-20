@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import {
     Menu, LogOut, LayoutDashboard, Landmark,
     User as UserIcon, TrendingUp, Target, PieChart, Calculator,
-    BarChart3, Settings, Wallet, LineChart, BookOpen
+    BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles
 } from 'lucide-react';
 import { User } from '../types';
 import { VersionInfo } from '../version';
@@ -13,10 +13,11 @@ interface SidebarProps {
     onChangeView: (view: string) => void;
     user: User;
     onLogout: () => void;
+    onOpenTraining: () => void;
     children: React.ReactNode;
 }
 
-export default function Layout({ currentView, onChangeView, user, onLogout, children }: SidebarProps) {
+export default function Layout({ currentView, onChangeView, user, onLogout, onOpenTraining, children }: SidebarProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const isActive = (id: string) => {
@@ -49,6 +50,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, chil
                     {detailedMenuItems.map(item => (
                         <button
                             key={item.id}
+                            id={`nav-${item.id}`}
                             onClick={() => onChangeView(item.id)}
                             className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-all duration-200 group
                 ${isActive(item.id)
@@ -75,6 +77,12 @@ export default function Layout({ currentView, onChangeView, user, onLogout, chil
                             </p>
                         </div>
                     </div>
+                    <button
+                        onClick={onOpenTraining}
+                        className="flex items-center space-x-2 text-orange-500 hover:text-orange-600 text-[11px] font-bold px-2 w-full transition-colors hover:bg-orange-50 p-2 rounded-lg mb-1"
+                    >
+                        <Sparkles size={14} /> <span>Treinamento Inicial</span>
+                    </button>
                     <button
                         onClick={onLogout}
                         className="flex items-center space-x-2 text-slate-500 hover:text-red-400 text-sm px-2 w-full transition-colors hover:bg-slate-800/50 p-2 rounded-lg"

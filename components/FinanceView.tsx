@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Landmark, CreditCard } from 'lucide-react';
 import AccountsView from './AccountsView';
 import CardsView from './CardsView';
@@ -12,6 +11,10 @@ interface FinanceViewProps {
 
 export default function FinanceView({ initialTab = 'accounts' }: FinanceViewProps) {
     const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+
+    useEffect(() => {
+        setActiveTab(initialTab);
+    }, [initialTab]);
 
     const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
         { id: 'accounts', label: 'Contas Bancárias', icon: Landmark },

@@ -146,6 +146,7 @@ export default function AccountsView() {
             <div className="flex justify-between items-center mb-6 text-white md:text-inherit">
                 <h2 className="text-2xl font-bold text-slate-800">Contas Bancárias</h2>
                 <button
+                    id="trigger-new-account"
                     onClick={() => handleOpenModal()}
                     className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center shadow-md transition-colors"
                 >

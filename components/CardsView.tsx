@@ -205,7 +205,11 @@ export default function CardsView() {
                     <h2 className="text-2xl font-bold text-slate-800">Meus Cartões</h2>
                     <p className="text-slate-500">Gerencie seus limites e faturas.</p>
                 </div>
-                <button onClick={() => handleOpenModal()} className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl flex items-center shadow-lg hover:shadow-xl transition-all font-bold">
+                <button
+                    id="trigger-new-card"
+                    onClick={() => handleOpenModal()}
+                    className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl flex items-center shadow-lg hover:shadow-xl transition-all font-bold"
+                >
                     <PlusCircle size={20} className="mr-2" />
                     Novo Cartão
                 </button>
@@ -228,6 +232,7 @@ export default function CardsView() {
                                 </div>
                                 <div className="flex space-x-1">
                                     <button
+                                        id="trigger-invoice-setup"
                                         onClick={() => handleOpenInvoiceSetup(card)}
                                         className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
                                         title="Importar Faturas/Saldos Anteriores"
