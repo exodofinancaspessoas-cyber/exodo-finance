@@ -341,12 +341,12 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                         onClick={() => setSelectorOpen(null)}
                     />
 
-                    <div className="relative w-full max-w-lg bg-white rounded-[32px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-500">
+                    <div className={`relative w-full max-w-lg bg-white rounded-t-[40px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-500 ${selectorOpen === 'CATEGORY' ? 'h-[92dvh]' : 'rounded-b-[32px]'}`}>
                         {/* Drawer Indicator */}
                         <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto my-4" />
 
-                        <div className="p-8 pt-2 space-y-6">
-                            <div className="flex justify-between items-center">
+                        <div className={`px-8 pt-2 space-y-6 flex flex-col ${selectorOpen === 'CATEGORY' ? 'h-full' : ''}`}>
+                            <div className="flex justify-between items-center shrink-0">
                                 <h3 className="font-black text-xl uppercase tracking-tight text-slate-900">
                                     {selectorOpen === 'CARD' ? 'Escolha o Cartão' : selectorOpen === 'ACCOUNT' ? 'Escolha a Conta' : 'Escolha a Categoria'}
                                 </h3>
@@ -356,7 +356,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                             </div>
 
                             {selectorOpen === 'CATEGORY' && (
-                                <div className="relative">
+                                <div className="relative shrink-0">
                                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input
                                         autoFocus
@@ -364,12 +364,12 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                         placeholder="Pesquisar categoria..."
                                         value={categorySearch}
                                         onChange={(e) => setCategorySearch(e.target.value)}
-                                        className="w-full bg-slate-100 border-none rounded-2xl p-4 pl-12 text-sm outline-none font-bold text-slate-900"
+                                        className="w-full bg-slate-100 border-2 border-slate-100 rounded-2xl p-4 pl-12 text-sm outline-none font-bold text-slate-900 focus:border-orange-500/20 focus:bg-white transition-all shadow-sm"
                                     />
                                 </div>
                             )}
 
-                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar pb-6 focus-within:pb-80">
+                            <div className={`space-y-3 overflow-y-auto pr-2 custom-scrollbar pb-10 transition-all flex-1 ${selectorOpen === 'CATEGORY' ? 'pb-[60vh]' : 'max-h-[60vh]'}`}>
                                 {/* Case: Categories */}
                                 {selectorOpen === 'CATEGORY' ? (
                                     categories
@@ -393,7 +393,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                             </button>
                                         ))
                                 ) : (
-                                    <>
+                                    <div className="space-y-3 pb-8">
                                         {/* Generic Option */}
                                         <button
                                             onClick={() => {
@@ -462,7 +462,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                                 </div>
                                             </button>
                                         ))}
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         </div>
