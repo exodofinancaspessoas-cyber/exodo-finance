@@ -212,6 +212,22 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                 <span className="text-[9px] font-black uppercase tracking-tighter">Pix</span>
                             </button>
 
+                            <button
+                                onClick={() => setSelectedPayment({ method: 'BOLETO' })}
+                                className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all ${selectedPayment?.method === 'BOLETO' ? 'border-orange-500 bg-orange-50 text-orange-900 shadow-xl scale-[1.02]' : 'border-slate-50 bg-slate-50 text-slate-400 opacity-60'}`}
+                            >
+                                <div className="w-6 h-6 rounded bg-slate-900 flex items-center justify-center text-[10px] font-black text-white italic">B</div>
+                                <span className="text-[9px] font-black uppercase tracking-tighter">Boleto</span>
+                            </button>
+
+                            <button
+                                onClick={() => setSelectedPayment({ method: 'TRANSFERENCIA' })}
+                                className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all ${selectedPayment?.method === 'TRANSFERENCIA' ? 'border-orange-500 bg-orange-50 text-orange-900 shadow-xl scale-[1.02]' : 'border-slate-50 bg-slate-50 text-slate-400 opacity-60'}`}
+                            >
+                                <RefreshCw size={24} strokeWidth={1} />
+                                <span className="text-[9px] font-black uppercase tracking-tighter">Transferência</span>
+                            </button>
+
                             {cards.map(card => (
                                 <button
                                     key={card.id}
@@ -223,6 +239,14 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                 </button>
                             ))}
 
+                            <button
+                                onClick={() => setSelectedPayment({ method: 'CREDITO' })}
+                                className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all ${selectedPayment?.method === 'CREDITO' && !selectedPayment.cardId ? 'border-orange-500 bg-orange-50 text-orange-900 shadow-xl scale-[1.02]' : 'border-slate-50 bg-slate-50 text-slate-400 opacity-60'}`}
+                            >
+                                <CreditCard size={24} strokeWidth={1} />
+                                <span className="text-[9px] font-black uppercase tracking-tighter">Cartão (Geral)</span>
+                            </button>
+
                             {accounts.map(acc => (
                                 <button
                                     key={acc.id}
@@ -233,6 +257,14 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                     <span className="text-[9px] font-black uppercase tracking-tighter truncate w-full text-center">{acc.name}</span>
                                 </button>
                             ))}
+
+                            <button
+                                onClick={() => setSelectedPayment({ method: 'DEBITO' })}
+                                className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all ${selectedPayment?.method === 'DEBITO' && !selectedPayment.accountId ? 'border-orange-500 bg-orange-50 text-orange-900 shadow-xl scale-[1.02]' : 'border-slate-50 bg-slate-50 text-slate-400 opacity-60'}`}
+                            >
+                                <Landmark size={24} strokeWidth={1} />
+                                <span className="text-[9px] font-black uppercase tracking-tighter">Conta (Geral)</span>
+                            </button>
                         </div>
                     </div>
 
@@ -306,8 +338,8 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                         onClick={() => handleSave(true)}
                         disabled={isSaving || !amount}
                         className={`flex-[1.8] py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-2 shadow-2xl active:scale-95 ${isReadyToComplete
-                                ? 'bg-orange-500 text-white shadow-orange-500/40 ring-4 ring-orange-500/10'
-                                : 'bg-slate-200 text-slate-400 shadow-none'
+                            ? 'bg-orange-500 text-white shadow-orange-500/40 ring-4 ring-orange-500/10'
+                            : 'bg-slate-200 text-slate-400 shadow-none'
                             }`}
                     >
                         {isSaving ? 'Salvando...' : 'Finalizar'}
