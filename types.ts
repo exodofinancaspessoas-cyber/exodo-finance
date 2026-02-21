@@ -49,7 +49,7 @@ export interface Card {
 export interface Category {
   id: string;
   name: string;
-  type: TransactionType;
+  type: TransactionType | 'AMBOS';
   icon?: string;
   color?: string;
   is_default?: boolean;

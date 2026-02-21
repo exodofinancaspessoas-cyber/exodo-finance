@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import {
     Menu, LogOut, LayoutDashboard, Landmark,
     User as UserIcon, TrendingUp, Target, PieChart, Calculator,
-    BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles
+    BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles, Plus, Smartphone
 } from 'lucide-react';
 import { User } from '../types';
 import { VersionInfo } from '../version';
@@ -14,10 +14,11 @@ interface SidebarProps {
     user: User;
     onLogout: () => void;
     onOpenTraining: () => void;
+    onQuickAdd?: () => void;
     children: React.ReactNode;
 }
 
-export default function Layout({ currentView, onChangeView, user, onLogout, onOpenTraining, children }: SidebarProps) {
+export default function Layout({ currentView, onChangeView, user, onLogout, onOpenTraining, onQuickAdd, children }: SidebarProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const isActive = (id: string) => {
@@ -107,9 +108,51 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 </header>
 
                 {/* Scrollable Content */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
+                <main className="flex-1 overflow-y-auto p-4 pb-24 md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
                     {children}
                 </main>
+            </div>
+
+            {/* Mobile Bottom Navigation */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-[40] bg-white/80 backdrop-blur-lg border-t border-slate-200 px-2 pb-safe-offset-2 pt-2 flex items-center justify-around shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+                {detailedMenuItems.slice(0, 2).map(item => (
+                    <button
+                        key={item.id}
+                        onClick={() => onChangeView(item.id)}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${isActive(item.id) ? 'text-orange-600 font-bold' : 'text-slate-400'}`}
+                    >
+                        <item.icon size={20} className={isActive(item.id) ? 'text-orange-600' : 'text-slate-400'} />
+                        <span className="text-[10px] uppercase tracking-tighter">
+                            {item.id === 'finance' ? 'Finanças' : item.label}
+                        </span>
+                    </button>
+                ))}
+
+                {/* Central Action: Quick Add */}
+                <div className="relative -top-6">
+                    <button
+                        onClick={onQuickAdd}
+                        className="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 border-[4px] border-white active:scale-90 transition-all group"
+                    >
+                        <div className="relative">
+                            <Plus size={28} className="group-hover:rotate-90 transition-transform duration-300" />
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-600 rounded-full border-2 border-slate-900" />
+                        </div>
+                    </button>
+                </div>
+
+                {detailedMenuItems.slice(2, 4).map(item => (
+                    <button
+                        key={item.id}
+                        onClick={() => onChangeView(item.id)}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${isActive(item.id) ? 'text-orange-600 font-bold' : 'text-slate-400'}`}
+                    >
+                        <item.icon size={20} className={isActive(item.id) ? 'text-orange-600' : 'text-slate-400'} />
+                        <span className="text-[10px] uppercase tracking-tighter">
+                            {item.id === 'movements' ? 'Lançar' : item.label}
+                        </span>
+                    </button>
+                ))}
             </div>
 
             {/* Mobile Menu Overlay */}

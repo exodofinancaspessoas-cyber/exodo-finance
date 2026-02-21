@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, CreditCard, Banknote, Landmark, Check, AlertCircle, ChevronRight, Wallet } from 'lucide-react';
+import { X, Plus, Minus, CreditCard, Banknote, Landmark, Check, AlertCircle, ChevronDown, Calendar, Tag, RefreshCw } from 'lucide-react';
 import { StorageService } from '../services/storage';
-import { Transaction, TransactionType, PaymentMethod, Account, Card, Category } from '../types';
-import { formatCurrency } from '../utils';
+import { Transaction, TransactionType, PaymentMethod, Account, Card, Category, TransactionStatus } from '../types';
+import { formatCurrency, toISODate } from '../utils';
 
 interface QuickAddViewProps {
     onClose: () => void;
@@ -13,6 +13,11 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
     const [type, setType] = useState<TransactionType>('DESPESA');
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
+    const [date, setDate] = useState(toISODate(new Date()));
+    const [categoryId, setCategoryId] = useState('');
+    const [status, setStatus] = useState<TransactionStatus>('PAGA');
+    const [isRecurring, setIsRecurring] = useState(false);
+
     const [selectedPayment, setSelectedPayment] = useState<{
         method: PaymentMethod,
         accountId?: string,
@@ -21,27 +26,32 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
 
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [cards, setCards] = useState<Card[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [categorySearch, setCategorySearch] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         loadData();
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
     }, []);
 
     const loadData = async () => {
-        const [accs, crds] = await Promise.all([
+        const [accs, crds, cats] = await Promise.all([
             StorageService.getAccounts(),
-            StorageService.getCards()
+            StorageService.getCards(),
+            StorageService.getCategories()
         ]);
         setAccounts(accs);
         setCards(crds);
+        setCategories(cats.filter(c => (c.type as string) === type || c.type === 'AMBOS'));
     };
 
-    const handleSave = async (isComplete: boolean = false) => {
+    useEffect(() => {
+        loadData();
+    }, [type]);
+
+    const handleSave = async (isQuick: boolean = false) => {
         const numericAmount = parseFloat(amount.replace(',', '.'));
         if (isNaN(numericAmount) || numericAmount <= 0) {
             alert('Insira um valor válido');
@@ -52,16 +62,17 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
         try {
             const newTrx: Transaction = {
                 id: StorageService.generateId(),
-                description: description || (type === 'DESPESA' ? 'Gasto Rápido' : 'Receita Rápida'),
+                description: description || (type === 'DESPESA' ? 'Nova Despesa' : 'Nova Receita'),
                 amount: numericAmount,
                 type: type,
-                category_id: '', // Empty for incomplete
-                date: new Date().toISOString().split('T')[0],
-                status: isComplete ? (type === 'RECEITA' ? 'RECEBIDA' : 'PAGA') : 'INCOMPLETA',
+                category_id: categoryId,
+                date: date,
+                status: isQuick ? 'INCOMPLETA' : status,
                 payment_method: selectedPayment?.method,
                 account_id: selectedPayment?.accountId,
                 card_id: selectedPayment?.cardId,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                observation: isRecurring ? 'Recorrência solicitada' : undefined
             };
 
             await StorageService.saveTransaction(newTrx);
@@ -75,158 +86,226 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
     };
 
     return (
-        <div className="fixed inset-0 z-[70] bg-white flex flex-col items-stretch text-slate-900 animate-in slide-in-from-bottom duration-500 overflow-hidden">
+        <div className="fixed inset-0 z-[70] bg-white flex flex-col items-stretch text-slate-900 animate-in slide-in-from-bottom duration-500 overflow-hidden h-[100dvh]">
             {/* Header */}
-            <div className="p-6 flex justify-between items-center border-b border-slate-100">
+            <div className="p-6 flex justify-between items-center border-b border-slate-100 bg-white sticky top-0 z-20 shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-orange-900/20">Ê</div>
-                    <span className="font-black tracking-tight uppercase text-base text-slate-900">Lançamento Rápido</span>
+                    <span className="font-black tracking-tight uppercase text-base text-slate-900">Nova Transação</span>
                 </div>
                 <button onClick={onClose} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-all active:scale-90 text-slate-600">
                     <X size={24} />
                 </button>
             </div>
 
-            {/* Type Selector - Smaller Buttons as requested */}
-            <div className="flex p-4 gap-3 mt-2">
-                <button
-                    onClick={() => setType('DESPESA')}
-                    className={`flex-1 py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all border-2 ${type === 'DESPESA' ? 'bg-red-500 border-red-500 shadow-lg shadow-red-200 text-white' : 'bg-slate-50 border-slate-100 text-slate-400'}`}
-                >
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center ${type === 'DESPESA' ? 'bg-white/20' : 'bg-slate-200'}`}>
-                        <Minus size={16} strokeWidth={3} />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Despesa</span>
-                </button>
-                <button
-                    onClick={() => setType('RECEITA')}
-                    className={`flex-1 py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all border-2 ${type === 'RECEITA' ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-200 text-white' : 'bg-slate-50 border-slate-100 text-slate-400'}`}
-                >
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center ${type === 'RECEITA' ? 'bg-white/20' : 'bg-slate-200'}`}>
-                        <Plus size={16} strokeWidth={3} />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Receita</span>
-                </button>
-            </div>
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+                {/* Type Selector */}
+                <div className="flex p-4 gap-3 bg-slate-50/50 sticky top-0 z-10 backdrop-blur-sm">
+                    <button
+                        onClick={() => setType('DESPESA')}
+                        className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 transition-all border-2 ${type === 'DESPESA'
+                            ? 'bg-white border-red-500 text-red-600 shadow-sm font-bold'
+                            : 'bg-transparent border-transparent text-slate-400'
+                            }`}
+                    >
+                        Despesa
+                    </button>
+                    <button
+                        onClick={() => setType('RECEITA')}
+                        className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 transition-all border-2 ${type === 'RECEITA'
+                            ? 'bg-white border-blue-500 text-blue-600 shadow-sm font-bold'
+                            : 'bg-transparent border-transparent text-slate-400'
+                            }`}
+                    >
+                        Receita
+                    </button>
+                </div>
 
-            {/* Value Display */}
-            <div className={`p-8 flex flex-col items-center justify-center transition-all ${type === 'DESPESA' ? 'text-red-500' : 'text-emerald-500'}`}>
-                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Valor do Lançamento</div>
-                <div className="flex items-center gap-3 relative">
-                    <span className="text-2xl font-black opacity-40 mt-1">R$</span>
-                    <div className="relative">
+                <div className="p-6 space-y-6 pb-32">
+                    {/* Descricao */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Descrição</label>
                         <input
-                            ref={inputRef}
                             type="text"
-                            inputMode="decimal"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            placeholder="0,00"
-                            className="bg-transparent border-none outline-none text-6xl font-black text-center w-full max-w-[300px] placeholder:text-slate-100 selection:bg-orange-500/20"
+                            placeholder="Ex: Mercado, Salário"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 text-base outline-none focus:border-orange-500/30 transition-all font-bold placeholder:text-slate-200"
                         />
-                        <div className={`absolute -right-1 top-0 bottom-0 w-[2px] animate-pulse ${type === 'DESPESA' ? 'bg-red-500' : 'bg-emerald-500'}`} />
                     </div>
-                </div>
-            </div>
 
-            {/* Quick Assets (Cards/Accounts) */}
-            <div className="flex-1 overflow-y-auto px-6 space-y-6">
-                <div className="space-y-3">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1 italic">Forma de Pagamento</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                        {/* Dinheiro */}
-                        <button
-                            onClick={() => setSelectedPayment({ method: 'DINHEIRO' })}
-                            className={`p-4 rounded-2xl flex items-center gap-3 transition-all ${selectedPayment?.method === 'DINHEIRO' ? 'bg-orange-50 border-orange-200 border shadow-sm' : 'bg-slate-50 border-slate-100 border'}`}
-                        >
-                            <div className={`p-2 rounded-lg ${selectedPayment?.method === 'DINHEIRO' ? 'bg-white shadow-sm' : 'bg-white'}`}>
-                                <Banknote size={18} className="text-orange-500" />
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Valor */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Valor Total</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">R$</span>
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder="0,00"
+                                    className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 pl-12 text-base outline-none focus:border-orange-500/30 transition-all font-bold"
+                                />
                             </div>
-                            <span className={`text-[12px] font-black uppercase tracking-tight ${selectedPayment?.method === 'DINHEIRO' ? 'text-orange-900' : 'text-slate-600'}`}>Dinheiro</span>
-                        </button>
+                        </div>
 
-                        {/* Pix */}
-                        <button
-                            onClick={() => setSelectedPayment({ method: 'PIX' })}
-                            className={`p-4 rounded-2xl flex items-center gap-3 transition-all ${selectedPayment?.method === 'PIX' ? 'bg-cyan-50 border-cyan-200 border shadow-sm' : 'bg-slate-50 border-slate-100 border'}`}
-                        >
-                            <div className={`p-2 rounded-lg ${selectedPayment?.method === 'PIX' ? 'bg-white shadow-sm' : 'bg-white'}`}>
+                        {/* Data */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Data</label>
+                            <div className="relative">
+                                <Calendar size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                                <input
+                                    type="date"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 pl-12 text-base outline-none focus:border-orange-500/30 transition-all font-bold"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Categoria */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Categoria</label>
+                        <div className="space-y-2">
+                            {/* Busca de Categoria */}
+                            <div className="relative group">
+                                <Tag size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar categoria..."
+                                    value={categorySearch}
+                                    onChange={(e) => setCategorySearch(e.target.value)}
+                                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 pl-12 text-sm outline-none focus:border-orange-500/30 focus:bg-white transition-all font-bold placeholder:text-slate-300"
+                                />
+                                {categorySearch && (
+                                    <button
+                                        onClick={() => setCategorySearch('')}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Seletor de Categoria */}
+                            <div className="relative">
+                                <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                                <select
+                                    value={categoryId}
+                                    onChange={(e) => setCategoryId(e.target.value)}
+                                    className="w-full bg-white border-2 border-slate-100 rounded-2xl p-4 pl-6 appearance-none outline-none focus:border-orange-500/30 transition-all font-bold text-slate-600"
+                                >
+                                    <option value="">{categorySearch ? `RESULTADOS PARA: ${categorySearch.toUpperCase()}` : 'SELECIONAR CATEGORIA'}</option>
+                                    {categories
+                                        .filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
+                                        .map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))
+                                    }
+                                    {categories.filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase())).length === 0 && (
+                                        <option disabled>Nenhum resultado encontrado</option>
+                                    )}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Metodo de Pagamento */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Método de Pagamento</label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => setSelectedPayment({ method: 'DINHEIRO' })}
+                                className={`p-3 rounded-xl flex items-center gap-2 border-2 transition-all ${selectedPayment?.method === 'DINHEIRO' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-100 bg-slate-50 text-slate-400'}`}
+                            >
+                                <Banknote size={16} />
+                                <span className="text-xs font-bold">Dinheiro</span>
+                            </button>
+                            <button
+                                onClick={() => setSelectedPayment({ method: 'PIX' })}
+                                className={`p-3 rounded-xl flex items-center gap-2 border-2 transition-all ${selectedPayment?.method === 'PIX' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : 'border-slate-100 bg-slate-50 text-slate-400'}`}
+                            >
                                 <div className="w-4 h-4 rounded-sm bg-cyan-500 flex items-center justify-center text-[10px] font-black text-white">P</div>
-                            </div>
-                            <span className={`text-[12px] font-black uppercase tracking-tight ${selectedPayment?.method === 'PIX' ? 'text-cyan-900' : 'text-slate-600'}`}>Pix</span>
-                        </button>
-                    </div>
-                </div>
+                                <span className="text-xs font-bold">Pix</span>
+                            </button>
 
-                {cards.length > 0 && (
-                    <div className="space-y-3">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1 italic">Seu Cartão</h3>
-                        <div className="grid grid-cols-2 gap-3">
                             {cards.map(card => (
                                 <button
                                     key={card.id}
                                     onClick={() => setSelectedPayment({ method: 'CREDITO', cardId: card.id })}
-                                    className={`p-4 rounded-2xl flex items-center gap-3 transition-all text-left ${selectedPayment?.cardId === card.id ? 'bg-blue-50 border-blue-200 border shadow-sm' : 'bg-slate-50 border-slate-100 border'}`}
+                                    className={`p-3 rounded-xl flex items-center gap-2 border-2 transition-all ${selectedPayment?.cardId === card.id ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 bg-slate-50 text-slate-400'}`}
                                 >
-                                    <CreditCard size={18} style={{ color: card.color || '#3b82f6' }} />
-                                    <span className={`text-[12px] font-black uppercase tracking-tight truncate ${selectedPayment?.cardId === card.id ? 'text-blue-900' : 'text-slate-600'}`}>{card.name}</span>
+                                    <CreditCard size={16} />
+                                    <span className="text-xs font-bold truncate">{card.name}</span>
                                 </button>
                             ))}
-                        </div>
-                    </div>
-                )}
 
-                {accounts.length > 0 && (
-                    <div className="space-y-3">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1 italic">Débito em Conta</h3>
-                        <div className="grid grid-cols-2 gap-3">
                             {accounts.map(acc => (
                                 <button
                                     key={acc.id}
                                     onClick={() => setSelectedPayment({ method: 'DEBITO', accountId: acc.id })}
-                                    className={`p-4 rounded-2xl flex items-center gap-3 transition-all text-left ${selectedPayment?.accountId === acc.id ? 'bg-indigo-50 border-indigo-200 border shadow-sm' : 'bg-slate-50 border-slate-100 border'}`}
+                                    className={`p-3 rounded-xl flex items-center gap-2 border-2 transition-all ${selectedPayment?.accountId === acc.id ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-100 bg-slate-50 text-slate-400'}`}
                                 >
-                                    <Landmark size={18} className="text-indigo-500" />
-                                    <span className={`text-[12px] font-black uppercase tracking-tight truncate ${selectedPayment?.accountId === acc.id ? 'text-indigo-900' : 'text-slate-600'}`}>{acc.name}</span>
+                                    <Landmark size={16} />
+                                    <span className="text-xs font-bold truncate">{acc.name}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
-                )}
 
-                <div className="py-2">
-                    <input
-                        type="text"
-                        placeholder="O que você comprou? (opcional)"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm outline-none placeholder:text-slate-300 focus:ring-1 focus:ring-slate-200 font-medium"
-                    />
+                    {/* Recorrencia */}
+                    <button
+                        onClick={() => setIsRecurring(!isRecurring)}
+                        className={`w-full p-4 rounded-2xl border-2 flex items-center gap-4 transition-all ${isRecurring ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-white'}`}
+                    >
+                        <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${isRecurring ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-200'}`}>
+                            {isRecurring && <Check size={14} strokeWidth={4} />}
+                        </div>
+                        <div className="text-left">
+                            <p className="text-sm font-bold text-slate-700">Repetir esta {type === 'DESPESA' ? 'despesa' : 'receita'}?</p>
+                            <p className="text-[10px] text-slate-400 font-medium">Mantenha seus gastos fixos e variáveis organizados</p>
+                        </div>
+                    </button>
+
+                    {/* Status */}
+                    <div className="space-y-3">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status da Transação</label>
+                        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+                            {['PREVISTA', 'CONFIRMADA', 'PAGA', 'ATRASADA'].map((s) => (
+                                <button
+                                    key={s}
+                                    onClick={() => setStatus(s as TransactionStatus)}
+                                    className={`flex-1 py-2 rounded-lg text-[9px] font-black transition-all ${status === s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Footer Actions */}
-            <div className="p-6 bg-white border-t border-slate-50 flex flex-col gap-3">
+            <div className="p-6 bg-white border-t border-slate-100 flex flex-col gap-3 sticky bottom-0 z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
                 <div className="flex gap-3">
                     <button
                         disabled={isSaving || !amount}
+                        onClick={() => handleSave(true)}
+                        className="flex-1 bg-slate-100 text-slate-600 font-black text-xs py-5 rounded-2xl active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-2"
+                    >
+                        SALVAR RÁPIDO <AlertCircle size={16} className="text-yellow-500" />
+                    </button>
+                    <button
+                        disabled={isSaving || !amount || !selectedPayment || !categoryId}
                         onClick={() => handleSave(false)}
                         className="flex-1 bg-slate-900 text-white font-black text-xs py-5 rounded-2xl active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-200"
                     >
-                        SALVAR RÁPIDO <AlertCircle size={16} className="text-yellow-400" />
-                    </button>
-                    <button
-                        disabled={isSaving || !amount || !selectedPayment}
-                        onClick={() => handleSave(true)}
-                        className={`flex-1 font-black text-xs py-5 rounded-2xl active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-2 border-2 shadow-xl ${type === 'DESPESA' ? 'bg-white text-red-500 border-red-100 shadow-red-50' : 'bg-white text-emerald-500 border-emerald-100 shadow-emerald-50'}`}
-                    >
-                        OK, PAGO <Check size={18} />
+                        CRIAR TRANSAÇÃO <Check size={18} />
                     </button>
                 </div>
-
-                <p className="text-[10px] text-center text-slate-300 uppercase font-bold tracking-[0.1em] mt-2">
-                    Transações incompletas serão sinalizadas no dashboard
-                </p>
             </div>
         </div>
     );

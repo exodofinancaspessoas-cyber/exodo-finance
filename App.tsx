@@ -113,6 +113,7 @@ export default function App() {
         return <PlanningView initialTab="budgets" />;
       case 'simulator': return <InvoiceSimulator />;
       case 'settings': return <SettingsView onRestartTour={() => setShowManual(true)} />;
+      case 'loading': return <div className="h-full w-full flex items-center justify-center font-bold text-slate-300">Carregando...</div>;
       default:
         return <Dashboard currentMonth={currentMonth} onChangeMonth={setCurrentMonth} onChangeView={setCurrentView} />;
     }
@@ -124,56 +125,60 @@ export default function App() {
   };
 
   return (
-    <Layout
-      currentView={currentView}
-      onChangeView={setCurrentView}
-      user={user}
-      onLogout={handleLogout}
-      onOpenTraining={() => setShowManual(true)}
-      onQuickAdd={() => setIsQuickAddOpen(true)}
-    >
-      <div className="relative h-full w-full">
-        {renderView()}
+    <>
+      <Layout
+        currentView={currentView}
+        onChangeView={setCurrentView}
+        user={user}
+        onLogout={handleLogout}
+        onOpenTraining={() => setShowManual(true)}
+        onQuickAdd={() => setIsQuickAddOpen(true)}
+      >
+        <div className="relative h-full w-full">
+          {renderView()}
 
-        {/* Manual for those who prefer reading */}
-        {showManual && (
-          <ActionManual
-            onClose={() => {
-              setShowManual(false);
-              localStorage.setItem('onboarding_completed', 'true');
-            }}
-            onStartTour={() => {
-              setShowManual(false);
-              setShowOnboarding(true);
-            }}
-          />
-        )}
+          {/* Manual for those who prefer reading */}
+          {showManual && (
+            <ActionManual
+              onClose={() => {
+                setShowManual(false);
+                localStorage.setItem('onboarding_completed', 'true');
+              }}
+              onStartTour={() => {
+                setShowManual(false);
+                setShowOnboarding(true);
+              }}
+            />
+          )}
 
-        {/* Interactive Onboarding Flow */}
-        {showOnboarding && (
-          <OnboardingFlow
-            onStageChange={setCurrentView}
-            onComplete={() => {
-              setShowOnboarding(false);
-              localStorage.setItem('onboarding_completed', 'true');
-              setCurrentView('dashboard');
-            }}
-          />
-        )}
-      </div>
+          {/* Interactive Onboarding Flow */}
+          {showOnboarding && (
+            <OnboardingFlow
+              onStageChange={setCurrentView}
+              onComplete={() => {
+                setShowOnboarding(false);
+                localStorage.setItem('onboarding_completed', 'true');
+                setCurrentView('dashboard');
+              }}
+            />
+          )}
+        </div>
+      </Layout>
 
       {isQuickAddOpen && (
-        <QuickAddView
-          onClose={() => setIsQuickAddOpen(false)}
-          onSuccess={() => {
-            setIsQuickAddOpen(false);
-            // Full refresh approach to ensure all views update
-            const current = currentView;
-            setCurrentView('loading');
-            setTimeout(() => setCurrentView(current), 10);
-          }}
-        />
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col">
+          <QuickAddView
+            onClose={() => setIsQuickAddOpen(false)}
+            onSuccess={() => {
+              setIsQuickAddOpen(false);
+              // Full refresh approach
+              const current = currentView;
+              setCurrentView('loading');
+              setTimeout(() => setCurrentView(current), 10);
+            }}
+          />
+        </div>
       )}
-    </Layout>
+    </>
   );
 }
