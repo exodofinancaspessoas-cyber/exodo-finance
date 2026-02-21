@@ -116,7 +116,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl rotate-3">Ê</div>
                     <div className="flex flex-col">
-                        <span className="font-black tracking-[0.2em] uppercase text-[10px] text-orange-500">Exodo Finance</span>
+                        <span className="font-black tracking-[0.2em] uppercase text-[11px] text-orange-600">Exodo Finance</span>
                         <span className="font-black text-lg text-slate-900 leading-none">Novo Lançamento</span>
                     </div>
                 </div>
@@ -133,8 +133,8 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                 >
                     <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-100 to-transparent" />
 
-                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-6 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                    <label className="text-xs font-black uppercase tracking-[0.4em] text-slate-400 mb-6 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-orange-600 animate-pulse" />
                         Valor da {type === 'DESPESA' ? 'Despesa' : 'Receita'}
                     </label>
 
@@ -149,7 +149,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="0,00"
-                                    className={`bg-transparent border-none outline-none text-7xl md:text-8xl font-black text-center w-full max-w-[320px] placeholder:text-slate-100 transition-colors ${type === 'DESPESA' ? 'text-slate-900' : 'text-slate-900'}`}
+                                    className={`bg-transparent border-none outline-none text-7xl md:text-8xl font-black text-center w-full max-w-[320px] placeholder:text-slate-200 transition-colors ${type === 'DESPESA' ? 'text-slate-900' : 'text-slate-900'}`}
                                 />
                             </div>
                         </div>
@@ -163,25 +163,25 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                     <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl relative border border-slate-200">
                         <button
                             onClick={() => setType('DESPESA')}
-                            className={`py-4 rounded-xl flex items-center justify-center gap-2 transition-all font-black text-[10px] uppercase tracking-widest z-10 ${type === 'DESPESA' ? 'bg-white text-red-500 shadow-xl' : 'text-slate-400'
+                            className={`py-4 rounded-xl flex items-center justify-center gap-2 transition-all font-black text-xs uppercase tracking-widest z-10 ${type === 'DESPESA' ? 'bg-white text-red-600 shadow-xl' : 'text-slate-500'
                                 }`}
                         >
-                            <div className={`w-2 h-2 rounded-full ${type === 'DESPESA' ? 'bg-red-500' : 'bg-slate-300'}`} />
+                            <div className={`w-2 h-2 rounded-full ${type === 'DESPESA' ? 'bg-red-600' : 'bg-slate-400'}`} />
                             Despesa
                         </button>
                         <button
                             onClick={() => setType('RECEITA')}
-                            className={`py-4 rounded-xl flex items-center justify-center gap-2 transition-all font-black text-[10px] uppercase tracking-widest z-10 ${type === 'RECEITA' ? 'bg-white text-blue-500 shadow-xl' : 'text-slate-400'
+                            className={`py-4 rounded-xl flex items-center justify-center gap-2 transition-all font-black text-xs uppercase tracking-widest z-10 ${type === 'RECEITA' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-500'
                                 }`}
                         >
-                            <div className={`w-2 h-2 rounded-full ${type === 'RECEITA' ? 'bg-blue-500' : 'bg-slate-300'}`} />
+                            <div className={`w-2 h-2 rounded-full ${type === 'RECEITA' ? 'bg-blue-600' : 'bg-slate-400'}`} />
                             Receita
                         </button>
                     </div>
 
                     {/* Descricao Section */}
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">O que é isso? <span className="text-orange-500">*</span></label>
+                        <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 pl-1">O que é isso? <span className="text-orange-600">*</span></label>
                         <div className="relative group">
                             <input
                                 type="text"
@@ -195,7 +195,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
 
                     {/* Pagamento Grid */}
                     <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Forma de Pagamento <span className="text-orange-500">*</span></label>
+                        <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 pl-1">Forma de Pagamento <span className="text-orange-600">*</span></label>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => setSelectedPayment({ method: 'DINHEIRO' })}
@@ -260,17 +260,17 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
 
                             <button
                                 onClick={() => setSelectedPayment({ method: 'DEBITO' })}
-                                className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all ${selectedPayment?.method === 'DEBITO' && !selectedPayment.accountId ? 'border-orange-500 bg-orange-50 text-orange-900 shadow-xl scale-[1.02]' : 'border-slate-50 bg-slate-50 text-slate-400 opacity-60'}`}
+                                className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all ${selectedPayment?.method === 'DEBITO' && !selectedPayment.accountId ? 'border-orange-500 bg-orange-50 text-orange-900 shadow-xl scale-[1.02]' : 'border-slate-50 bg-slate-50 text-slate-500 opacity-60'}`}
                             >
                                 <Landmark size={24} strokeWidth={1} />
-                                <span className="text-[9px] font-black uppercase tracking-tighter">Conta (Geral)</span>
+                                <span className="text-[10px] font-black uppercase tracking-tighter">Conta (Geral)</span>
                             </button>
                         </div>
                     </div>
 
                     {/* Categoria Selector */}
                     <div className="space-y-4 pt-4 border-t border-slate-100">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Categoria</label>
+                        <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 pl-1">Categoria</label>
                         <div className="relative group">
                             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-200" />
                             <input
@@ -302,7 +302,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                     {/* Extra Settings */}
                     <div className="grid grid-cols-2 gap-3 pt-6">
                         <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-wider text-slate-400">Quando?</label>
+                            <label className="text-xs font-black uppercase tracking-wider text-slate-500 pl-1">Quando?</label>
                             <input
                                 type="date"
                                 value={date}
@@ -313,10 +313,10 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                         <div className="flex flex-col justify-end">
                             <button
                                 onClick={() => setIsRecurring(!isRecurring)}
-                                className={`w-full p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${isRecurring ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-100 bg-slate-50 text-slate-300'}`}
+                                className={`w-full p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${isRecurring ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-100 bg-slate-50 text-slate-500'}`}
                             >
                                 <RefreshCw size={14} className={isRecurring ? 'animate-spin-slow' : ''} />
-                                <span className="text-[9px] font-black uppercase">Recorrente?</span>
+                                <span className="text-xs font-black uppercase">Recorrente?</span>
                             </button>
                         </div>
                     </div>
@@ -329,7 +329,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                     <button
                         onClick={() => handleSave(false)}
                         disabled={isSaving || !amount}
-                        className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-2xl font-black text-[9px] uppercase tracking-[0.2em] active:scale-95 transition-all text-center border border-slate-200/50 shadow-sm"
+                        className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-[0.2em] active:scale-95 transition-all text-center border border-slate-200/50 shadow-sm"
                     >
                         Salvar Rascunho
                     </button>
@@ -337,9 +337,9 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                     <button
                         onClick={() => handleSave(true)}
                         disabled={isSaving || !amount}
-                        className={`flex-[1.8] py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-2 shadow-2xl active:scale-95 ${isReadyToComplete
-                            ? 'bg-orange-500 text-white shadow-orange-500/40 ring-4 ring-orange-500/10'
-                            : 'bg-slate-200 text-slate-400 shadow-none'
+                        className={`flex-[1.8] py-4 rounded-2xl font-black text-xs uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-2 shadow-2xl active:scale-95 ${isReadyToComplete
+                            ? 'bg-orange-600 text-white shadow-orange-600/40 ring-4 ring-orange-600/10'
+                            : 'bg-slate-200 text-slate-500 shadow-none'
                             }`}
                     >
                         {isSaving ? 'Salvando...' : 'Finalizar'}
