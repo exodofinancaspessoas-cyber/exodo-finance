@@ -317,20 +317,20 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                     <button
                         onClick={() => handleSave(false)}
                         disabled={isSaving || !amount}
-                        className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all"
+                        className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-tighter active:scale-95 transition-all text-center leading-tight px-2"
                     >
-                        Rascunho
+                        Lançamento Parcial
                     </button>
 
                     <button
                         onClick={() => handleSave(true)}
-                        disabled={isSaving || !amount}
-                        className={`flex-[2] py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-2 shadow-2xl active:scale-95 ${isReadyToComplete
-                                ? 'bg-orange-600 text-white shadow-orange-500/40 ring-4 ring-orange-500/10'
+                        disabled={isSaving || !isReadyToComplete}
+                        className={`flex-1 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-2xl active:scale-95 ${isReadyToComplete
+                                ? 'bg-orange-600 text-white shadow-orange-500/40 ring-4 ring-orange-600/10'
                                 : 'bg-slate-200 text-slate-400 shadow-none'
                             }`}
                     >
-                        {isSaving ? 'Processando...' : 'Finalizar'}
+                        {isSaving ? 'Processando...' : 'Lançar'}
                         <Check size={18} strokeWidth={4} />
                     </button>
                 </div>
