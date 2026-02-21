@@ -422,6 +422,26 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
 
       {/* ── VISÃO GERAL — Grid de Cards ───────────────────────────────────── */}
       <div>
+        {incompleteTransactions.length > 0 && (
+          <div
+            onClick={() => onChangeView('movements_incomplete')}
+            className="mb-6 p-4 bg-orange-50 border-2 border-orange-100 rounded-2xl flex items-center justify-between gap-4 cursor-pointer active:scale-[0.98] transition-all shadow-lg shadow-orange-900/5 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+                <AlertCircle size={24} strokeWidth={3} />
+              </div>
+              <div>
+                <p className="text-orange-900 font-black text-sm uppercase tracking-wider">Lançamentos Pendentes</p>
+                <p className="text-orange-700/80 text-[10px] font-bold">Você tem {incompleteTransactions.length} {incompleteTransactions.length === 1 ? 'item' : 'itens'} que precisam de atenção.</p>
+              </div>
+            </div>
+            <div className="bg-orange-100 p-2 rounded-lg text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-all">
+              <ArrowRight size={18} />
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-slate-800">Visão Geral</h3>
           <span className="text-xs text-slate-400 capitalize">{monthLabel}</span>
