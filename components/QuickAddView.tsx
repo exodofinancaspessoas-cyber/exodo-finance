@@ -32,7 +32,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
     const [isSaving, setIsSaving] = useState(false);
 
     // Selector States
-    const [selectorOpen, setSelectorOpen] = useState<'CARD' | 'ACCOUNT' | null>(null);
+    const [selectorOpen, setSelectorOpen] = useState<'CARD' | 'ACCOUNT' | 'CATEGORY' | null>(null);
 
     const amountInputRef = useRef<HTMLInputElement>(null);
 
@@ -262,29 +262,21 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                     {/* Categoria Selector */}
                     <div className="space-y-4 pt-4 border-t border-slate-100">
                         <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 pl-1">Categoria <span className="text-orange-600">*</span></label>
-                        <div className="relative">
-                            <select
-                                value={categoryId}
-                                onChange={(e) => setCategoryId(e.target.value)}
-                                className="w-full bg-slate-900 text-white rounded-2xl p-5 pl-6 appearance-none outline-none font-bold text-sm shadow-2xl border-none"
-                            >
-                                <option value="">SELECIONAR CATEGORIA</option>
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
-                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
-                        </div>
-                        <div className="relative group">
-                            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-                            <input
-                                type="text"
-                                placeholder="Filtrar categorias..."
-                                value={categorySearch}
-                                onChange={(e) => setCategorySearch(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-sm outline-none font-bold text-slate-500"
-                            />
-                        </div>
+                        <button
+                            onClick={() => {
+                                setSelectorOpen('CATEGORY');
+                                setCategorySearch('');
+                            }}
+                            className={`w-full p-5 rounded-2xl flex items-center justify-between border-2 transition-all ${categoryId ? 'border-slate-900 bg-slate-900 text-white shadow-xl' : 'border-slate-100 bg-slate-50 text-slate-400'}`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Tag size={20} className={categoryId ? 'text-orange-400' : 'text-slate-300'} />
+                                <span className="font-black text-sm uppercase tracking-tight">
+                                    {categoryId ? categories.find(c => c.id === categoryId)?.name : 'Selecionar Categoria'}
+                                </span>
+                            </div>
+                            <ChevronDown size={20} className={categoryId ? 'text-white/40' : 'text-slate-200'} />
+                        </button>
                     </div>
 
                     {/* Meta Data */}
@@ -317,9 +309,9 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                     <button
                         onClick={() => handleSave(false)}
                         disabled={isSaving || !amount}
-                        className={`flex-1 py-5 rounded-2xl font-black text-[10px] uppercase tracking-tighter active:scale-95 transition-all text-center leading-tight px-2 ${type === 'DESPESA'
-                                ? 'bg-red-50 text-red-600 border border-red-100'
-                                : 'bg-blue-50 text-blue-600 border border-blue-100'
+                        className={`flex-1 py-5 rounded-2xl font-black text-xs uppercase tracking-tighter active:scale-95 transition-all text-center leading-tight px-2 ${type === 'DESPESA'
+                            ? 'bg-red-50 text-red-600 border border-red-100'
+                            : 'bg-blue-50 text-blue-600 border border-blue-100'
                             }`}
                     >
                         Lançamento Parcial
@@ -329,10 +321,10 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                         onClick={() => handleSave(true)}
                         disabled={isSaving || !isReadyToComplete}
                         className={`flex-1 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-2xl active:scale-95 ${isReadyToComplete
-                                ? (type === 'DESPESA'
-                                    ? 'bg-red-600 text-white shadow-red-500/40 ring-4 ring-red-600/10'
-                                    : 'bg-blue-600 text-white shadow-blue-500/40 ring-4 ring-blue-600/10')
-                                : 'bg-slate-200 text-slate-400 shadow-none'
+                            ? (type === 'DESPESA'
+                                ? 'bg-red-600 text-white shadow-red-500/40 ring-4 ring-red-600/10'
+                                : 'bg-blue-600 text-white shadow-blue-500/40 ring-4 ring-blue-600/10')
+                            : 'bg-slate-200 text-slate-400 shadow-none'
                             }`}
                     >
                         {isSaving ? 'Processando...' : 'Lançar'}
@@ -356,82 +348,122 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                         <div className="p-8 pt-2 space-y-6">
                             <div className="flex justify-between items-center">
                                 <h3 className="font-black text-xl uppercase tracking-tight text-slate-900">
-                                    {selectorOpen === 'CARD' ? 'Escolha o Cartão' : 'Escolha a Conta'}
+                                    {selectorOpen === 'CARD' ? 'Escolha o Cartão' : selectorOpen === 'ACCOUNT' ? 'Escolha a Conta' : 'Escolha a Categoria'}
                                 </h3>
                                 <button onClick={() => setSelectorOpen(null)} className="p-2 bg-slate-50 rounded-full text-slate-400">
                                     <X size={20} />
                                 </button>
                             </div>
 
-                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar pb-6">
-                                {/* Generic Option */}
-                                <button
-                                    onClick={() => {
-                                        setSelectedPayment({ method: selectorOpen === 'CARD' ? 'CREDITO' : 'DEBITO', label: selectorOpen === 'CARD' ? 'Crt. Geral' : 'Cta. Geral' });
-                                        setSelectorOpen(null);
-                                    }}
-                                    className="w-full p-6 rounded-3xl bg-slate-50 hover:bg-orange-50 border-2 border-transparent transition-all flex items-center justify-between group"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-orange-200 group-hover:text-orange-600 transition-colors">
-                                            {selectorOpen === 'CARD' ? <CreditCard size={24} /> : <Landmark size={24} />}
-                                        </div>
-                                        <div className="flex flex-col items-start">
-                                            <span className="font-black text-sm text-slate-900 uppercase">Uso Geral</span>
-                                            <span className="text-[10px] font-bold text-slate-400">Sem vínculo específico</span>
-                                        </div>
-                                    </div>
-                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-orange-500 transition-colors">
-                                        <ChevronRight size={20} />
-                                    </div>
-                                </button>
+                            {selectorOpen === 'CATEGORY' && (
+                                <div className="relative">
+                                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        placeholder="Pesquisar categoria..."
+                                        value={categorySearch}
+                                        onChange={(e) => setCategorySearch(e.target.value)}
+                                        className="w-full bg-slate-100 border-none rounded-2xl p-4 pl-12 text-sm outline-none font-bold text-slate-900"
+                                    />
+                                </div>
+                            )}
 
-                                {/* Specific Options */}
-                                {selectorOpen === 'CARD' ? cards.map(item => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => {
-                                            setSelectedPayment({ method: 'CREDITO', cardId: item.id, label: item.name });
-                                            setSelectorOpen(null);
-                                        }}
-                                        className="w-full p-6 rounded-3xl bg-slate-50 hover:bg-orange-50 border-2 border-transparent transition-all flex items-center justify-between group"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-orange-200 group-hover:text-orange-600 transition-colors">
-                                                <CreditCard size={24} />
+                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar pb-6 focus-within:pb-80">
+                                {/* Case: Categories */}
+                                {selectorOpen === 'CATEGORY' ? (
+                                    categories
+                                        .filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
+                                        .map(cat => (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => {
+                                                    setCategoryId(cat.id);
+                                                    setSelectorOpen(null);
+                                                }}
+                                                className={`w-full p-5 rounded-2xl transition-all flex items-center justify-between group ${categoryId === cat.id ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-slate-50 hover:bg-slate-100 text-slate-900'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${categoryId === cat.id ? 'bg-white/20' : 'bg-white shadow-sm text-slate-400'}`}>
+                                                        <Tag size={18} />
+                                                    </div>
+                                                    <span className="font-black text-sm uppercase tracking-tight">{cat.name}</span>
+                                                </div>
+                                                {categoryId === cat.id ? <Check size={20} /> : <ChevronRight size={18} className="text-slate-300" />}
+                                            </button>
+                                        ))
+                                ) : (
+                                    <>
+                                        {/* Generic Option */}
+                                        <button
+                                            onClick={() => {
+                                                setSelectedPayment({ method: selectorOpen === 'CARD' ? 'CREDITO' : 'DEBITO', label: selectorOpen === 'CARD' ? 'Crt. Geral' : 'Cta. Geral' });
+                                                setSelectorOpen(null);
+                                            }}
+                                            className="w-full p-6 rounded-3xl bg-slate-50 hover:bg-orange-50 border-2 border-transparent transition-all flex items-center justify-between group"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-orange-200 group-hover:text-orange-600 transition-colors">
+                                                    {selectorOpen === 'CARD' ? <CreditCard size={24} /> : <Landmark size={24} />}
+                                                </div>
+                                                <div className="flex flex-col items-start">
+                                                    <span className="font-black text-sm text-slate-900 uppercase">Uso Geral</span>
+                                                    <span className="text-[10px] font-bold text-slate-400">Sem vínculo específico</span>
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col items-start">
-                                                <span className="font-black text-sm text-slate-900 uppercase">{item.name}</span>
-                                                <span className="text-[10px] font-bold text-slate-400">Final {item.last_digits || '****'}</span>
+                                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-orange-500 transition-colors">
+                                                <ChevronRight size={20} />
                                             </div>
-                                        </div>
-                                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-orange-500 transition-colors">
-                                            <ChevronRight size={20} />
-                                        </div>
-                                    </button>
-                                )) : accounts.map(item => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => {
-                                            setSelectedPayment({ method: 'DEBITO', accountId: item.id, label: item.name });
-                                            setSelectorOpen(null);
-                                        }}
-                                        className="w-full p-6 rounded-3xl bg-slate-50 hover:bg-orange-50 border-2 border-transparent transition-all flex items-center justify-between group"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-orange-200 group-hover:text-orange-600 transition-colors">
-                                                <Landmark size={24} />
-                                            </div>
-                                            <div className="flex flex-col items-start">
-                                                <span className="font-black text-sm text-slate-900 uppercase">{item.name}</span>
-                                                <span className="text-[10px] font-bold text-slate-400">{item.bank_name || 'Instituição Financeira'}</span>
-                                            </div>
-                                        </div>
-                                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-orange-500 transition-colors">
-                                            <ChevronRight size={20} />
-                                        </div>
-                                    </button>
-                                ))}
+                                        </button>
+
+                                        {/* Specific Options */}
+                                        {selectorOpen === 'CARD' ? cards.map(item => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => {
+                                                    setSelectedPayment({ method: 'CREDITO', cardId: item.id, label: item.name });
+                                                    setSelectorOpen(null);
+                                                }}
+                                                className="w-full p-6 rounded-3xl bg-slate-50 hover:bg-orange-50 border-2 border-transparent transition-all flex items-center justify-between group"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-orange-200 group-hover:text-orange-600 transition-colors">
+                                                        <CreditCard size={24} />
+                                                    </div>
+                                                    <div className="flex flex-col items-start">
+                                                        <span className="font-black text-sm text-slate-900 uppercase">{item.name}</span>
+                                                        <span className="text-[10px] font-bold text-slate-400">Final {item.last_digits || '****'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-orange-500 transition-colors">
+                                                    <ChevronRight size={20} />
+                                                </div>
+                                            </button>
+                                        )) : accounts.map(item => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => {
+                                                    setSelectedPayment({ method: 'DEBITO', accountId: item.id, label: item.name });
+                                                    setSelectorOpen(null);
+                                                }}
+                                                className="w-full p-6 rounded-3xl bg-slate-50 hover:bg-orange-50 border-2 border-transparent transition-all flex items-center justify-between group"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-orange-200 group-hover:text-orange-600 transition-colors">
+                                                        <Landmark size={24} />
+                                                    </div>
+                                                    <div className="flex flex-col items-start">
+                                                        <span className="font-black text-sm text-slate-900 uppercase">{item.name}</span>
+                                                        <span className="text-[10px] font-bold text-slate-400">{item.bank_name || 'Instituição Financeira'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-orange-500 transition-colors">
+                                                    <ChevronRight size={20} />
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
