@@ -317,7 +317,10 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                     <button
                         onClick={() => handleSave(false)}
                         disabled={isSaving || !amount}
-                        className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-tighter active:scale-95 transition-all text-center leading-tight px-2"
+                        className={`flex-1 py-5 rounded-2xl font-black text-[10px] uppercase tracking-tighter active:scale-95 transition-all text-center leading-tight px-2 ${type === 'DESPESA'
+                                ? 'bg-red-50 text-red-600 border border-red-100'
+                                : 'bg-blue-50 text-blue-600 border border-blue-100'
+                            }`}
                     >
                         Lançamento Parcial
                     </button>
@@ -326,7 +329,9 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                         onClick={() => handleSave(true)}
                         disabled={isSaving || !isReadyToComplete}
                         className={`flex-1 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-2xl active:scale-95 ${isReadyToComplete
-                                ? 'bg-orange-600 text-white shadow-orange-500/40 ring-4 ring-orange-600/10'
+                                ? (type === 'DESPESA'
+                                    ? 'bg-red-600 text-white shadow-red-500/40 ring-4 ring-red-600/10'
+                                    : 'bg-blue-600 text-white shadow-blue-500/40 ring-4 ring-blue-600/10')
                                 : 'bg-slate-200 text-slate-400 shadow-none'
                             }`}
                     >
