@@ -78,19 +78,16 @@ export default function ActionManual({ onClose, onStartTour }: ActionManualProps
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-6 bg-slate-50/80 border-t border-slate-100 space-y-3">
-                    <button
-                        onClick={onClose}
-                        className="w-full bg-slate-900 text-white text-xs font-black py-4 rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 active:scale-[0.98]"
-                    >
-                        OK, ENTENDI <CheckCircle2 size={16} />
-                    </button>
+                <div className="p-6 bg-slate-50/80 border-t border-slate-100 flex flex-col gap-2">
                     <button
                         onClick={onStartTour}
-                        className="w-full text-[10px] font-black text-slate-400 hover:text-orange-600 transition-colors text-center flex items-center justify-center gap-1 group uppercase tracking-widest"
+                        className="w-full bg-slate-900 text-white text-xs font-black py-4 rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 active:scale-[0.98]"
                     >
-                        Quero o guia passo a passo <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                        COMEÇAR GUIA PASSO A PASSO <ArrowRight size={16} />
                     </button>
+                    <p className="text-[9px] text-slate-400 font-bold text-center uppercase tracking-widest mt-1">
+                        Recomendado para usuários novos
+                    </p>
                 </div>
             </div>
         </div>

@@ -10,17 +10,25 @@ interface OnboardingFlowProps {
 }
 
 export default function OnboardingFlow({ onStageChange, onComplete }: OnboardingFlowProps) {
-  const [stage, setStage] = useState<OnboardingStage>('START');
+  const [stage, setStage] = useState<OnboardingStage>(() => {
+    return (localStorage.getItem('onboarding_stage') as OnboardingStage) || 'START';
+  });
   const [hasCreatedAccount, setHasCreatedAccount] = useState(false);
   const [hasCreatedCard, setHasCreatedCard] = useState(false);
   const [hasSetInvoices, setHasSetInvoices] = useState(false);
   const [transactionType, setTransactionType] = useState<'RECEITA' | 'DESPESA' | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
 
+  // Sync stage to localStorage
+  useEffect(() => {
+    localStorage.setItem('onboarding_stage', stage);
+  }, [stage]);
+
   // Helper to open app modals
   const triggerAppAction = (id: string) => {
     const el = document.getElementById(id);
     if (el) el.click();
+    setIsMinimized(true);
   };
 
   // Robust Pulse effect logic
@@ -68,17 +76,34 @@ export default function OnboardingFlow({ onStageChange, onComplete }: Onboarding
 
   // Monitor data creation
   useEffect(() => {
+    let prevAccount = false;
+    let prevCard = false;
+    let prevInvoices = false;
+
     const checkData = async () => {
       const accounts = await StorageService.getAccounts();
       const cards = await StorageService.getCards();
       const trxs = await StorageService.getTransactions();
 
-      setHasCreatedAccount(accounts.length > 0);
-      setHasCreatedCard(cards.length > 0);
-      setHasSetInvoices(trxs.some(t => t.observation === 'Importado via Configuração Inicial de Cartão'));
+      const currentAccount = accounts.length > 0;
+      const currentCard = cards.length > 0;
+      const currentInvoices = trxs.some(t => t.observation === 'Importado via Configuração Inicial de Cartão');
+
+      setHasCreatedAccount(currentAccount);
+      setHasCreatedCard(currentCard);
+      setHasSetInvoices(currentInvoices);
+
+      // Auto-expand logic: if something was created, expand to show next step
+      if ((currentAccount && !prevAccount) || (currentCard && !prevCard) || (currentInvoices && !prevInvoices)) {
+        setIsMinimized(false);
+      }
+
+      prevAccount = currentAccount;
+      prevCard = currentCard;
+      prevInvoices = currentInvoices;
     };
 
-    const interval = setInterval(checkData, 2000);
+    const interval = setInterval(checkData, 1500);
     checkData();
     return () => clearInterval(interval);
   }, []);
@@ -113,6 +138,7 @@ export default function OnboardingFlow({ onStageChange, onComplete }: Onboarding
   };
 
   const handleFinish = () => {
+    localStorage.removeItem('onboarding_stage');
     onComplete();
   };
 
@@ -142,8 +168,8 @@ export default function OnboardingFlow({ onStageChange, onComplete }: Onboarding
 
   return (
     <div className={`fixed z-[60] transition-all duration-500 ease-in-out ${isMinimized
-        ? 'bottom-6 right-6 w-12 h-12'
-        : 'bottom-6 right-6 w-[calc(100%-48px)] max-w-[280px] md:right-32'
+      ? 'bottom-6 right-6 w-12 h-12'
+      : 'bottom-6 right-6 w-[calc(100%-48px)] max-w-[280px] md:right-32'
       }`}>
       {isMinimized ? (
         <button

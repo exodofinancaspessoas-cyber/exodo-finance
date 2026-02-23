@@ -31,9 +31,12 @@ export default function App() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   // Onboarding states
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return !!localStorage.getItem('onboarding_stage');
+  });
   const [showManual, setShowManual] = useState(() => {
-    return !localStorage.getItem('onboarding_completed');
+    // Show manual only if not completed AND not already mid-tour
+    return !localStorage.getItem('onboarding_completed') && !localStorage.getItem('onboarding_stage');
   });
 
   // Auto-open Quick Add on Mobile or via URL
@@ -65,6 +68,15 @@ export default function App() {
         try {
           console.log('[App] Starting recurring expenses processing...');
           await StorageService.processRecurringExpenses();
+
+          // Smart Onboarding: If user has accounts, they are not new.
+          // This prevents the tour from appearing even if they clear localStorage but keep their DB data.
+          const accounts = await StorageService.getAccounts();
+          if (accounts.length > 0 && !localStorage.getItem('onboarding_completed')) {
+            localStorage.setItem('onboarding_completed', 'true');
+            setShowManual(false);
+          }
+
           console.log('[App] Recurring expenses processing complete.');
         } catch (e) {
           console.error('[App] Error processing recurring expenses:', e);
@@ -112,7 +124,10 @@ export default function App() {
       case 'budgets':
         return <PlanningView initialTab="budgets" />;
       case 'simulator': return <InvoiceSimulator />;
-      case 'settings': return <SettingsView onRestartTour={() => setShowManual(true)} />;
+      case 'settings': return <SettingsView onRestartTour={() => {
+        localStorage.removeItem('onboarding_completed');
+        setShowManual(true);
+      }} />;
       case 'loading': return <div className="h-full w-full flex items-center justify-center font-bold text-slate-300">Carregando...</div>;
       default:
         return <Dashboard currentMonth={currentMonth} onChangeMonth={setCurrentMonth} onChangeView={setCurrentView} />;
@@ -131,7 +146,10 @@ export default function App() {
         onChangeView={setCurrentView}
         user={user}
         onLogout={handleLogout}
-        onOpenTraining={() => setShowManual(true)}
+        onOpenTraining={() => {
+          localStorage.removeItem('onboarding_completed');
+          setShowManual(true);
+        }}
         onQuickAdd={() => setIsQuickAddOpen(true)}
       >
         <div className="relative h-full w-full">
@@ -147,6 +165,8 @@ export default function App() {
               onStartTour={() => {
                 setShowManual(false);
                 setShowOnboarding(true);
+                // Ensure we don't show the manual again if they reload mid-tour
+                localStorage.setItem('onboarding_completed', 'true');
               }}
             />
           )}
