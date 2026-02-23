@@ -59,11 +59,13 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [cards, setCards] = useState<Card[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [transfers, setTransfers] = useState<Transfer[]>([]);
 
     // UI State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
-    const [isExportModalOpen, setIsExportModalOpen] = useState(false); // New state for export
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [exportData, setExportData] = useState<Transaction[]>([]);
     const [filters, setFilters] = useState<FilterState>(() => getInitialFilters(initialType, initialStatus));
     const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
@@ -144,11 +146,12 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
         } catch (error) {
             console.error('Erro ao processar recorrências:', error);
         }
-        const [trxs, accs, crds, catsRaw] = await Promise.all([
+        const [trxs, accs, crds, catsRaw, transferRecords] = await Promise.all([
             StorageService.getTransactions(),
             StorageService.getAccounts(),
             StorageService.getCards(),
-            StorageService.getCategories()
+            StorageService.getCategories(),
+            StorageService.getTransfers()
         ]);
 
         let cats = catsRaw;
@@ -177,6 +180,7 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
         setAccounts(accs);
         setCards(crds);
         setCategories(cats);
+        setTransfers(transferRecords);
         // Load recurring rules too
         const recs = await StorageService.getRecurringExpenses();
         setRecurringRules(recs);
@@ -185,7 +189,23 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
 
     // --- Advanced Filtering Logic ---
     const filteredTransactions = useMemo(() => {
-        return transactions.filter(t => {
+        const mappedTransfers: Transaction[] = (filters.type === 'ALL' || filters.type as string === 'TRANSFERENCIA') ? transfers.map(tr => ({
+            id: tr.id,
+            description: tr.description || `Transferência: ${accounts.find(a => a.id === tr.from_account_id)?.name} → ${accounts.find(a => a.id === tr.to_account_id)?.name}`,
+            amount: tr.amount,
+            type: 'DESPESA', // Treat as exit for "from" but we'll style it differently
+            category_id: 'transfer-cat',
+            date: tr.date,
+            status: 'PAGA',
+            payment_method: 'TRANSFERENCIA',
+            account_id: tr.from_account_id,
+            observation: `Destino: ${accounts.find(a => a.id === tr.to_account_id)?.name}`,
+            created_at: tr.created_at || tr.date
+        })) : [];
+
+        const allItems = [...transactions, ...mappedTransfers];
+
+        return allItems.filter(t => {
             // Text Search (Description or Obs)
             if (filters.search) {
                 const searchLower = filters.search.toLowerCase();
@@ -395,72 +415,82 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
         setIsSaving(true);
         try {
             const totalAmount = Number(formData.amount);
-            let finalAmount = totalAmount;
-            let installmentsData = undefined;
+            const installmentsCount = formData.is_installment ? Math.max(1, formData.installments_count) : 1;
+            const amountPerInstallment = totalAmount / installmentsCount;
+            const baseDate = new Date(formData.date + 'T12:00:00'); // Use noon to avoid timezone shifts
 
-            if (formData.is_installment && formData.installments_count > 1) {
-                finalAmount = totalAmount / formData.installments_count;
-                installmentsData = {
-                    current: 1,
-                    total: formData.installments_count
+            const transactionsToSave: Transaction[] = [];
+            const installmentGroupId = formData.is_installment ? StorageService.generateId() : undefined;
+
+            for (let i = 0; i < installmentsCount; i++) {
+                const currentDate = new Date(baseDate);
+                currentDate.setMonth(baseDate.getMonth() + i);
+
+                const installmentTrx: Transaction = {
+                    id: (i === 0 && editingTransaction) ? editingTransaction.id : StorageService.generateId(),
+                    description: installmentsCount > 1
+                        ? `${formData.description} (${i + 1}/${installmentsCount})`
+                        : formData.description,
+                    amount: amountPerInstallment,
+                    type: formData.type,
+                    category_id: formData.category_id || undefined,
+                    date: currentDate.toISOString().split('T')[0],
+                    status: (i === 0) ? formData.status : 'PREVISTA',
+                    payment_method: formData.payment_method,
+                    account_id: formData.account_id || undefined,
+                    card_id: formData.card_id || undefined,
+                    observation: formData.observation,
+                    installments: installmentsCount > 1 ? {
+                        current: i + 1,
+                        total: installmentsCount
+                    } : undefined,
+                    created_at: new Date().toISOString()
                 };
-            }
 
-            const newTrx: Transaction = {
-                id: editingTransaction ? editingTransaction.id : StorageService.generateId(),
-                description: formData.description,
-                amount: finalAmount,
-                type: formData.type,
-                category_id: formData.category_id || undefined,
-                date: formData.date,
-                status: formData.status,
-                payment_method: formData.payment_method,
-                account_id: formData.account_id || undefined,
-                card_id: formData.card_id || undefined,
-                observation: formData.observation,
-                installments: installmentsData,
-                created_at: new Date().toISOString()
-            };
+                // Add recurring ID if applicable (only for the group/first one logic)
+                if (formData.is_recurring && !editingTransaction && i === 0) {
+                    const recurringId = StorageService.generateId();
+                    installmentTrx.recurrence_id = recurringId;
 
-            // Handle Recurring
-            if (formData.is_recurring && !editingTransaction) {
-                const recurringId = StorageService.generateId();
-                newTrx.recurrence_id = recurringId;
+                    let endDate = undefined;
+                    if (formData.recurring_duration && Number(formData.recurring_duration) > 0) {
+                        const duration = Number(formData.recurring_duration);
+                        const end = new Date(formData.date);
+                        end.setMonth(end.getMonth() + duration - 1);
+                        endDate = end.toISOString().split('T')[0];
+                    }
 
-                let endDate = undefined;
-                if (formData.recurring_duration && Number(formData.recurring_duration) > 0) {
-                    const duration = Number(formData.recurring_duration);
-                    const end = new Date(formData.date);
-                    end.setMonth(end.getMonth() + duration - 1);
-                    endDate = end.toISOString().split('T')[0];
+                    const recurringExpense: RecurringExpense = {
+                        id: recurringId,
+                        description: formData.description,
+                        amount: amountPerInstallment,
+                        programmed_amount: formData.programmed_amount ? Number(formData.programmed_amount) : amountPerInstallment,
+                        category_id: formData.category_id,
+                        type: formData.recurring_type,
+                        frequency: formData.frequency,
+                        day_of_month: Number(formData.day_of_month),
+                        active: true,
+                        auto_create: true,
+                        account_id: formData.account_id || undefined,
+                        payment_method: formData.payment_method,
+                        last_generated: new Date().toISOString(),
+                        start_date: formData.date,
+                        end_date: endDate,
+                        duration_count: formData.recurring_duration ? Number(formData.recurring_duration) : undefined
+                    };
+                    await StorageService.saveRecurringExpense(recurringExpense);
                 }
 
-                const recurringExpense: RecurringExpense = {
-                    id: recurringId,
-                    description: formData.description,
-                    amount: finalAmount,
-                    programmed_amount: formData.programmed_amount ? Number(formData.programmed_amount) : finalAmount,
-                    category_id: formData.category_id,
-                    type: formData.recurring_type,
-                    frequency: formData.frequency,
-                    day_of_month: Number(formData.day_of_month),
-                    active: true,
-                    auto_create: true,
-                    account_id: formData.account_id || undefined,
-                    payment_method: formData.payment_method,
-                    last_generated: new Date().toISOString(),
-                    start_date: formData.date,
-                    end_date: endDate,
-                    duration_count: formData.recurring_duration ? Number(formData.recurring_duration) : undefined
-                };
-
-                // SAVE TRANSACTION FIRST to avoid duplication in processRecurringExpenses
-                await StorageService.saveTransaction(newTrx);
-                // THEN SAVE RECURRING RULE
-                await StorageService.saveRecurringExpense(recurringExpense);
-            } else {
-                await StorageService.saveTransaction(newTrx);
+                transactionsToSave.push(installmentTrx);
             }
+
+            // Save all generated transactions
+            if (transactionsToSave.length > 1) {
+                await StorageService.saveTransactions(transactionsToSave);
+            } else {
+                await StorageService.saveTransaction(transactionsToSave[0]);
+            }
+
 
             // Warning if type mismatch
             if (filters.type !== 'ALL' && formData.type !== filters.type) {
@@ -681,25 +711,25 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4 animate-slide-down">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Tipo</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Tipo</label>
                                 <select
-                                    className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
                                     value={filters.type}
                                     onChange={e => setFilters({ ...filters, type: e.target.value as any })}
                                 >
-                                    <option value="ALL">Todos</option>
+                                    <option value="ALL">Todos os Tipos</option>
                                     <option value="RECEITA">Receitas</option>
                                     <option value="DESPESA">Despesas</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Status</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Status</label>
                                 <select
-                                    className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
                                     value={filters.status}
                                     onChange={e => setFilters({ ...filters, status: e.target.value as any })}
                                 >
-                                    <option value="ALL">Todos</option>
+                                    <option value="ALL">Todos os Status</option>
                                     <option value="PREVISTA">Prevista</option>
                                     <option value="CONFIRMADA">Confirmada</option>
                                     <option value="ATRASADA">Atrasada</option>
@@ -710,21 +740,73 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Início</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Categoria</label>
+                                <select
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                    value={filters.category}
+                                    onChange={e => setFilters({ ...filters, category: e.target.value })}
+                                >
+                                    <option value="ALL">Todas as Categorias</option>
+                                    {categories
+                                        .filter(c => filters.type === 'ALL' || c.type === filters.type)
+                                        .map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Conta/Cartão</label>
+                                <select
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                    value={filters.account}
+                                    onChange={e => setFilters({ ...filters, account: e.target.value })}
+                                >
+                                    <option value="ALL">Todas as Contas</option>
+                                    <optgroup label="Contas">
+                                        {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                                    </optgroup>
+                                    <optgroup label="Cartões">
+                                        {cards.map(card => <option key={card.id} value={card.id}>{card.name}</option>)}
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data Início</label>
                                 <input
                                     type="date"
-                                    className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
                                     value={filters.startDate}
                                     onChange={e => setFilters({ ...filters, startDate: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Fim</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data Fim</label>
                                 <input
                                     type="date"
-                                    className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
                                     value={filters.endDate}
                                     onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor Mínimo</label>
+                                <input
+                                    type="number"
+                                    placeholder="R$ 0,00"
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                    value={filters.minAmount}
+                                    onChange={e => setFilters({ ...filters, minAmount: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor Máximo</label>
+                                <input
+                                    type="number"
+                                    placeholder="R$ Infinito"
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                    value={filters.maxAmount}
+                                    onChange={e => setFilters({ ...filters, maxAmount: e.target.value })}
                                 />
                             </div>
                         </div>
@@ -762,8 +844,11 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                     Limpar Filtros
                                 </button>
                                 <button
-                                    onClick={() => setIsExportModalOpen(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-bold"
+                                    onClick={() => {
+                                        setExportData(filteredTransactions);
+                                        setIsExportModalOpen(true);
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-bold transition-colors"
                                 >
                                     <Download size={16} /> Exportar Filtrados
                                 </button>
@@ -893,6 +978,17 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                         <span className="font-bold text-sm ml-2">{selectedTransactions.size} selecionados</span>
                         <div className="flex gap-2">
                             <button
+                                onClick={() => {
+                                    const selected = transactions.filter(t => selectedTransactions.has(t.id));
+                                    setExportData(selected);
+                                    setIsExportModalOpen(true);
+                                }}
+                                className="p-2 hover:bg-slate-700 rounded-lg text-indigo-300 hover:text-indigo-200 flex items-center gap-2 text-sm"
+                                title="Exportar Selecionados"
+                            >
+                                <Download size={16} /> Exportar
+                            </button>
+                            <button
                                 onClick={handleBatchDelete}
                                 className="p-2 hover:bg-slate-700 rounded-lg text-red-300 hover:text-red-200 flex items-center gap-2 text-sm disabled:opacity-50"
                                 title="Excluir"
@@ -935,7 +1031,8 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
                             {filteredTransactions.map(t => {
-                                const category = categories.find(c => c.id === t.category_id);
+                                const isTransfer = t.payment_method === 'TRANSFERENCIA';
+                                const category = isTransfer ? { name: 'Transferência', color: '#6366f1', icon: 'ArrowRightLeft' } : categories.find(c => c.id === t.category_id);
                                 const isSelected = selectedTransactions.has(t.id);
 
                                 return (
@@ -958,6 +1055,7 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                         <td className="px-6 py-4 font-medium text-slate-800">
                                             <div className="flex flex-col">
                                                 <span className="flex items-center gap-1.5">
+                                                    {isTransfer && <ArrowRightLeft size={14} className="text-indigo-500" />}
                                                     {t.description}
                                                     {t.payment_method === 'CREDITO' && <CreditCard size={12} className="text-slate-400" />}
                                                     {t.recurrence_id && <RefreshCw size={10} className="text-indigo-400" title="Recorrente" />}
@@ -981,13 +1079,13 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${getStatusColor(t.status)}`}>
-                                                {t.status}
+                                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${isTransfer ? 'bg-indigo-50 text-indigo-600' : getStatusColor(t.status)}`}>
+                                                {isTransfer ? 'TRANSFERIDO' : t.status}
                                             </span>
                                         </td>
-                                        <td className={`px-6 py-4 text-right font-bold ${t.type === 'RECEITA' ? 'text-green-600' : 'text-red-700'} ${t.status === 'PREVISTA' && t.recurrence_id ? 'italic opacity-80' : ''}`}>
+                                        <td className={`px-6 py-4 text-right font-bold ${isTransfer ? 'text-indigo-600' : (t.type === 'RECEITA' ? 'text-green-600' : 'text-red-700')} ${t.status === 'PREVISTA' && t.recurrence_id ? 'italic opacity-80' : ''}`}>
                                             {t.status === 'PREVISTA' && t.recurrence_id ? '~ ' : ''}
-                                            {t.type === 'RECEITA' ? '+' : '-'}{formatCurrency(t.amount)}
+                                            {isTransfer ? '' : (t.type === 'RECEITA' ? '+' : '-')}{formatCurrency(t.amount)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end space-x-2 items-center">
@@ -1009,8 +1107,31 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                                                 <Check size={14} /> QUITAR
                                                             </button>
                                                         )}
-                                                        <button onClick={() => handleOpenModal(t)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-indigo-600 transition-colors disabled:opacity-50" disabled={isSaving}><Edit size={16} /></button>
-                                                        <button onClick={() => handleDelete(t.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 group-hover:text-red-500 transition-colors disabled:opacity-50" disabled={isSaving}><Trash2 size={16} /></button>
+                                                        <button
+                                                            onClick={() => isTransfer ? alert('Edição de transferências em breve.') : handleOpenModal(t)}
+                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-indigo-600 transition-colors disabled:opacity-50"
+                                                            disabled={isSaving || isTransfer}
+                                                        >
+                                                            <Edit size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (isTransfer) {
+                                                                    if (confirm('Excluir esta transferência?')) {
+                                                                        setIsSaving(true);
+                                                                        try {
+                                                                            alert('Para excluir uma transferência, utilize a aba de Contas nesta versão.');
+                                                                        } finally { setIsSaving(false); }
+                                                                    }
+                                                                } else {
+                                                                    handleDelete(t.id);
+                                                                }
+                                                            }}
+                                                            className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 group-hover:text-red-500 transition-colors disabled:opacity-50"
+                                                            disabled={isSaving}
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </>
                                                 )}
                                             </div>
@@ -1576,7 +1697,7 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
             <ExportModal
                 isOpen={isExportModalOpen}
                 onClose={() => setIsExportModalOpen(false)}
-                transactions={filteredTransactions}
+                transactions={exportData}
                 categories={categories}
             />
 

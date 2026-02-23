@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import {
     Menu, LogOut, LayoutDashboard, Landmark,
     User as UserIcon, TrendingUp, Target, PieChart, Calculator,
-    BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles, Plus, Smartphone
+    BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles, Plus, Smartphone, X
 } from 'lucide-react';
 import { User } from '../types';
 import { VersionInfo } from '../version';
+import { hapticFeedback } from './ui/Skeleton';
 
 interface SidebarProps {
     currentView: string;
@@ -52,7 +53,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                         <button
                             key={item.id}
                             id={`nav-${item.id}`}
-                            onClick={() => onChangeView(item.id)}
+                            onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
                             className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-all duration-200 group
                 ${isActive(item.id)
                                     ? 'bg-orange-600/90 text-white shadow-lg shadow-orange-900/20 translate-x-1'
@@ -131,12 +132,12 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 {/* Central Action: Quick Add */}
                 <div className="relative -top-6">
                     <button
-                        onClick={onQuickAdd}
-                        className="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 border-[4px] border-white active:scale-90 transition-all group"
+                        onClick={() => { hapticFeedback(15); onQuickAdd?.(); }}
+                        className="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 border-[4px] border-white active:scale-90 transition-all group btn-mobile-active"
                     >
                         <div className="relative">
                             <Plus size={28} className="group-hover:rotate-90 transition-transform duration-300" />
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-600 rounded-full border-2 border-slate-900" />
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-600 rounded-full border-2 border-white" />
                         </div>
                     </button>
                 </div>
@@ -159,12 +160,12 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
             {isMobileMenuOpen && (
                 <div className="md:hidden fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-sm text-white p-6 animate-fade-in flex flex-col">
                     <div className="flex justify-between items-center mb-10">
-                        <span className="font-bold text-2xl tracking-tight">Menu Principal</span>
+                        <h3 className="font-black text-2xl tracking-tight">Menu Principal</h3>
                         <button
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"
+                            onClick={() => { hapticFeedback(5); setIsMobileMenuOpen(false); }}
+                            className="w-10 h-10 flex items-center justify-center bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"
                         >
-                            <LogOut size={24} className="rotate-180" /> {/* Using LogOut icon as Close X replacement or similar */}
+                            <X size={20} />
                         </button>
                     </div>
 

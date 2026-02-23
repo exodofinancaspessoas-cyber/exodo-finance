@@ -53,7 +53,14 @@ export interface Category {
   icon?: string;
   color?: string;
   is_default?: boolean;
+  is_frequent?: boolean;
   parent_id?: string;
+}
+
+export enum TransactionOrigin {
+  WA_TEXT = 'WA_TEXT',
+  WA_AUDIO = 'WA_AUDIO',
+  MANUAL = 'MANUAL'
 }
 
 export interface Transaction {
@@ -79,6 +86,10 @@ export interface Transaction {
   // New fields for Stage 3 (Simulations/Splits)
   original_invoice_id?: string; // If this transaction is a result of a split execution
   is_simulation_result?: boolean;
+
+  // Evidence / Attachments
+  photo_url?: string;
+  audio_url?: string;
 }
 
 export type RecurrenceFrequency = 'DIARIO' | 'SEMANAL' | 'MENSAL' | 'ANUAL';

@@ -1,9 +1,10 @@
 import {
-    User, Account, Card, Transaction, Category, Transfer,
+    User, Account, Card, Transaction, TransactionType, Category, Transfer,
     DashboardData, RecurringExpense, AppNotification,
     Goal, Budget
 } from '../types';
 import { DatabaseService } from './database';
+import { supabase } from './supabase';
 import { toISODate } from '../utils';
 import { INITIAL_CATEGORIES_DATA } from './initialCategories';
 
@@ -125,6 +126,71 @@ export const StorageService = {
         return Math.random().toString(36).substring(2) + Date.now().toString(36);
     },
 
+    // STORAGE (Supabase Buckets)
+    async uploadEvidence(file: File | Blob, type: 'photo' | 'audio'): Promise<string | null> {
+        if (!supabase) return null;
+
+        // VALIDAÇÃO DE SEGURANÇA
+        const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
+        const MAX_AUDIO_SIZE = 2 * 1024 * 1024; // 2MB
+
+        const sizeLimit = type === 'photo' ? MAX_PHOTO_SIZE : MAX_AUDIO_SIZE;
+        if (file.size > sizeLimit) {
+            console.error(`File too large: ${file.size} bytes. Limit for ${type} is ${sizeLimit} bytes.`);
+            alert(`O arquivo é muito grande! O limite para ${type === 'photo' ? 'fotos' : 'áudio'} é de ${type === 'photo' ? '5MB' : '2MB'}.`);
+            return null;
+        }
+
+        // Validate MIME type
+        if (type === 'photo' && !file.type.startsWith('image/')) {
+            console.error('Invalid photo type:', file.type);
+            return null;
+        }
+        if (type === 'audio' && !file.type.startsWith('audio/') && !file.type.includes('application/octet-stream')) {
+            // Some browsers use octet-stream for blobs
+            console.error('Invalid audio type:', file.type);
+        }
+
+        const fileName = `${type}_${StorageService.generateId()}.${type === 'photo' ? 'jpg' : 'webm'}`;
+        const filePath = `${fileName}`;
+
+        try {
+            const { data, error } = await supabase.storage
+                .from('evidences')
+                .upload(filePath, file, {
+                    contentType: file.type,
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) throw error;
+
+            // Retornamos apenas o nome do arquivo para salvar no banco.
+            // O link assinado será gerado apenas sob demanda para visualização.
+            return fileName;
+        } catch (error) {
+            console.error('Error uploading to Supabase Storage:', error);
+            return null;
+        }
+    },
+
+    async getSignedUrl(fileName: string | null | undefined): Promise<string | null> {
+        if (!supabase || !fileName) return null;
+
+        try {
+            // Gera uma URL assinada válida por 1 hora (3600 segundos)
+            const { data, error } = await supabase.storage
+                .from('evidences')
+                .createSignedUrl(fileName, 3600);
+
+            if (error) throw error;
+            return data.signedUrl;
+        } catch (error) {
+            console.error('Error generating signed URL:', error);
+            return null;
+        }
+    },
+
     // USER
     getUser: (): User | null => getStorage<User | null>(STORAGE_KEYS.USER, null),
     setUser: (user: User) => setStorage(STORAGE_KEYS.USER, user),
@@ -221,7 +287,7 @@ export const StorageService = {
                 if (!rec.active || !rec.auto_create) continue;
 
                 const cat = categories.find(c => c.id === rec.category_id);
-                const entryType = cat?.type || 'DESPESA';
+                const entryType = (cat?.type === 'AMBOS' ? 'DESPESA' : cat?.type || 'DESPESA') as TransactionType;
 
                 const count = rec.duration_count || defaultHorizon;
                 const startDate = rec.start_date ? new Date(rec.start_date) : today;

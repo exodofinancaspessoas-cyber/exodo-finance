@@ -2,6 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .animate-shimmer {
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+  }
+
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .text-fluid-base {
+    font-size: clamp(0.875rem, 0.8rem + 0.375vw, 1.125rem);
+  }
+
+  .text-fluid-lg {
+    font-size: clamp(1.125rem, 1rem + 0.625vw, 1.5rem);
+  }
+
+  .text-fluid-xl {
+    font-size: clamp(1.5rem, 1.25rem + 1.25vw, 2.5rem);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes bounce-subtle {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s infinite ease-in-out;
+}
+
+/* Mobile Touch Feedbacks */
+.btn-mobile-active:active {
+  transform: scale(0.96);
+  filter: brightness(0.95);
+}
+
+.touch-target-min {
+  min-height: 48px;
+  min-width: 48px;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

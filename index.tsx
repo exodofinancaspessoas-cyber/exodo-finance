@@ -13,8 +13,10 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+class ErrorBoundary extends React.Component<any, any> {
+  state: any;
+  props: any;
+  constructor(props: any) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -28,14 +30,15 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   render() {
-    if (this.state.hasError) {
+    const { hasError, error } = this.state;
+    if (hasError) {
       return (
         <div className="p-8 bg-red-50 text-red-900 h-screen flex flex-col items-center justify-center font-sans">
           <h1 className="text-2xl font-bold mb-4">Algo deu errado 😔</h1>
           <div className="bg-white p-4 rounded border border-red-200 text-sm overflow-auto max-w-full w-full max-w-2xl shadow-sm">
             <h2 className="font-bold mb-2">Detalhes do erro:</h2>
             <pre className="whitespace-pre-wrap font-mono text-xs">
-              {this.state.error?.toString()}
+              {error?.toString()}
             </pre>
             <p className="mt-4 text-xs text-slate-500">
               Verifique o console do desenvolvedor (F12) para mais detalhes.

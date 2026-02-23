@@ -205,7 +205,9 @@ export const DatabaseService = {
                     installments: t.installments_total ? {
                         current: t.installments_current,
                         total: t.installments_total
-                    } : undefined
+                    } : undefined,
+                    photo_url: t.photo_url,
+                    audio_url: t.audio_url
                 }));
 
                 const localStored = localStorage.getItem('exodo_transactions');
@@ -279,7 +281,9 @@ export const DatabaseService = {
                         installments_total: transaction.installments?.total,
                         recurrence_id: transaction.recurrence_id,
                         observation: transaction.observation,
-                        created_at: transaction.created_at
+                        created_at: transaction.created_at,
+                        photo_url: transaction.photo_url,
+                        audio_url: transaction.audio_url
                     });
                     if (error) throw error;
                     console.log(`[Database] Saved ${transaction.description} to Supabase`);
@@ -317,7 +321,9 @@ export const DatabaseService = {
                     installments_total: t.installments?.total,
                     recurrence_id: t.recurrence_id,
                     observation: t.observation,
-                    created_at: t.created_at
+                    created_at: t.created_at,
+                    photo_url: t.photo_url,
+                    audio_url: t.audio_url
                 }));
 
                 try {

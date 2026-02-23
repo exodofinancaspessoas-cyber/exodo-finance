@@ -13,6 +13,7 @@ import { formatCurrency, formatDate, toISODate, parseSafeDate } from '../utils';
 import { Account, Card, Transaction, Category, Transfer, TransactionStatus } from '../types';
 import SupabaseSync from './SupabaseSync';
 import { AlertCircle, Smartphone } from 'lucide-react';
+import { Skeleton, hapticFeedback } from './ui/Skeleton';
 
 interface DashboardProps {
   currentMonth: Date;
@@ -64,16 +65,19 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
   };
 
   const handlePrevMonth = () => {
+    hapticFeedback(5);
     const next = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
     onChangeMonth(next);
   };
 
   const handleNextMonth = () => {
+    hapticFeedback(5);
     const next = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
     onChangeMonth(next);
   };
 
   const handleCurrentMonth = () => {
+    hapticFeedback(10);
     onChangeMonth(new Date());
   };
 
@@ -270,9 +274,25 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-slate-400">
-        <Loader2 size={40} className="animate-spin mb-4" />
-        <p className="font-medium">Carregando seus dados...</p>
+      <div className="animate-fade-in space-y-6 pb-20">
+        {/* Skeleton for Hero */}
+        <Skeleton height={240} className="w-full" />
+
+        {/* Skeleton for Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} height={120} className="w-full" />
+          ))}
+        </div>
+
+        {/* Skeleton for Chart */}
+        <Skeleton height={200} className="w-full" />
+
+        {/* Skeleton for Lists */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <Skeleton height={300} className="lg:col-span-3 w-full" />
+          <Skeleton height={300} className="lg:col-span-2 w-full" />
+        </div>
       </div>
     );
   }
