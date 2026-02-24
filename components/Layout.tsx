@@ -8,6 +8,8 @@ import {
 import { User } from '../types';
 import { VersionInfo } from '../version';
 import { hapticFeedback } from './ui/Skeleton';
+import { isSupabaseConfigured } from '../services/supabase';
+import { Cloud, CloudOff } from 'lucide-react';
 
 interface SidebarProps {
     currentView: string;
@@ -74,8 +76,13 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-white truncate">{user.name}</p>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
                                 Versão {VersionInfo.version}
+                                {isSupabaseConfigured() ? (
+                                    <span className="text-emerald-500" title="Cloud Active"><Cloud size={10} /></span>
+                                ) : (
+                                    <span className="text-amber-500" title="Local Only Mode"><CloudOff size={10} /></span>
+                                )}
                             </p>
                         </div>
                     </div>
@@ -102,6 +109,11 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                     <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold">Ê</div>
                         <span className="font-bold text-lg text-slate-800">Êxodo</span>
+                        {!isSupabaseConfigured() && (
+                            <span className="bg-amber-100 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded uppercase flex items-center gap-0.5">
+                                <CloudOff size={8} /> Local
+                            </span>
+                        )}
                     </div>
                     <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
                         <Menu size={24} />

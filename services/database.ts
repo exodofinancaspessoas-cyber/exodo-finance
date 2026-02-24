@@ -70,9 +70,9 @@ export const DatabaseService = {
                 });
                 if (error) {
                     console.error('Error saving account to Supabase:', error);
-                } else {
-                    return;
+                    throw new Error(`Falha ao salvar na nuvem: ${error.message}`);
                 }
+                return;
             }
         }
         const accounts = await this.getAccounts();
@@ -163,9 +163,9 @@ export const DatabaseService = {
                 });
                 if (error) {
                     console.error('Error saving card to Supabase:', error);
-                } else {
-                    return;
+                    throw new Error(`Falha ao salvar na nuvem: ${error.message}`);
                 }
+                return;
             }
         }
         const cards = await this.getCards();
@@ -287,8 +287,9 @@ export const DatabaseService = {
                     });
                     if (error) throw error;
                     console.log(`[Database] Saved ${transaction.description} to Supabase`);
-                } catch (err) {
-                    console.error('Supabase Save Error (falling back to LocalStorage):', err);
+                } catch (err: any) {
+                    console.error('Supabase Save Error:', err);
+                    throw new Error(`Falha ao sincronizar: ${err.message || 'Erro desconhecido'}`);
                 }
             }
         }
@@ -330,8 +331,9 @@ export const DatabaseService = {
                     const { error } = await supabase.from('transactions').upsert(mapped);
                     if (error) throw error;
                     console.log(`[Database] Successfully synced ${transactions.length} transactions to Supabase`);
-                } catch (err) {
+                } catch (err: any) {
                     console.error('Supabase Batch Save Error:', err);
+                    throw new Error(`Falha ao sincronizar lote: ${err.message || 'Erro desconhecido'}`);
                 }
             }
         }
@@ -422,9 +424,9 @@ export const DatabaseService = {
                 });
                 if (error) {
                     console.error('Error saving transfer to Supabase:', error);
-                } else {
-                    return;
+                    throw new Error(`Falha ao salvar na nuvem: ${error.message}`);
                 }
+                return;
             }
         }
         const transfers = await this.getTransfers();
@@ -536,9 +538,9 @@ export const DatabaseService = {
                 });
                 if (error) {
                     console.error('Error saving goal to Supabase:', error);
-                } else {
-                    return;
+                    throw new Error(`Falha ao salvar meta na nuvem: ${error.message}`);
                 }
+                return;
             }
         }
         const goals = await this.getGoals();
@@ -585,9 +587,9 @@ export const DatabaseService = {
                 });
                 if (error) {
                     console.error('Error saving budget to Supabase:', error);
-                } else {
-                    return;
+                    throw new Error(`Falha ao salvar orçamento na nuvem: ${error.message}`);
                 }
+                return;
             }
         }
         const budgets = await this.getBudgets();
@@ -669,8 +671,9 @@ export const DatabaseService = {
                         throw error;
                     }
                     return;
-                } catch (err) {
+                } catch (err: any) {
                     console.error('Error saving recurring expense to Supabase:', err);
+                    throw new Error(`Falha ao salvar gasto recorrente na nuvem: ${err.message || 'Erro desconhecido'}`);
                 }
             }
         }

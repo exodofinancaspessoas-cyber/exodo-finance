@@ -330,6 +330,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="0,00"
                                     className={`bg-transparent border-none outline-none text-7xl md:text-8xl font-black text-center w-full max-w-[320px] placeholder:text-slate-200 transition-colors ${type === 'DESPESA' ? 'text-slate-900' : 'text-slate-900'}`}
+                                    onFocus={e => e.target.select()}
                                 />
                             </div>
                         </div>

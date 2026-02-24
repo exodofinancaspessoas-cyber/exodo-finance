@@ -118,7 +118,7 @@ export default function TransfersView() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Valor</label>
-                                <input type="number" step="0.01" className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} required />
+                                <input type="number" step="0.01" className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} onFocus={e => e.target.select()} required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Data</label>

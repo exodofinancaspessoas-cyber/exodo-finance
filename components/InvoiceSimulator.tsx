@@ -127,7 +127,7 @@ export default function InvoiceSimulator() {
                 amount: scenario.installment_amount, // per installment
                 total_amount: scenario.total_amount, // total
                 type: 'DESPESA',
-                category_id: 'cat_boleto', // todo: valid cat
+                category_id: '66666666-6666-4666-a666-666666666666', // 'Contas/Boletos' default
                 date: scenario.first_payment_date,
                 status: 'PREVISTA',
                 installments: {
@@ -172,6 +172,7 @@ export default function InvoiceSimulator() {
                                     className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
                                     value={invoiceAmount}
                                     onChange={e => setInvoiceAmount(Number(e.target.value))}
+                                    onFocus={e => e.target.select()}
                                 />
                             </div>
                         </div>
@@ -185,6 +186,7 @@ export default function InvoiceSimulator() {
                                     className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg text-lg font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
                                     value={availableBudget}
                                     onChange={e => setAvailableBudget(Number(e.target.value))}
+                                    onFocus={e => e.target.select()}
                                 />
                             </div>
                             <p className="text-xs text-slate-500 mt-1">Sua reserva ou saldo no momento.</p>
@@ -202,6 +204,7 @@ export default function InvoiceSimulator() {
                                 className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-center font-bold"
                                 value={interestRate}
                                 onChange={e => setInterestRate(Number(e.target.value))}
+                                onFocus={e => e.target.select()}
                             />
                             <span className="text-slate-600 font-medium">%</span>
                             <div className="text-xs text-slate-500 flex-1">
@@ -221,8 +224,8 @@ export default function InvoiceSimulator() {
                                         else setCustomScenarios([...customScenarios, n].sort((a, b) => a - b));
                                     }}
                                     className={`px-4 py-2 rounded-lg text-sm font-bold border transition-all ${customScenarios.includes(n)
-                                            ? 'bg-slate-800 text-white border-slate-800'
-                                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                                        ? 'bg-slate-800 text-white border-slate-800'
+                                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
                                         }`}
                                 >
                                     {n}x
@@ -327,8 +330,8 @@ export default function InvoiceSimulator() {
                                     onClick={() => applyInstallment(scenario)}
                                     disabled={scenario.viability === 'IMPOSSIBLE'}
                                     className={`w-full py-2 rounded-lg font-bold text-sm transition-colors ${scenario.viability === 'IMPOSSIBLE'
-                                            ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                                            : 'bg-slate-900 hover:bg-slate-800 text-white'
+                                        ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                                        : 'bg-slate-900 hover:bg-slate-800 text-white'
                                         }`}
                                 >
                                     Escolher {scenario.installments}x

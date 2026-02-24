@@ -42,7 +42,13 @@ const setStorage = <T>(key: string, value: T) => {
 
 const generateId = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+    // Proper UUID v4 fallback
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 };
 
 // Helper for recurrence logic
@@ -76,11 +82,11 @@ const matchesYearMonth = (isoDate: string, target: Date) => {
 };
 
 const getDefaultCategories = (): Category[] => [
-    { id: 'cat_salario', name: 'Salário', type: 'RECEITA', icon: 'Briefcase', color: '#16a34a', is_default: true },
-    { id: 'cat_invest', name: 'Investimentos', type: 'RECEITA', icon: 'TrendingUp', color: '#0ea5e9', is_default: true },
-    { id: 'cat_casa', name: 'Moradia', type: 'DESPESA', icon: 'Home', color: '#ea580c', is_default: true },
-    { id: 'cat_ali', name: 'Alimentação', type: 'DESPESA', icon: 'ShoppingCart', color: '#dc2626', is_default: true },
-    { id: 'cat_trans', name: 'Transporte', type: 'DESPESA', icon: 'Car', color: '#f59e0b', is_default: true },
+    { id: '11111111-1111-4111-a111-111111111111', name: 'Salário', type: 'RECEITA', icon: 'Briefcase', color: '#16a34a', is_default: true },
+    { id: '22222222-2222-4222-a222-222222222222', name: 'Investimentos', type: 'RECEITA', icon: 'TrendingUp', color: '#0ea5e9', is_default: true },
+    { id: '33333333-3333-4333-a333-333333333333', name: 'Moradia', type: 'DESPESA', icon: 'Home', color: '#ea580c', is_default: true },
+    { id: '44444444-4444-4444-a444-444444444444', name: 'Alimentação', type: 'DESPESA', icon: 'ShoppingCart', color: '#dc2626', is_default: true },
+    { id: '55555555-5555-4555-a555-555555555555', name: 'Transporte', type: 'DESPESA', icon: 'Car', color: '#f59e0b', is_default: true },
 ];
 
 export const StorageService = {
@@ -121,10 +127,7 @@ export const StorageService = {
         };
     },
 
-    generateId: () => {
-        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-        return Math.random().toString(36).substring(2) + Date.now().toString(36);
-    },
+    generateId: () => generateId(),
 
     // STORAGE (Supabase Buckets)
     async uploadEvidence(file: File | Blob, type: 'photo' | 'audio'): Promise<string | null> {

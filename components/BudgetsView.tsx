@@ -94,6 +94,7 @@ export default function BudgetsView() {
                                     className="w-full text-2xl font-bold border-b-2 border-pink-500 outline-none pb-1 mb-6 text-slate-800"
                                     value={editValue}
                                     onChange={e => setEditValue(Number(e.target.value))}
+                                    onFocus={e => e.target.select()}
                                 />
                                 <button onClick={() => handleSaveBudget(cat.id)} className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-500/30">
                                     <Save size={18} /> Salvar Orçamento

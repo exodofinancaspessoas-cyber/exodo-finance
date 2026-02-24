@@ -1213,9 +1213,10 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Valor Total</label>
                                         <input
                                             type="number" step="0.01"
-                                            className={`w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold ${formData.type === 'RECEITA' ? 'text-green-600' : 'text-red-600'}`}
+                                            className={`w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold ${formData.amount === '0' || Number(formData.amount) === 0 ? 'text-slate-400' : formData.type === 'RECEITA' ? 'text-green-600' : 'text-red-600'}`}
                                             value={formData.amount}
                                             onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                                            onFocus={e => e.target.select()}
                                             required
                                             placeholder="0,00"
                                         />

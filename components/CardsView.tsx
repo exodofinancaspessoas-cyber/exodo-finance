@@ -317,17 +317,17 @@ export default function CardsView() {
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Limite Total</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-3.5 text-slate-400 font-medium">R$</span>
-                                    <input type="number" step="0.01" className="w-full pl-10 border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold text-slate-800" value={formData.limit} onChange={e => setFormData({ ...formData, limit: Number(e.target.value) })} required />
+                                    <input type="number" step="0.01" className="w-full pl-10 border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold text-slate-800" value={formData.limit} onChange={e => setFormData({ ...formData, limit: Number(e.target.value) })} onFocus={e => e.target.select()} required />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Dia Fechamento</label>
-                                    <input type="number" min="1" max="31" className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 text-center font-bold text-slate-700" value={formData.closing_day} onChange={e => setFormData({ ...formData, closing_day: Number(e.target.value) })} required />
+                                    <input type="number" min="1" max="31" className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 text-center font-bold text-slate-700" value={formData.closing_day} onChange={e => setFormData({ ...formData, closing_day: Number(e.target.value) })} onFocus={e => e.target.select()} required />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Dia Vencimento</label>
-                                    <input type="number" min="1" max="31" className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 text-center font-bold text-slate-700" value={formData.due_day} onChange={e => setFormData({ ...formData, due_day: Number(e.target.value) })} required />
+                                    <input type="number" min="1" max="31" className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 text-center font-bold text-slate-700" value={formData.due_day} onChange={e => setFormData({ ...formData, due_day: Number(e.target.value) })} onFocus={e => e.target.select()} required />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -466,6 +466,7 @@ export default function CardsView() {
                                                                 placeholder="0,00"
                                                                 className={`w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none font-bold transition-all ${Number(slot.amount) > 0 ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600'}`}
                                                                 value={slot.amount}
+                                                                onFocus={e => e.target.select()}
                                                                 onChange={e => handleSlotChange(index, e.target.value)}
                                                             />
                                                         </td>

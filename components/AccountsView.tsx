@@ -246,6 +246,7 @@ export default function AccountsView() {
                                     className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none font-mono"
                                     value={formData.initial_balance}
                                     onChange={e => setFormData({ ...formData, initial_balance: Number(e.target.value) })}
+                                    onFocus={e => e.target.select()}
                                     disabled={!!editingAccount}
                                 />
                                 {editingAccount && <p className="text-xs text-slate-500 mt-1">Para ajustar o saldo atual, crie uma transação de ajuste.</p>}
@@ -293,6 +294,7 @@ export default function AccountsView() {
                                                     className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
                                                     value={cardFormData.limit}
                                                     onChange={e => setCardFormData({ ...cardFormData, limit: Number(e.target.value) })}
+                                                    onFocus={e => e.target.select()}
                                                 />
                                             </div>
                                             <div className="grid grid-cols-2 gap-2">
