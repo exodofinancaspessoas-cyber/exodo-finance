@@ -293,7 +293,16 @@ export const StorageService = {
                 const entryType = (cat?.type === 'AMBOS' ? 'DESPESA' : cat?.type || 'DESPESA') as TransactionType;
 
                 const count = rec.duration_count || defaultHorizon;
-                const startDate = rec.start_date ? new Date(rec.start_date) : today;
+
+                // Safe date parsing to avoid timezone shifts
+                let startDate: Date;
+                if (rec.start_date) {
+                    const [y, m, d] = rec.start_date.split('-').map(Number);
+                    startDate = new Date(y, m - 1, d, 12, 0, 0); // Noon to be safe
+                } else {
+                    startDate = new Date();
+                    startDate.setHours(12, 0, 0, 0);
+                }
 
                 for (let i = 0; i < count; i++) {
                     let targetDate: Date;
@@ -303,7 +312,7 @@ export const StorageService = {
                         case 'ANUAL': targetDate = addYears(startDate, i); break;
                         case 'MENSAL':
                         default:
-                            targetDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+                            targetDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1, 12, 0, 0);
                             const lastDay = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
                             const day = Math.min(rec.day_of_month || 1, lastDay);
                             targetDate.setDate(day);

@@ -323,11 +323,12 @@ export default function RecurringExpensesView() {
                                     </div>
                                 )}
                                 <div className={formData.frequency !== 'MENSAL' ? 'col-span-2' : ''}>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Duração (Repetições)</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Total de Ocorrências</label>
                                     <input
                                         type="number"
                                         min="1"
-                                        placeholder="Infinito"
+                                        max="120"
+                                        placeholder="Ex: 12"
                                         className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none bg-white font-medium text-slate-700"
                                         value={formData.duration_count || ''}
                                         onChange={e => setFormData({ ...formData, duration_count: e.target.value ? Number(e.target.value) : undefined })}

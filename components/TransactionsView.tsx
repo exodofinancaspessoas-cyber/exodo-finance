@@ -363,7 +363,7 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                 recurring_type: 'FIXO',
                 frequency: 'MENSAL',
                 day_of_month: new Date().getDate(),
-                recurring_duration: '',
+                recurring_duration: '12',
                 programmed_amount: ''
             });
         }
@@ -452,11 +452,32 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                     const recurringId = StorageService.generateId();
                     installmentTrx.recurrence_id = recurringId;
 
+                    // Calculate next start date (repetitions start from next period)
+                    const nextDate = new Date(baseDate);
+                    const durationTotal = formData.recurring_duration ? Number(formData.recurring_duration) : 12;
+
+                    switch (formData.frequency) {
+                        case 'DIARIO': nextDate.setDate(nextDate.getDate() + 1); break;
+                        case 'SEMANAL': nextDate.setDate(nextDate.getDate() + 7); break;
+                        case 'ANUAL': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
+                        case 'MENSAL':
+                        default:
+                            nextDate.setMonth(nextDate.getMonth() + 1);
+                            break;
+                    }
+
                     let endDate = undefined;
-                    if (formData.recurring_duration && Number(formData.recurring_duration) > 0) {
-                        const duration = Number(formData.recurring_duration);
-                        const end = new Date(formData.date);
-                        end.setMonth(end.getMonth() + duration - 1);
+                    if (durationTotal > 1) {
+                        const end = new Date(nextDate);
+                        switch (formData.frequency) {
+                            case 'DIARIO': end.setDate(end.getDate() + (durationTotal - 2)); break;
+                            case 'SEMANAL': end.setDate(end.getDate() + (durationTotal - 2) * 7); break;
+                            case 'ANUAL': end.setFullYear(end.getFullYear() + (durationTotal - 2)); break;
+                            case 'MENSAL':
+                            default:
+                                end.setMonth(end.getMonth() + (durationTotal - 2));
+                                break;
+                        }
                         endDate = end.toISOString().split('T')[0];
                     }
 
@@ -474,9 +495,9 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                         account_id: formData.account_id || undefined,
                         payment_method: formData.payment_method,
                         last_generated: new Date().toISOString(),
-                        start_date: formData.date,
+                        start_date: nextDate.toISOString().split('T')[0], // Start from NEXT cycle
                         end_date: endDate,
-                        duration_count: formData.recurring_duration ? Number(formData.recurring_duration) : undefined
+                        duration_count: durationTotal > 1 ? durationTotal - 1 : 1 // Remaining repetitions
                     };
                     await StorageService.saveRecurringExpense(recurringExpense);
                 }
@@ -1549,11 +1570,12 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                                         </div>
                                                     )}
                                                     <div className={formData.frequency !== 'MENSAL' ? 'col-span-2' : ''}>
-                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Duração (Repetições)</label>
+                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total de Ocorrências</label>
                                                         <input
                                                             type="number"
                                                             min="1"
-                                                            placeholder="Infinito"
+                                                            max="120"
+                                                            placeholder="Ex: 12"
                                                             className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
                                                             value={formData.recurring_duration}
                                                             onChange={e => setFormData({ ...formData, recurring_duration: e.target.value })}
