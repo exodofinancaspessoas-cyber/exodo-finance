@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { TrendingUp, BarChart3 } from 'lucide-react';
 import ProjectionView from './ProjectionView';
 import ReportsView from './ReportsView';
+import FluxoCaixaView from './FluxoCaixaView';
 
-type Tab = 'projection' | 'reports';
+type Tab = 'projection' | 'reports' | 'fluxo';
 
 interface Props {
     initialTab?: Tab;
@@ -12,6 +13,7 @@ interface Props {
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'projection', label: 'Projeção', icon: TrendingUp },
+    { id: 'fluxo', label: 'Tabela de Caixa', icon: BarChart3 },
     { id: 'reports', label: 'Relatórios', icon: BarChart3 },
 ];
 
@@ -29,8 +31,8 @@ export default function AnalyticsView({ initialTab = 'projection' }: Props) {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${active
-                                    ? 'bg-slate-900 text-white shadow-md'
-                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                ? 'bg-slate-900 text-white shadow-md'
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                                 }`}
                         >
                             <Icon size={16} />
@@ -42,6 +44,7 @@ export default function AnalyticsView({ initialTab = 'projection' }: Props) {
 
             <div>
                 {activeTab === 'projection' && <ProjectionView />}
+                {activeTab === 'fluxo' && <FluxoCaixaView />}
                 {activeTab === 'reports' && <ReportsView />}
             </div>
         </div>

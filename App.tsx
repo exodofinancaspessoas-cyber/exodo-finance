@@ -23,6 +23,7 @@ import OnboardingFlow from './components/Onboarding';
 import ActionManual from './components/ActionManual';
 import QuickAddView from './components/QuickAddView';
 import AgendaView from './components/AgendaView';
+import FluxoCaixaView from './components/FluxoCaixaView';
 import { Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -100,6 +101,8 @@ export default function App() {
         return <TransactionsView key="movements-view" initialType="ALL" />;
       case 'agenda':
         return <AgendaView />;
+      case 'fluxo-caixa':
+        return <FluxoCaixaView />;
       case 'incomes':
         return <TransactionsView key="incomes-view" initialType="RECEITA" />;
       case 'expenses':
