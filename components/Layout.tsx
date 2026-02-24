@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import {
     Menu, LogOut, LayoutDashboard, Landmark,
     User as UserIcon, TrendingUp, Target, PieChart, Calculator,
-    BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles, Plus, Smartphone, X
+    BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles, Plus, Smartphone, X, CalendarDays
 } from 'lucide-react';
 import { User } from '../types';
 import { VersionInfo } from '../version';
@@ -34,6 +34,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
 
     const detailedMenuItems = [
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'agenda', icon: CalendarDays, label: 'Agenda Mensal' },
         { id: 'finance', icon: Landmark, label: 'Contas & Cartões' },
         { id: 'movements', icon: Wallet, label: 'Movimentações' },
         { id: 'analytics', icon: LineChart, label: 'Análises' },

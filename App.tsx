@@ -22,6 +22,7 @@ import PlanningView from './components/PlanningView';
 import OnboardingFlow from './components/Onboarding';
 import ActionManual from './components/ActionManual';
 import QuickAddView from './components/QuickAddView';
+import AgendaView from './components/AgendaView';
 import { Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -97,6 +98,8 @@ export default function App() {
         return <TransactionsView key="movements-view-incomplete" initialType="ALL" initialStatus="INCOMPLETA" />;
       case 'movements':
         return <TransactionsView key="movements-view" initialType="ALL" />;
+      case 'agenda':
+        return <AgendaView />;
       case 'incomes':
         return <TransactionsView key="incomes-view" initialType="RECEITA" />;
       case 'expenses':
