@@ -10,7 +10,7 @@ import { StorageService } from '../services/storage';
 import { formatCurrency, formatDate, toISODate, isSameMonth } from '../utils';
 
 type AgendaTab = 'pendentes' | 'atrasadas' | 'liquidadas';
-type ViewMode = 'list' | 'timeline';
+type ViewMode = 'list' | 'timeline' | 'calendar';
 
 export default function AgendaView() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -167,20 +167,27 @@ export default function AgendaView() {
                     <p className="text-slate-500 text-sm">Controle o que entra e o que sai com precisão.</p>
                 </div>
 
-                <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+                <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
                     <button
                         onClick={() => setViewMode('list')}
-                        className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`p-2 rounded-xl transition-all ${viewMode === 'list' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
                         title="Lista Simples"
                     >
                         <List size={18} />
                     </button>
                     <button
                         onClick={() => setViewMode('timeline')}
-                        className={`p-2 rounded-lg transition-all ${viewMode === 'timeline' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                        title="Ver por Data"
+                        className={`p-2 rounded-xl transition-all ${viewMode === 'timeline' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                        title="Linha do Tempo"
                     >
                         <Clock3 size={18} />
+                    </button>
+                    <button
+                        onClick={() => setViewMode('calendar')}
+                        className={`p-2 rounded-xl transition-all ${viewMode === 'calendar' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                        title="Calendário Mensal"
+                    >
+                        <Calendar size={18} />
                     </button>
                 </div>
             </div>
@@ -258,107 +265,184 @@ export default function AgendaView() {
 
             {/* Content List */}
             <div className="space-y-8">
-                {groupedData.length === 0 || (groupedData.length === 1 && groupedData[0].data.length === 0) ? (
-                    <div className="bg-white py-20 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                            <Calendar className="text-slate-300" size={32} />
+                {viewMode === 'calendar' ? (
+                    <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+                        {/* Calendar Week Header */}
+                        <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100">
+                            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+                                <div key={day} className="py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    {day}
+                                </div>
+                            ))}
                         </div>
-                        <h3 className="text-lg font-bold text-slate-700">Nada encontrado aqui</h3>
-                        <p className="text-slate-400 text-sm max-w-xs mx-auto">Não há lançamentos para este filtro ou período selecionado.</p>
-                    </div>
-                ) : (
-                    groupedData.map((group, idx) => (
-                        <div key={idx} className="space-y-3">
-                            {viewMode === 'timeline' && (
-                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2 flex items-center gap-2">
-                                    <div className="w-1 h-3 bg-rose-600 rounded-full"></div>
-                                    {group.title === 'Hoje' ? (
-                                        <span className="text-rose-600">Para Hoje</span>
-                                    ) : group.title === 'Em Atraso' ? (
-                                        <span className="text-rose-600">Em Atraso</span>
-                                    ) : (
-                                        formatDate(group.title) || group.title
-                                    )}
-                                </h3>
-                            )}
 
-                            <div className="grid grid-cols-1 gap-3">
-                                {group.data.map(trx => {
-                                    const cat = getCategory(trx.category_id || '');
-                                    const source = getAccountOrCard(trx);
-                                    const isPaid = trx.status === 'PAGA' || trx.status === 'RECEBIDA';
+                        {/* Calendar Grid */}
+                        <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 border-l border-t border-transparent">
+                            {(() => {
+                                const year = currentMonth.getFullYear();
+                                const month = currentMonth.getMonth();
+                                const firstDay = new Date(year, month, 1).getDay();
+                                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                                const todayStr = toISODate(new Date());
 
-                                    return (
-                                        <div
-                                            key={trx.id}
-                                            className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 hover:border-rose-200 transition-all group active:scale-[0.98]"
-                                        >
-                                            <div className="flex items-center justify-between gap-4">
-                                                <div className="flex items-center gap-4 flex-1 min-w-0">
-                                                    {/* Type Indicator */}
-                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${trx.type === 'RECEITA' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-600'
-                                                        }`}>
-                                                        {trx.type === 'RECEITA' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
-                                                    </div>
+                                const cells = [];
+                                // Padding start
+                                for (let i = 0; i < firstDay; i++) {
+                                    cells.push(<div key={`pad-start-${i}`} className="min-h-[100px] md:min-h-[140px] bg-slate-50/30" />);
+                                }
 
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-0.5">
-                                                            <h4 className="font-bold text-slate-800 truncate">{trx.description}</h4>
-                                                            {trx.installments && (
-                                                                <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md">
-                                                                    {trx.installments.current}/{trx.installments.total}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-                                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat?.color || '#94a3b8' }}></div>
-                                                                {cat?.name || 'Geral'}
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
-                                                                <Wallet size={12} className="text-slate-400" />
-                                                                {source}
-                                                            </div>
-                                                            {viewMode === 'list' && (
-                                                                <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
-                                                                    <Calendar size={12} />
-                                                                    {formatDate(trx.date)}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                // Days of month
+                                for (let d = 1; d <= daysInMonth; d++) {
+                                    const dateStr = toISODate(new Date(year, month, d));
+                                    const isToday = dateStr === todayStr;
+                                    const dayTrxs = transactions.filter(t => t.date === dateStr && t.status !== 'EXCLUIDA');
 
-                                                <div className="text-right">
-                                                    <p className={`font-black text-lg ${trx.type === 'RECEITA' ? 'text-emerald-600' : 'text-slate-900'}`}>
-                                                        {trx.type === 'DESPESA' ? '-' : ''}{formatCurrency(trx.amount + (trx.interest_amount || 0))}
-                                                    </p>
-                                                    {trx.interest_amount > 0 && (
-                                                        <p className="text-[9px] text-indigo-500 font-bold -mt-1">+ {formatCurrency(trx.interest_amount)} juros</p>
-                                                    )}
-                                                    <span className={`text-[10px] font-black tracking-tighter uppercase px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-700' :
-                                                        trx.date < toISODate(new Date()) ? 'bg-rose-100 text-rose-700' : 'bg-rose-100 text-rose-700'
-                                                        }`}>
-                                                        {trx.status}
-                                                    </span>
-                                                </div>
+                                    cells.push(
+                                        <div key={dateStr} className={`min-h-[100px] md:min-h-[140px] p-2 hover:bg-slate-50/50 transition-colors group relative ${isToday ? 'bg-rose-50/20' : ''}`}>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className={`text-xs font-black w-6 h-6 flex items-center justify-center rounded-full transition-all ${isToday ? 'bg-rose-600 text-white shadow-md shadow-rose-200 scale-110' : 'text-slate-400 group-hover:text-slate-900 group-hover:bg-slate-100'}`}>
+                                                    {d}
+                                                </span>
+                                            </div>
 
-                                                {!isPaid && (
-                                                    <button
-                                                        onClick={() => handleMarkAsPaid(trx)}
-                                                        className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center hover:scale-110 active:scale-90"
-                                                        title="Confirmar Pagamento"
-                                                    >
-                                                        <Check size={20} />
-                                                    </button>
-                                                )}
+                                            <div className="space-y-1 overflow-y-auto max-h-[80px] md:max-h-[100px] no-scrollbar">
+                                                {dayTrxs.map(t => {
+                                                    const isPaid = t.status === 'PAGA' || t.status === 'RECEBIDA';
+                                                    return (
+                                                        <button
+                                                            key={t.id}
+                                                            onClick={!isPaid ? () => handleMarkAsPaid(t) : undefined}
+                                                            className={`w-full p-1 rounded-md text-[9px] font-bold truncate text-left transition-all ${isPaid
+                                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 opacity-60'
+                                                                    : t.type === 'RECEITA'
+                                                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 hover:scale-[1.02]'
+                                                                        : 'bg-rose-50 text-rose-700 border border-rose-100 hover:scale-[1.02] active:bg-rose-100'
+                                                                }`}
+                                                            title={`${t.description}: ${formatCurrency(t.amount)}`}
+                                                        >
+                                                            {t.description}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     );
-                                })}
-                            </div>
+                                }
+
+                                // Padding end
+                                const totalCellsSoFar = firstDay + daysInMonth;
+                                const padEnd = (7 - (totalCellsSoFar % 7)) % 7;
+                                for (let i = 0; i < padEnd; i++) {
+                                    cells.push(<div key={`pad-end-${i}`} className="min-h-[100px] md:min-h-[140px] bg-slate-50/30" />);
+                                }
+
+                                return cells;
+                            })()}
                         </div>
-                    ))
+                    </div>
+                ) : (
+                    groupedData.length === 0 || (groupedData.length === 1 && groupedData[0].data.length === 0) ? (
+                        <div className="bg-white py-20 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                <Calendar className="text-slate-300" size={32} />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-700">Nada encontrado aqui</h3>
+                            <p className="text-slate-400 text-sm max-w-xs mx-auto">Não há lançamentos para este filtro ou período selecionado.</p>
+                        </div>
+                    ) : (
+                        groupedData.map((group, idx) => (
+                            <div key={idx} className="space-y-3">
+                                {viewMode === 'timeline' && (
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2 flex items-center gap-2">
+                                        <div className="w-1 h-3 bg-rose-600 rounded-full"></div>
+                                        {group.title === 'Hoje' ? (
+                                            <span className="text-rose-600">Para Hoje</span>
+                                        ) : group.title === 'Em Atraso' ? (
+                                            <span className="text-rose-600">Em Atraso</span>
+                                        ) : (
+                                            formatDate(group.title) || group.title
+                                        )}
+                                    </h3>
+                                )}
+
+                                <div className="grid grid-cols-1 gap-3">
+                                    {group.data.map(trx => {
+                                        const cat = getCategory(trx.category_id || '');
+                                        const source = getAccountOrCard(trx);
+                                        const isPaid = trx.status === 'PAGA' || trx.status === 'RECEBIDA';
+
+                                        return (
+                                            <div
+                                                key={trx.id}
+                                                className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 hover:border-rose-200 transition-all group active:scale-[0.98]"
+                                            >
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                        {/* Type Indicator */}
+                                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${trx.type === 'RECEITA' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-600'
+                                                            }`}>
+                                                            {trx.type === 'RECEITA' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                                                        </div>
+
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-0.5">
+                                                                <h4 className="font-bold text-slate-800 truncate">{trx.description}</h4>
+                                                                {trx.installments && (
+                                                                    <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md">
+                                                                        {trx.installments.current}/{trx.installments.total}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                                <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+                                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat?.color || '#94a3b8' }}></div>
+                                                                    {cat?.name || 'Geral'}
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
+                                                                    <Wallet size={12} className="text-slate-400" />
+                                                                    {source}
+                                                                </div>
+                                                                {viewMode === 'list' && (
+                                                                    <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
+                                                                        <Calendar size={12} />
+                                                                        {formatDate(trx.date)}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="text-right">
+                                                        <p className={`font-black text-lg ${trx.type === 'RECEITA' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                                            {trx.type === 'DESPESA' ? '-' : ''}{formatCurrency(trx.amount + (trx.interest_amount || 0))}
+                                                        </p>
+                                                        {trx.interest_amount > 0 && (
+                                                            <p className="text-[9px] text-indigo-500 font-bold -mt-1">+ {formatCurrency(trx.interest_amount)} juros</p>
+                                                        )}
+                                                        <span className={`text-[10px] font-black tracking-tighter uppercase px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-700' :
+                                                            trx.date < toISODate(new Date()) ? 'bg-rose-100 text-rose-700' : 'bg-rose-100 text-rose-700'
+                                                            }`}>
+                                                            {trx.status}
+                                                        </span>
+                                                    </div>
+
+                                                    {!isPaid && (
+                                                        <button
+                                                            onClick={() => handleMarkAsPaid(trx)}
+                                                            className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center hover:scale-110 active:scale-90"
+                                                            title="Confirmar Pagamento"
+                                                        >
+                                                            <Check size={20} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))
+                    )
                 )}
             </div>
 
