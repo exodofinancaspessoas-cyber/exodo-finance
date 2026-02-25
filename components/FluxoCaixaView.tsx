@@ -33,6 +33,7 @@ export default function FluxoCaixaView() {
     const [viewMode, setViewMode] = useState<'all' | 'receita' | 'despesa'>('all');
     const [displayType, setDisplayType] = useState<'table' | 'detailed'>('detailed');
     const [forecastDays, setForecastDays] = useState<number | null>(null);
+    const [showProjections, setShowProjections] = useState(true);
     const [accounts, setAccounts] = useState<any[]>([]);
 
     // Period controls
@@ -56,7 +57,7 @@ export default function FluxoCaixaView() {
 
     useEffect(() => {
         loadData();
-    }, [startMonthOffset, numMonths, selectedMonthIndex, forecastDays]);
+    }, [startMonthOffset, numMonths, selectedMonthIndex, forecastDays, showProjections]);
 
     const loadData = async () => {
         setLoading(true);
@@ -109,36 +110,57 @@ export default function FluxoCaixaView() {
                 }
             });
 
-            recurring.forEach(rec => {
-                if (!rec.active || !rec.category_id) return;
-                const row = rowMap.get(rec.category_id);
-                if (!row) return;
+            if (showProjections) {
+                recurring.forEach(rec => {
+                    if (!rec.active || !rec.category_id) return;
+                    const row = rowMap.get(rec.category_id);
+                    if (!row) return;
 
-                cols.forEach(col => {
-                    const [y, m] = col.key.split('-').map(Number);
-                    const targetMonthDate = new Date(y, m - 1, 1);
-                    const startDate = rec.start_date ? new Date(rec.start_date) : new Date(0);
-                    const endDate = rec.end_date ? new Date(rec.end_date) : new Date(9999, 11, 31);
-                    const isWithinRange = targetMonthDate >= new Date(startDate.getFullYear(), startDate.getMonth(), 1) &&
-                        targetMonthDate <= endDate;
+                    cols.forEach(col => {
+                        const [y, m] = col.key.split('-').map(Number);
+                        const targetMonthDate = new Date(y, m - 1, 1);
+                        const startDate = rec.start_date ? new Date(rec.start_date) : new Date(0);
 
-                    if (isWithinRange) {
-                        const alreadyRealized = transactions.some(t => {
-                            const tDate = new Date(t.date);
-                            const tKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}`;
-                            return t.recurrence_id === rec.id && tKey === col.key;
-                        });
+                        // Check if it's within range based on start_date and end_date
+                        const endDate = rec.end_date ? new Date(rec.end_date) : new Date(9999, 11, 31);
+                        let isWithinRange = targetMonthDate >= new Date(startDate.getFullYear(), startDate.getMonth(), 1) &&
+                            targetMonthDate <= endDate;
 
-                        if (!alreadyRealized) {
-                            if (!row.values[col.key]) {
-                                row.values[col.key] = { amount: rec.programmed_amount || rec.amount, isProjected: true };
-                            } else if (row.values[col.key].isProjected) {
-                                row.values[col.key].amount += rec.programmed_amount || rec.amount;
+                        // Also check duration_count if present
+                        if (isWithinRange && rec.duration_count && rec.duration_count > 0) {
+                            const startYear = startDate.getFullYear();
+                            const startMonth = startDate.getMonth();
+                            const targetYear = targetMonthDate.getFullYear();
+                            const targetMonth = targetMonthDate.getMonth();
+
+                            // Simple monthly diff for MENSAL
+                            if (rec.frequency === 'MENSAL') {
+                                const monthsDiff = (targetYear - startYear) * 12 + (targetMonth - startMonth);
+                                if (monthsDiff >= rec.duration_count) {
+                                    isWithinRange = false;
+                                }
                             }
                         }
-                    }
+
+                        if (isWithinRange) {
+                            const alreadyRealized = transactions.some(t => {
+                                const tDate = new Date(t.date);
+                                const tKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}`;
+                                return t.recurrence_id === rec.id && tKey === col.key && t.status !== 'EXCLUIDA';
+                            });
+
+                            if (!alreadyRealized) {
+                                const projectedAmount = rec.programmed_amount || rec.amount;
+                                if (!row.values[col.key]) {
+                                    row.values[col.key] = { amount: projectedAmount, isProjected: true };
+                                } else if (row.values[col.key].isProjected) {
+                                    row.values[col.key].amount += projectedAmount;
+                                }
+                            }
+                        }
+                    });
                 });
-            });
+            }
 
             setRows(Array.from(rowMap.values()).filter(r => Object.keys(r.values).length > 0)
                 .sort((a, b) => a.type === b.type ? a.categoryName.localeCompare(b.categoryName) : (a.type === 'RECEITA' ? -1 : 1)));
@@ -198,50 +220,81 @@ export default function FluxoCaixaView() {
                 });
 
                 // Projected recurring
-                recurring.filter(rec => rec.active).forEach(rec => {
-                    // Check occurrences within range
-                    // Simple logic for monthly recurring: check if day_of_month falls within range
-                    let checkDate = new Date(rangeStart);
-                    checkDate.setHours(0, 0, 0, 0);
-                    const endLimit = new Date(rangeEnd);
-                    endLimit.setHours(23, 59, 59, 999);
+                if (showProjections) {
+                    recurring.filter(rec => rec.active).forEach(rec => {
+                        const startDate = rec.start_date ? new Date(rec.start_date + 'T12:00:00') : new Date(0);
+                        const endDate = rec.end_date ? new Date(rec.end_date + 'T23:59:59') : new Date(9999, 11, 31);
 
-                    // Iterate through days in range to find occurrences
-                    // (For forecast days > 31 it might find multiple occurrences, for < 31 it might find 0 or 1)
-                    let iterDate = new Date(checkDate);
-                    while (iterDate <= endLimit) {
-                        if (iterDate.getDate() === rec.day_of_month) {
-                            const dateISO = toISODate(iterDate);
-                            const alreadyExists = transactions.some(t => {
-                                return t.recurrence_id === rec.id && t.date === dateISO && t.status !== 'EXCLUIDA';
-                            });
+                        let checkDate = new Date(rangeStart);
+                        checkDate.setHours(12, 0, 0, 0);
+                        const endLimit = new Date(rangeEnd);
+                        endLimit.setHours(12, 0, 0, 0);
 
-                            if (!alreadyExists) {
-                                const amount = rec.programmed_amount || rec.amount;
-                                const item = {
-                                    id: 'proj_' + rec.id + '_' + dateISO,
-                                    description: rec.description,
-                                    planned_amount: amount,
-                                    actual_amount: 0,
-                                    planned_date: dateISO,
-                                    actual_date: null,
-                                    status: 'PROJETADA',
-                                    is_projection: true
-                                };
+                        // Iterate through days in range to find occurrences
+                        let iterDate = new Date(checkDate);
+                        while (iterDate <= endLimit) {
+                            // Basic frequency check (Monthly)
+                            let isOccurrenceDay = false;
+                            if (rec.frequency === 'MENSAL') {
+                                const targetDay = Math.min(rec.day_of_month || 1, new Date(iterDate.getFullYear(), iterDate.getMonth() + 1, 0).getDate());
+                                isOccurrenceDay = iterDate.getDate() === targetDay;
+                            } else if (rec.frequency === 'DIARIO') {
+                                isOccurrenceDay = true;
+                            } else if (rec.frequency === 'SEMANAL') {
+                                isOccurrenceDay = iterDate.getDay() === startDate.getDay();
+                            } else if (rec.frequency === 'ANUAL') {
+                                isOccurrenceDay = iterDate.getMonth() === startDate.getMonth() && iterDate.getDate() === startDate.getDate();
+                            }
 
-                                const cat = categories.find(c => c.id === rec.category_id);
-                                if (cat?.type === 'RECEITA') {
-                                    monthIncomes.push(item);
-                                    pInc += amount;
-                                } else {
-                                    monthExpenses.push(item);
-                                    pExp += amount;
+                            if (isOccurrenceDay) {
+                                const dateISO = toISODate(iterDate);
+                                const isWithinRange = iterDate >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 11, 0, 0) &&
+                                    iterDate <= endDate;
+
+                                // Check duration_count
+                                let withinDuration = true;
+                                if (rec.duration_count && rec.duration_count > 0) {
+                                    // Calculate how many occurrences before this one
+                                    let occurrencesBefore = 0;
+                                    if (rec.frequency === 'MENSAL') {
+                                        occurrencesBefore = (iterDate.getFullYear() - startDate.getFullYear()) * 12 + (iterDate.getMonth() - startDate.getMonth());
+                                    }
+                                    if (occurrencesBefore >= rec.duration_count) withinDuration = false;
+                                }
+
+                                if (isWithinRange && withinDuration) {
+                                    const alreadyExists = transactions.some(t => {
+                                        return t.recurrence_id === rec.id && t.date === dateISO && t.status !== 'EXCLUIDA';
+                                    });
+
+                                    if (!alreadyExists) {
+                                        const amount = rec.programmed_amount || rec.amount;
+                                        const item = {
+                                            id: 'proj_' + rec.id + '_' + dateISO,
+                                            description: rec.description,
+                                            planned_amount: amount,
+                                            actual_amount: 0,
+                                            planned_date: dateISO,
+                                            actual_date: null,
+                                            status: 'PROJETADA',
+                                            is_projection: true,
+                                            type: (categories.find(c => c.id === rec.category_id)?.type === 'RECEITA') ? 'RECEITA' : 'DESPESA'
+                                        };
+
+                                        if (item.type === 'RECEITA') {
+                                            monthIncomes.push(item);
+                                            pInc += amount;
+                                        } else {
+                                            monthExpenses.push(item);
+                                            pExp += amount;
+                                        }
+                                    }
                                 }
                             }
+                            iterDate.setDate(iterDate.getDate() + 1);
                         }
-                        iterDate.setDate(iterDate.getDate() + 1);
-                    }
-                });
+                    });
+                }
 
                 setDetailData({
                     incomes: monthIncomes.sort((a, b) => a.planned_date.localeCompare(b.planned_date)),
@@ -320,6 +373,15 @@ export default function FluxoCaixaView() {
                             className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${displayType === 'table' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
                         >
                             <LayoutGrid size={14} /> Tabela Geral
+                        </button>
+                    </div>
+
+                    <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                        <button
+                            onClick={() => setShowProjections(!showProjections)}
+                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${showProjections ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            <TrendingUp size={14} /> {showProjections ? 'Ocultar Projeção' : 'Ver Projeção'}
                         </button>
                     </div>
 

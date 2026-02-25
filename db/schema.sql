@@ -69,6 +69,7 @@ create table public.transactions (
   installments_current integer,
   installments_total integer,
   observation text,
+  recurrence_id uuid references public.recurring_expenses(id) on delete set null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -87,6 +88,10 @@ create table public.recurring_expenses (
   active boolean default true,
   auto_create boolean default true,
   last_generated date,
+  start_date date,
+  end_date date,
+  duration_count integer,
+  programmed_amount numeric(15,2),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

@@ -1216,6 +1216,114 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                     </div>
                                 )}
 
+                                {/* Recurring Section — MOVED TO TOP */}
+                                {!editingTransaction && !isTransferMode && (
+                                    <div className="space-y-4">
+                                        <label className={`flex items-center space-x-3 p-4 border rounded-2xl cursor-pointer transition-all ${formData.is_recurring ? (formData.type === 'RECEITA' ? 'bg-green-50/50 border-green-200' : 'bg-rose-50/50 border-rose-200') : 'border-slate-200 hover:bg-slate-50'}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.is_recurring}
+                                                onChange={e => {
+                                                    setFormData({ ...formData, is_recurring: e.target.checked });
+                                                }}
+                                                className={`w-5 h-5 rounded focus:ring-offset-0 ${formData.type === 'RECEITA' ? 'text-green-600 focus:ring-green-500' : 'text-rose-600 focus:ring-rose-500'}`}
+                                            />
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="block font-bold text-slate-800">Repetir esta {formData.type === 'RECEITA' ? 'receita' : 'despesa'}?</span>
+                                                    <div className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${formData.type === 'RECEITA' ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700'}`}>RECORRENTE</div>
+                                                </div>
+                                                <span className="block text-[10px] text-slate-500 font-medium leading-tight">Mantenha seus lançamentos fixos e variáveis organizados</span>
+                                            </div>
+                                        </label>
+
+                                        {formData.is_recurring && (
+                                            <div className={`p-4 rounded-xl border space-y-4 animate-slide-down ${formData.type === 'RECEITA' ? 'bg-green-50/30 border-green-100' : 'bg-rose-50/30 border-rose-100'}`}>
+                                                <div className="flex bg-white p-1 rounded-lg border border-slate-100">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, recurring_type: 'FIXO' })}
+                                                        className={`flex-1 py-1.5 text-[10px] font-bold rounded uppercase transition-all ${formData.recurring_type === 'FIXO' ? (formData.type === 'RECEITA' ? 'bg-green-600 text-white' : 'bg-rose-600 text-white') : 'text-slate-400'}`}
+                                                    >
+                                                        Valor Fixo
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, recurring_type: 'VARIAVEL' })}
+                                                        className={`flex-1 py-1.5 text-[10px] font-bold rounded uppercase transition-all ${formData.recurring_type === 'VARIAVEL' ? (formData.type === 'RECEITA' ? 'bg-green-600 text-white' : 'bg-rose-600 text-white') : 'text-slate-400'}`}
+                                                    >
+                                                        Valor Variável
+                                                    </button>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor Programado para futuras</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs text-[10px] font-bold">R$</span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            placeholder="0,00"
+                                                            className={`w-full bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-2 outline-none text-sm font-bold ${formData.type === 'RECEITA' ? 'text-green-600 focus:border-green-300' : 'text-rose-600 focus:border-rose-300'}`}
+                                                            value={formData.programmed_amount === '0' ? '' : formData.programmed_amount}
+                                                            onChange={e => setFormData({ ...formData, programmed_amount: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <p className="text-[9px] text-slate-400 mt-1">Este valor será usado para as projeções dos próximos meses.</p>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="col-span-2">
+                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Frequência</label>
+                                                        <select
+                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
+                                                            value={formData.frequency}
+                                                            onChange={e => setFormData({ ...formData, frequency: e.target.value as RecurrenceFrequency })}
+                                                        >
+                                                            <option value="DIARIO">Diário</option>
+                                                            <option value="SEMANAL">Semanal</option>
+                                                            <option value="MENSAL">Mensal</option>
+                                                            <option value="ANUAL">Anual</option>
+                                                        </select>
+                                                    </div>
+                                                    {formData.frequency === 'MENSAL' && (
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Vencimento</label>
+                                                            <select
+                                                                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
+                                                                value={formData.day_of_month}
+                                                                onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
+                                                            >
+                                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                                                    <option key={d} value={d}>Dia {d}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                    <div className={formData.frequency !== 'MENSAL' ? 'col-span-2' : ''}>
+                                                        <div className="flex justify-between items-center mb-1">
+                                                            <label className="block text-[10px] font-bold text-slate-500 uppercase">Repetições</label>
+                                                            <span className="text-[8px] font-black text-indigo-500 uppercase bg-indigo-50 px-1 py-0.5 rounded">Opcional</span>
+                                                        </div>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max="120"
+                                                            placeholder="Indeterminado"
+                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
+                                                            value={formData.recurring_duration}
+                                                            onChange={e => setFormData({ ...formData, recurring_duration: e.target.value })}
+                                                        />
+                                                        {!formData.recurring_duration && (
+                                                            <p className="text-[9px] text-slate-400 mt-1">Lançamento sem prazo (Até cancelar)</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Basic Info */}
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Descrição</label>
@@ -1490,107 +1598,6 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                     )}
                                 </div>
 
-                                {/* Recurring Section */}
-                                {!editingTransaction && (
-                                    <div className="space-y-4">
-                                        <label className="flex items-center space-x-3 p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.is_recurring}
-                                                onChange={e => setFormData({ ...formData, is_recurring: e.target.checked })}
-                                                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
-                                            />
-                                            <div className="flex-1">
-                                                <span className="block font-bold text-slate-800">Repetir esta despesa?</span>
-                                                <span className="block text-xs text-slate-500">Mantenha seus gastos fixos e variáveis organizados</span>
-                                            </div>
-                                        </label>
-
-                                        {formData.is_recurring && (
-                                            <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-4 animate-slide-down">
-                                                <div className="flex bg-white p-1 rounded-lg border border-indigo-100">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setFormData({ ...formData, recurring_type: 'FIXO' })}
-                                                        className={`flex-1 py-1.5 text-[10px] font-bold rounded uppercase transition-all ${formData.recurring_type === 'FIXO' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400'}`}
-                                                    >
-                                                        Valor Fixo
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setFormData({ ...formData, recurring_type: 'VARIAVEL' })}
-                                                        className={`flex-1 py-1.5 text-[10px] font-bold rounded uppercase transition-all ${formData.recurring_type === 'VARIAVEL' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400'}`}
-                                                    >
-                                                        Valor Variável
-                                                    </button>
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor Programado para futuras</label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs text-[10px] font-bold">R$</span>
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            placeholder="0,00"
-                                                            className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-2 outline-none text-sm font-bold text-indigo-600"
-                                                            value={formData.programmed_amount === '0' ? '' : formData.programmed_amount}
-                                                            onChange={e => setFormData({ ...formData, programmed_amount: e.target.value })}
-                                                        />
-                                                    </div>
-                                                    <p className="text-[9px] text-slate-400 mt-1">Este valor será usado para as projeções dos próximos meses.</p>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="col-span-2">
-                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Frequência</label>
-                                                        <select
-                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
-                                                            value={formData.frequency}
-                                                            onChange={e => setFormData({ ...formData, frequency: e.target.value as RecurrenceFrequency })}
-                                                        >
-                                                            <option value="DIARIO">Diário</option>
-                                                            <option value="SEMANAL">Semanal</option>
-                                                            <option value="MENSAL">Mensal</option>
-                                                            <option value="ANUAL">Anual</option>
-                                                        </select>
-                                                    </div>
-                                                    {formData.frequency === 'MENSAL' && (
-                                                        <div>
-                                                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Dia de Vencimento</label>
-                                                            <select
-                                                                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
-                                                                value={formData.day_of_month}
-                                                                onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
-                                                            >
-                                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                                                    <option key={d} value={d}>Dia {d}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    )}
-                                                    <div className={formData.frequency !== 'MENSAL' ? 'col-span-2' : ''}>
-                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total de Ocorrências</label>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            max="120"
-                                                            placeholder="Ex: 12"
-                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
-                                                            value={formData.recurring_duration}
-                                                            onChange={e => setFormData({ ...formData, recurring_duration: e.target.value })}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="text-[10px] text-slate-400 italic leading-tight">
-                                                    {formData.recurring_type === 'FIXO'
-                                                        ? 'O sistema criará a despesa como confirmada todo mês.'
-                                                        : 'Ideal para contas de consumo (água, luz).'}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
 
                                 {/* Status Final */}
                                 <div>

@@ -219,12 +219,37 @@ export const StorageService = {
 
     async saveRecurringExpense(expense: RecurringExpense) {
         await DatabaseService.saveRecurringExpense(expense);
+
+        // If deactivated, we should remove future PREVISTA transactions
+        if (!expense.active) {
+            const trxs = await StorageService.getTransactions();
+            const today = toISODate(new Date());
+            const toDelete = trxs
+                .filter(t => t.recurrence_id === expense.id && t.status === 'PREVISTA' && t.date >= today)
+                .map(t => t.id);
+
+            if (toDelete.length > 0) {
+                await StorageService.deleteTransactions(toDelete);
+            }
+        }
+
         StorageService.clearCache();
         await StorageService.processRecurringExpenses();
     },
 
     async deleteRecurringExpense(id: string) {
         await DatabaseService.deleteRecurringExpense(id);
+
+        // Also remove all associated transactions that are not realized
+        const trxs = await StorageService.getTransactions();
+        const toDelete = trxs
+            .filter(t => t.recurrence_id === id && (t.status === 'PREVISTA' || t.status === 'ATRASADA'))
+            .map(t => t.id);
+
+        if (toDelete.length > 0) {
+            await StorageService.deleteTransactions(toDelete);
+        }
+
         StorageService.clearCache();
     },
 
@@ -282,7 +307,7 @@ export const StorageService = {
 
             console.log(`[Recurring] Found ${recurring.length} recurring expenses. Transactions in memory: ${transactions.length}`);
 
-            const defaultHorizon = 12;
+            const defaultHorizon = 2; // Only create physical records for the next 2 occurrences by default
 
             const categories = await StorageService.getCategories();
 

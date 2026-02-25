@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import {
     Repeat, Plus, Edit2, Trash2, CheckCircle, AlertCircle,
-    Calendar, RotateCw, DollarSign, ArrowUpCircle, ArrowDownCircle
+    Calendar, RotateCw, DollarSign, ArrowUpCircle, ArrowDownCircle,
+    Power, Pause, Play, TrendingUp, Clock
 } from 'lucide-react';
 import { RecurringExpense, Category, Account, Card, RecurrenceFrequency, TransactionType } from '../types';
 import { StorageService } from '../services/storage';
@@ -30,7 +31,8 @@ export default function RecurringExpensesView() {
         auto_create: true,
         account_id: '',
         card_id: '',
-        duration_count: undefined
+        duration_count: undefined,
+        programmed_amount: undefined
     });
 
     const [loading, setLoading] = useState(true);
@@ -65,8 +67,23 @@ export default function RecurringExpensesView() {
         setIsModalOpen(true);
     };
 
+    const toggleActive = async (expense: RecurringExpense) => {
+        setIsSaving(true);
+        try {
+            await StorageService.saveRecurringExpense({
+                ...expense,
+                active: !expense.active
+            });
+            await loadData();
+        } catch (error) {
+            console.error("Erro ao alternar status:", error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleDelete = async (id: string) => {
-        if (confirm('Tem certeza que deseja excluir esta recorrência?')) {
+        if (confirm('Tem certeza que deseja excluir esta recorrência? Todas as projeções futuras serão removidas.')) {
             await StorageService.deleteRecurringExpense(id);
             await loadData();
         }
@@ -101,6 +118,7 @@ export default function RecurringExpensesView() {
                 account_id: formData.account_id,
                 card_id: formData.card_id,
                 duration_count: formData.duration_count,
+                programmed_amount: formData.programmed_amount,
                 // Preserve existing fields if editing
                 last_generated: editingId ? expenses.find(e => e.id === editingId)?.last_generated : undefined,
                 start_date: editingId ? expenses.find(e => e.id === editingId)?.start_date : new Date().toISOString().split('T')[0]
@@ -109,7 +127,7 @@ export default function RecurringExpensesView() {
             await StorageService.saveRecurringExpense(newExpense);
             setIsModalOpen(false);
             setEditingId(null);
-            setFormData({ description: '', amount: 0, category_id: '', type: 'FIXO', frequency: 'MENSAL', day_of_month: 1, active: true, auto_create: true, account_id: '', duration_count: undefined });
+            setFormData({ description: '', amount: 0, category_id: '', type: 'FIXO', frequency: 'MENSAL', day_of_month: 1, active: true, auto_create: true, account_id: '', duration_count: undefined, programmed_amount: undefined });
             await loadData();
         } catch (error) {
             console.error("Erro ao salvar recorrência:", error);
@@ -156,45 +174,85 @@ export default function RecurringExpensesView() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredExpenses.map(exp => {
                     const cat = categories.find(c => c.id === exp.category_id);
-                    return (
-                        <div key={exp.id} className={`bg-white rounded-xl shadow-sm border ${exp.active ? 'border-slate-100' : 'border-slate-200 bg-slate-50 opacity-75'} p-5 relative group`}>
-                            <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEdit(exp)} className="p-1 text-slate-400 hover:text-blue-500"><Edit2 size={16} /></button>
-                                <button onClick={() => handleDelete(exp.id)} className="p-1 text-slate-400 hover:text-red-500"><Trash2 size={16} /></button>
-                            </div>
+                    const isIncome = (cat?.type || activeTab) === 'RECEITA';
 
-                            <div className="flex items-center space-x-3 mb-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${exp.active ? (activeTab === 'RECEITA' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600') : 'bg-slate-200 text-slate-400'}`}>
-                                    <RotateCw size={20} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-slate-800 truncate">{exp.description}</h3>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat?.color }}></span>
-                                        <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{cat?.name}</span>
+                    return (
+                        <div key={exp.id} className={`bg-white rounded-[2rem] shadow-xl transition-all duration-300 border-2 overflow-hidden flex flex-col ${exp.active ? 'border-indigo-50 shadow-slate-200/50' : 'border-slate-100 opacity-60 grayscale-[0.5]'}`}>
+                            {/* Card Header with Category and Actions */}
+                            <div className={`p-5 flex justify-between items-start ${exp.active ? (isIncome ? 'bg-emerald-50/30' : 'bg-rose-50/30') : 'bg-slate-50/50'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg ${exp.active
+                                        ? (isIncome ? 'bg-emerald-600 text-white shadow-emerald-200' : 'bg-rose-600 text-white shadow-rose-200')
+                                        : 'bg-slate-200 text-slate-400 shadow-none'}`}>
+                                        <RotateCw size={22} className={exp.active ? 'animate-spin-slow' : ''} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-slate-800 text-lg leading-tight truncate max-w-[150px]">{exp.description}</h3>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat?.color }}></span>
+                                            <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest leading-none">{cat?.name}</span>
+                                        </div>
                                     </div>
                                 </div>
+                                <div className="flex gap-1.5">
+                                    <button onClick={() => toggleActive(exp)} className={`p-2 rounded-xl transition-all ${exp.active ? 'bg-white text-rose-500 hover:bg-rose-50 shadow-sm' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md'}`}>
+                                        {exp.active ? <Pause size={16} /> : <Play size={16} />}
+                                    </button>
+                                    <button onClick={() => handleEdit(exp)} className="p-2 bg-white text-slate-400 hover:text-indigo-600 rounded-xl shadow-sm hover:shadow transition-all"><Edit2 size={16} /></button>
+                                </div>
                             </div>
 
-                            <div className="space-y-3">
-                                <div className="flex justify-between text-sm border-b border-slate-50 pb-2">
-                                    <span className="text-slate-500">Valor Estimado</span>
-                                    <span className={`font-bold ${activeTab === 'RECEITA' ? 'text-green-600' : 'text-slate-800'}`}>
-                                        {formatCurrency(exp.amount)}
-                                    </span>
+                            {/* Card Body with Financial Info */}
+                            <div className="p-6 space-y-4 flex-1">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1">
+                                            <DollarSign size={10} /> Valor Atual
+                                        </p>
+                                        <p className="text-xl font-black text-slate-800">{formatCurrency(exp.amount)}</p>
+                                    </div>
+                                    {exp.programmed_amount && exp.programmed_amount !== exp.amount && (
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest flex items-center gap-1">
+                                                <TrendingUp size={10} /> Programado
+                                            </p>
+                                            <p className="text-xl font-black text-indigo-600">{formatCurrency(exp.programmed_amount)}</p>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="flex justify-between text-sm border-b border-slate-50 pb-2">
-                                    <span className="text-slate-500">Vencimento</span>
-                                    <span className="text-slate-800 font-medium">Dia {exp.day_of_month}</span>
+
+                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-50">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[9px] text-slate-400 font-black uppercase tracking-tighter flex items-center gap-1"><Calendar size={10} /> Frequência</span>
+                                        <span className="text-xs font-bold text-slate-700">{exp.frequency}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[9px] text-slate-400 font-black uppercase tracking-tighter flex items-center gap-1"><Clock size={10} /> Próximo</span>
+                                        <span className="text-xs font-bold text-slate-700">Dia {exp.day_of_month}</span>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-center pt-1">
-                                    <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${exp.auto_create ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                        {exp.auto_create ? 'Automático' : 'Lembrete'}
+
+                                <div className="pt-2 flex flex-wrap gap-2">
+                                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${exp.auto_create ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
+                                        {exp.auto_create ? 'Auto-Lançamento' : 'Manual'}
                                     </span>
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${exp.type === 'FIXO' ? 'text-blue-600' : 'text-purple-600'}`}>
+                                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${exp.type === 'FIXO' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-purple-50 border-purple-100 text-purple-600'}`}>
                                         {exp.type}
                                     </span>
+                                    {!exp.active && (
+                                        <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl bg-slate-100 border-slate-200 text-slate-500 flex items-center gap-1">
+                                            <Pause size={8} /> Pausado
+                                        </span>
+                                    )}
                                 </div>
+                            </div>
+
+                            {/* Card Footer Actions */}
+                            <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-50 flex justify-between items-center group-hover:bg-slate-50 transition-all">
+                                <button onClick={() => handleDelete(exp.id)} className="text-[10px] font-black text-slate-300 hover:text-rose-500 uppercase tracking-widest transition-colors flex items-center gap-1">
+                                    <Trash2 size={12} /> Excluir
+                                </button>
+                                <div className={`w-2 h-2 rounded-full ${exp.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
                             </div>
                         </div>
                     );
@@ -262,7 +320,7 @@ export default function RecurringExpensesView() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Valor {formData.type === 'VARIAVEL' ? '(Estimado)' : ''}</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Valor {formData.type === 'VARIAVEL' ? '(Real)' : ''}</label>
                                     <div className="relative">
                                         <DollarSign size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold" />
                                         <input
@@ -278,19 +336,35 @@ export default function RecurringExpensesView() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Categoria</label>
-                                    <select
-                                        className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all font-medium text-slate-700"
-                                        value={formData.category_id}
-                                        onChange={e => setFormData({ ...formData, category_id: e.target.value })}
-                                        required
-                                    >
-                                        <option value="">Selecione...</option>
-                                        {categories.filter(c => c.type === activeTab).map(c => (
-                                            <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                                        ))}
-                                    </select>
+                                    <label className="block text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1.5 ml-1 italic">Valor Programado/Estimado</label>
+                                    <div className="relative">
+                                        <TrendingUp size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-400 font-bold" />
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            className="w-full border border-indigo-100 bg-indigo-50/30 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all font-bold text-indigo-900"
+                                            value={formData.programmed_amount || ''}
+                                            onChange={e => setFormData({ ...formData, programmed_amount: e.target.value ? Number(e.target.value) : undefined })}
+                                            onFocus={e => e.target.select()}
+                                            placeholder="Para projeções..."
+                                        />
+                                    </div>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Categoria</label>
+                                <select
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all font-medium text-slate-700"
+                                    value={formData.category_id}
+                                    onChange={e => setFormData({ ...formData, category_id: e.target.value })}
+                                    required
+                                >
+                                    <option value="">Selecione...</option>
+                                    {categories.filter(c => c.type === activeTab).map(c => (
+                                        <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="grid grid-cols-2 gap-6 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
