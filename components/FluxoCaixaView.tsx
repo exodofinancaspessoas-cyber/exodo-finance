@@ -49,11 +49,14 @@ export default function FluxoCaixaView() {
         totalPlannedIncome: number,
         totalRealizedIncome: number,
         totalPlannedExpense: number,
-        totalRealizedExpense: number
+        totalRealizedExpense: number,
+        totalOverdueIncome: number,
+        totalOverdueExpense: number
     }>({
         incomes: [], expenses: [],
         totalPlannedIncome: 0, totalRealizedIncome: 0,
-        totalPlannedExpense: 0, totalRealizedExpense: 0
+        totalPlannedExpense: 0, totalRealizedExpense: 0,
+        totalOverdueIncome: 0, totalOverdueExpense: 0
     });
 
     useEffect(() => {
@@ -189,7 +192,7 @@ export default function FluxoCaixaView() {
             if (rangeStart && rangeEnd) {
                 const monthIncomes: any[] = [];
                 const monthExpenses: any[] = [];
-                let pInc = 0, rInc = 0, pExp = 0, rExp = 0;
+                let pInc = 0, rInc = 0, pExp = 0, rExp = 0, oInc = 0, oExp = 0;
 
                 // Actual transactions + Overdue (unpaid from the past)
                 transactions.filter(t => {
@@ -198,6 +201,8 @@ export default function FluxoCaixaView() {
                     const isOverdue = (t.status === 'PREVISTA' || t.status === 'CONFIRMADA' || t.status === 'ATRASADA') && t.date < todayStr;
                     return isInRange || isOverdue;
                 }).forEach(t => {
+                    const isInRange = t.date >= startISO && t.date <= endISO;
+                    const isOverdue = (t.status === 'PREVISTA' || t.status === 'CONFIRMADA' || t.status === 'ATRASADA') && t.date < todayStr;
                     const isPaid = (t.type === 'RECEITA' && (t.status === 'RECEBIDA' || t.status === 'CONFIRMADA' || t.status === 'PAGA')) ||
                         (t.type === 'DESPESA' && t.status === 'PAGA');
 
@@ -209,17 +214,22 @@ export default function FluxoCaixaView() {
                         planned_date: t.date,
                         actual_date: isPaid ? t.date : null,
                         status: t.status,
-                        type: t.type
+                        type: t.type,
+                        is_overdue: isOverdue && !isPaid
                     };
+
+                    const totalValue = (t.amount + (t.interest_amount || 0));
 
                     if (t.type === 'RECEITA') {
                         monthIncomes.push(item);
-                        pInc += (t.amount + (t.interest_amount || 0));
-                        if (isPaid) rInc += (t.amount + (t.interest_amount || 0));
+                        if (isInRange) pInc += totalValue;
+                        if (isOverdue && !isPaid) oInc += totalValue;
+                        if (isPaid && isInRange) rInc += totalValue;
                     } else {
                         monthExpenses.push(item);
-                        pExp += (t.amount + (t.interest_amount || 0));
-                        if (isPaid) rExp += (t.amount + (t.interest_amount || 0));
+                        if (isInRange) pExp += totalValue;
+                        if (isOverdue && !isPaid) oExp += totalValue;
+                        if (isPaid && isInRange) rExp += totalValue;
                     }
                 });
 
@@ -252,7 +262,7 @@ export default function FluxoCaixaView() {
 
                             if (isOccurrenceDay) {
                                 const dateISO = toISODate(iterDate);
-                                const isWithinRange = iterDate >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 11, 0, 0) &&
+                                const isInRangeProj = iterDate >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 11, 0, 0) &&
                                     iterDate <= endDate;
 
                                 // Check duration_count
@@ -266,7 +276,7 @@ export default function FluxoCaixaView() {
                                     if (occurrencesBefore >= rec.duration_count) withinDuration = false;
                                 }
 
-                                if (isWithinRange && withinDuration) {
+                                if (isInRangeProj && withinDuration) {
                                     const alreadyExists = transactions.some(t => {
                                         return t.recurrence_id === rec.id && t.date === dateISO && t.status !== 'EXCLUIDA';
                                     });
@@ -282,15 +292,18 @@ export default function FluxoCaixaView() {
                                             actual_date: null,
                                             status: 'PROJETADA',
                                             is_projection: true,
-                                            type: (categories.find(c => c.id === rec.category_id)?.type === 'RECEITA') ? 'RECEITA' : 'DESPESA'
+                                            type: (categories.find(c => c.id === rec.category_id)?.type === 'RECEITA') ? 'RECEITA' : 'DESPESA',
+                                            is_overdue: dateISO < todayStr
                                         };
 
                                         if (item.type === 'RECEITA') {
                                             monthIncomes.push(item);
-                                            pInc += amount;
+                                            if (dateISO < todayStr) oInc += amount;
+                                            else pInc += amount;
                                         } else {
                                             monthExpenses.push(item);
-                                            pExp += amount;
+                                            if (dateISO < todayStr) oExp += amount;
+                                            else pExp += amount;
                                         }
                                     }
                                 }
@@ -306,7 +319,9 @@ export default function FluxoCaixaView() {
                     totalPlannedIncome: pInc,
                     totalRealizedIncome: rInc,
                     totalPlannedExpense: pExp,
-                    totalRealizedExpense: rExp
+                    totalRealizedExpense: rExp,
+                    totalOverdueIncome: oInc,
+                    totalOverdueExpense: oExp
                 });
             }
 
@@ -611,52 +626,71 @@ export default function FluxoCaixaView() {
                     </div>
 
                     {/* FOCUSED SUMMARY CARD */}
-                    <div className="bg-slate-900 rounded-[3.5rem] p-12 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-12 group">
-                        <div className="relative z-10">
+                    <div className="bg-slate-900 rounded-[3.5rem] p-12 text-white shadow-2xl relative overflow-hidden flex flex-col xl:flex-row items-center justify-between gap-12 group">
+                        <div className="relative z-10 w-full xl:w-2/3">
                             <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-4">
-                                {forecastDays ? `Saldo Final em ${forecastDays} dias` : 'Resultado Projetado'}
+                                {forecastDays ? `Análise Financeira em ${forecastDays} dias` : 'Análise Financeira Projetada'}
                             </h4>
 
                             {(() => {
                                 const currentTotalBalance = accounts.reduce((sum, a) => sum + (a.current_balance || 0), 0);
-                                const pendingIn = detailData.totalPlannedIncome - detailData.totalRealizedIncome;
-                                const pendingOut = detailData.totalPlannedExpense - detailData.totalRealizedExpense;
-                                const projectedFinal = currentTotalBalance + pendingIn - pendingOut;
+
+                                // Values SPECIFIC to this period (excluding past overdue)
+                                const periodPendingIn = detailData.totalPlannedIncome - detailData.totalRealizedIncome;
+                                const periodPendingOut = detailData.totalPlannedExpense - detailData.totalRealizedExpense;
+                                const periodResult = periodPendingIn - periodPendingOut;
+
+                                // TOTAL including overdue
+                                const finalPendingIn = periodPendingIn + detailData.totalOverdueIncome;
+                                const finalPendingOut = periodPendingOut + detailData.totalOverdueExpense;
+                                const projectedFinal = currentTotalBalance + finalPendingIn - finalPendingOut;
+
                                 const isPositive = projectedFinal >= 0;
 
                                 return (
-                                    <>
-                                        <div className={`text-7xl font-black tracking-tighter mb-4 ${isPositive ? 'text-white' : 'text-rose-400'}`}>
-                                            {formatCurrency(projectedFinal)}
+                                    <div className="space-y-8">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8 border-b border-white/5">
+                                            <div>
+                                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-2">
+                                                    Resultado do Período
+                                                    <span className="text-[8px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded cursor-help" title="Apenas o que entra e sai no período selecionado">?</span>
+                                                </p>
+                                                <div className={`text-4xl font-black ${periodResult >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                    {formatCurrency(periodResult)}
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 font-medium mt-1">Lançamentos específicos deste mês.</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-2">
+                                                    Saldo de Atrasados
+                                                    <span className="text-[8px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded cursor-help" title="Contas que venceram no passado e não foram quitadas">?</span>
+                                                </p>
+                                                <div className={`text-4xl font-black ${detailData.totalOverdueIncome - detailData.totalOverdueExpense >= 0 ? 'text-indigo-300' : 'text-rose-400/80'}`}>
+                                                    {formatCurrency(detailData.totalOverdueIncome - detailData.totalOverdueExpense)}
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 font-medium mt-1">Impacto de títulos pendentes do passado.</p>
+                                            </div>
                                         </div>
-                                        <p className="text-slate-400 font-medium max-w-lg leading-relaxed">
-                                            {forecastDays
-                                                ? `Considerando seu saldo atual de ${formatCurrency(currentTotalBalance)}, em ${forecastDays} dias sua conta estará `
-                                                : `Este é o seu saldo final esperado para ${months[selectedMonthIndex]?.label}. Suas contas estarão `
-                                            }
-                                            <span className={`font-black ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                {isPositive ? 'POSITIVA' : 'NEGATIVA'}
-                                            </span>.
-                                        </p>
-                                    </>
+
+                                        <div>
+                                            <p className="text-indigo-400 text-[10px] font-black uppercase tracking-widest mb-2">Saldo Final Projetado (Realista)</p>
+                                            <div className={`text-7xl font-black tracking-tighter mb-4 ${isPositive ? 'text-white' : 'text-rose-400'}`}>
+                                                {formatCurrency(projectedFinal)}
+                                            </div>
+                                            <p className="text-slate-400 font-medium max-w-2xl leading-relaxed">
+                                                Com base no saldo atual de <span className="text-slate-200 font-bold">{formatCurrency(currentTotalBalance)}</span>, somando o que você tem a receber e subtraindo tudo o que deve (incluindo as contas atrasadas), sua conta chegará ao final desse ciclo <span className={`font-black ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>{isPositive ? 'POSITIVA' : 'NEGATIVA'}</span>.
+                                            </p>
+                                        </div>
+                                    </div>
                                 );
                             })()}
                         </div>
 
-                        <div className="relative z-10 flex gap-8 items-center text-center md:text-left">
-                            <div className="p-8 rounded-[2.5rem] bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col items-center group-hover:bg-white/10 transition-all">
-                                <span className="text-[10px] font-black text-slate-400 uppercase mb-2">Resultado do Período</span>
-                                <span className={`text-2xl font-black ${detailData.totalPlannedIncome - detailData.totalPlannedExpense >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                    {formatCurrency(detailData.totalPlannedIncome - detailData.totalPlannedExpense)}
-                                </span>
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-24 h-24 rounded-[2rem] bg-indigo-500 text-white flex items-center justify-center mb-4 shadow-2xl shadow-indigo-500/30">
+                                <Calculator size={40} />
                             </div>
-                            <div className="w-px h-20 bg-white/10 hidden md:block"></div>
-                            <div className="flex flex-col items-center">
-                                <div className="w-20 h-20 rounded-3xl bg-indigo-500/20 flex items-center justify-center mb-3">
-                                    <Calculator className="text-indigo-400" size={32} />
-                                </div>
-                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Saldo Projetado</span>
-                            </div>
+                            <span className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em]">Cálculo Pro Max</span>
                         </div>
 
                         {/* Decoration */}
