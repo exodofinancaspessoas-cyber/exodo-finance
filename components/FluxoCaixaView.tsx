@@ -716,11 +716,6 @@ export default function FluxoCaixaView() {
                             })()}
                         </div>
                     </div>
-
-                    {/* Decoration */}
-                    <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <TrendingUp size={400} />
-                    </div>
                 </div>
             ) : (
                 /* TABLE VIEW - Multi-month Comparison */
