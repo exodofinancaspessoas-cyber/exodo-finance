@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    Clock, CheckCircle2, AlertCircle, Calendar, Filter, ChevronRight,
+    Clock, CheckCircle2, AlertCircle, Calendar, Filter, ChevronRight, ChevronLeft,
     MoreHorizontal, Check, TrendingUp, TrendingDown, Clock3,
     CalendarDays, List, Search, ArrowRight, Wallet
 } from 'lucide-react';
@@ -43,6 +43,14 @@ export default function AgendaView() {
         setCategories(cats);
         setAccounts(accs);
         setCards(crds);
+    };
+
+    const nextMonth = () => {
+        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    };
+
+    const prevMonth = () => {
+        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
     };
 
     const handleMarkAsPaid = async (transaction: Transaction) => {
@@ -158,37 +166,65 @@ export default function AgendaView() {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header / Summary */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-                        <CalendarDays className="text-rose-600" size={28} />
-                        Agenda Financeira
-                    </h1>
-                    <p className="text-slate-500 text-sm">Controle o que entra e o que sai com precisão.</p>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center shrink-0 shadow-sm border border-rose-100">
+                        <CalendarDays size={32} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+                            Agenda Financeira
+                        </h1>
+                        <p className="text-slate-500 text-sm font-medium">Controle o que entra e o que sai com precisão.</p>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
-                    <button
-                        onClick={() => setViewMode('list')}
-                        className={`p-2 rounded-xl transition-all ${viewMode === 'list' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                        title="Lista Simples"
-                    >
-                        <List size={18} />
-                    </button>
-                    <button
-                        onClick={() => setViewMode('timeline')}
-                        className={`p-2 rounded-xl transition-all ${viewMode === 'timeline' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                        title="Linha do Tempo"
-                    >
-                        <Clock3 size={18} />
-                    </button>
-                    <button
-                        onClick={() => setViewMode('calendar')}
-                        className={`p-2 rounded-xl transition-all ${viewMode === 'calendar' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                        title="Calendário Mensal"
-                    >
-                        <Calendar size={18} />
-                    </button>
+                <div className="flex flex-wrap items-center gap-3">
+                    {/* Seletor de Mês */}
+                    <div className="flex items-center gap-1 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+                        <button
+                            onClick={prevMonth}
+                            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                        <div className="px-4 text-center min-w-[140px]">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none mb-1">Mês de Análise</span>
+                            <span className="text-sm font-bold text-slate-700 capitalize">
+                                {currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                            </span>
+                        </div>
+                        <button
+                            onClick={nextMonth}
+                            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                            title="Lista Simples"
+                        >
+                            <List size={20} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('timeline')}
+                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'timeline' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                            title="Linha do Tempo"
+                        >
+                            <Clock3 size={20} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('calendar')}
+                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'calendar' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                            title="Calendário Mensal"
+                        >
+                            <Calendar size={20} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -313,10 +349,10 @@ export default function AgendaView() {
                                                             key={t.id}
                                                             onClick={!isPaid ? () => handleMarkAsPaid(t) : undefined}
                                                             className={`w-full p-1 rounded-md text-[9px] font-bold truncate text-left transition-all ${isPaid
-                                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 opacity-60'
-                                                                    : t.type === 'RECEITA'
-                                                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 hover:scale-[1.02]'
-                                                                        : 'bg-rose-50 text-rose-700 border border-rose-100 hover:scale-[1.02] active:bg-rose-100'
+                                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 opacity-60'
+                                                                : t.type === 'RECEITA'
+                                                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 hover:scale-[1.02]'
+                                                                    : 'bg-rose-50 text-rose-700 border border-rose-100 hover:scale-[1.02] active:bg-rose-100'
                                                                 }`}
                                                             title={`${t.description}: ${formatCurrency(t.amount)}`}
                                                         >
