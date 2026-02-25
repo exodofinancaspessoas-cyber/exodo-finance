@@ -5,11 +5,12 @@ import {
     Table, TrendingUp, TrendingDown, ChevronLeft, ChevronRight,
     Filter, Download, LayoutGrid, List, Calculator, Calendar,
     ArrowUpRight, ArrowDownRight, CheckCircle2, AlertCircle,
-    Plus, Minus, Equal
+    Plus, Minus, Equal, X, Wallet, CreditCard, Tag
 } from 'lucide-react';
 import { Transaction, RecurringExpense, Category, TransactionType } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency, toISODate } from '../utils';
+import { hapticFeedback } from './ui/Skeleton';
 
 interface MonthColumn {
     key: string; // YYYY-MM
@@ -21,7 +22,7 @@ interface MonthColumn {
 interface RowData {
     categoryId: string;
     categoryName: string;
-    type: TransactionType;
+    type: TransactionType | 'AMBOS';
     values: Record<string, {
         amount: number;
         isProjected: boolean;
@@ -37,6 +38,7 @@ export default function FluxoCaixaView() {
     const [forecastDays, setForecastDays] = useState<number | null>(null);
     const [showProjections, setShowProjections] = useState(true);
     const [accounts, setAccounts] = useState<any[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
 
     // Period controls
     const [startMonthOffset, setStartMonthOffset] = useState(0);
@@ -60,6 +62,8 @@ export default function FluxoCaixaView() {
         totalOverdueIncome: 0, totalOverdueExpense: 0
     });
 
+    const [selectedItem, setSelectedItem] = useState<any>(null);
+
     useEffect(() => {
         loadData();
     }, [startMonthOffset, numMonths, selectedMonthIndex, forecastDays, showProjections]);
@@ -67,13 +71,14 @@ export default function FluxoCaixaView() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [transactions, recurring, categories, accs] = await Promise.all([
+            const [transactions, recurring, cats, accs] = await Promise.all([
                 StorageService.getTransactions(),
                 StorageService.getRecurringExpenses(),
                 StorageService.getCategories(),
                 StorageService.getAccounts()
             ]);
             setAccounts(accs);
+            setCategories(cats);
 
             const today = new Date();
             const currentYear = today.getFullYear();
@@ -95,17 +100,17 @@ export default function FluxoCaixaView() {
 
             // 2. Prepare Table Data logic (kept for the 'table' view)
             const rowMap = new Map<string, RowData>();
-            categories.forEach(cat => {
+            cats.forEach(cat => {
                 rowMap.set(cat.id, {
                     categoryId: cat.id,
                     categoryName: cat.name,
-                    type: cat.type as TransactionType,
+                    type: cat.type,
                     values: {}
                 });
             });
 
             transactions.forEach(t => {
-                if (!t.category_id || t.status === 'EXCLUIDA') return;
+                if (t.status === 'EXCLUIDA' || !t.category_id) return;
                 const d = new Date(t.date);
                 const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                 const row = rowMap.get(t.category_id);
@@ -138,13 +143,8 @@ export default function FluxoCaixaView() {
                             const targetYear = targetMonthDate.getFullYear();
                             const targetMonth = targetMonthDate.getMonth();
 
-                            // Simple monthly diff for MENSAL
-                            if (rec.frequency === 'MENSAL') {
-                                const monthsDiff = (targetYear - startYear) * 12 + (targetMonth - startMonth);
-                                if (monthsDiff >= rec.duration_count) {
-                                    isWithinRange = false;
-                                }
-                            }
+                            const monthsDiff = (targetYear - startYear) * 12 + (targetMonth - startMonth);
+                            if (monthsDiff >= rec.duration_count) isWithinRange = false;
                         }
 
                         if (isWithinRange) {
@@ -216,7 +216,9 @@ export default function FluxoCaixaView() {
                         actual_date: isPaid ? t.date : null,
                         status: t.status,
                         type: t.type,
-                        is_overdue: isOverdue && !isPaid
+                        is_overdue: isOverdue && !isPaid,
+                        is_projection: false,
+                        original: t
                     };
 
                     const totalValue = (t.amount + (t.interest_amount || 0));
@@ -248,44 +250,16 @@ export default function FluxoCaixaView() {
                         // Iterate through days in range to find occurrences
                         let iterDate = new Date(checkDate);
                         while (iterDate <= endLimit) {
-                            // Basic frequency check (Monthly)
-                            let isOccurrenceDay = false;
-                            if (rec.frequency === 'MENSAL') {
-                                const targetDay = Math.min(rec.day_of_month || 1, new Date(iterDate.getFullYear(), iterDate.getMonth() + 1, 0).getDate());
-                                isOccurrenceDay = iterDate.getDate() === targetDay;
-                            } else if (rec.frequency === 'DIARIO') {
-                                isOccurrenceDay = true;
-                            } else if (rec.frequency === 'SEMANAL') {
-                                isOccurrenceDay = iterDate.getDay() === startDate.getDay();
-                            } else if (rec.frequency === 'ANUAL') {
-                                isOccurrenceDay = iterDate.getMonth() === startDate.getMonth() && iterDate.getDate() === startDate.getDate();
-                            }
-
-                            if (isOccurrenceDay) {
-                                const dateISO = toISODate(iterDate);
-                                const isInRangeProj = iterDate >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 11, 0, 0) &&
-                                    iterDate <= endDate;
-
-                                // Check duration_count
-                                let withinDuration = true;
-                                if (rec.duration_count && rec.duration_count > 0) {
-                                    // Calculate how many occurrences before this one
-                                    let occurrencesBefore = 0;
-                                    if (rec.frequency === 'MENSAL') {
-                                        occurrencesBefore = (iterDate.getFullYear() - startDate.getFullYear()) * 12 + (iterDate.getMonth() - startDate.getMonth());
-                                    }
-                                    if (occurrencesBefore >= rec.duration_count) withinDuration = false;
-                                }
-
-                                if (isInRangeProj && withinDuration) {
-                                    const alreadyExists = transactions.some(t => {
-                                        return t.recurrence_id === rec.id && t.date === dateISO && t.status !== 'EXCLUIDA';
-                                    });
-
-                                    if (!alreadyExists) {
+                            if (iterDate >= startDate && iterDate <= endDate) {
+                                // Simple monthly recurrence check logic
+                                if (iterDate.getDate() === startDate.getDate()) {
+                                    const dateISO = toISODate(iterDate);
+                                    // Check if NOT already realized
+                                    const alreadyRealized = transactions.some(t => t.recurrence_id === rec.id && t.date === dateISO && t.status !== 'EXCLUIDA');
+                                    if (!alreadyRealized) {
                                         const amount = rec.programmed_amount || rec.amount;
                                         const item = {
-                                            id: 'proj_' + rec.id + '_' + dateISO,
+                                            id: `proj-${rec.id}-${dateISO}`,
                                             description: rec.description,
                                             planned_amount: amount,
                                             actual_amount: 0,
@@ -293,8 +267,9 @@ export default function FluxoCaixaView() {
                                             actual_date: null,
                                             status: 'PROJETADA',
                                             is_projection: true,
-                                            type: (categories.find(c => c.id === rec.category_id)?.type === 'RECEITA') ? 'RECEITA' : 'DESPESA',
-                                            is_overdue: dateISO < todayStr
+                                            type: (cats.find(c => c.id === rec.category_id)?.type === 'RECEITA') ? 'RECEITA' : 'DESPESA',
+                                            is_overdue: dateISO < todayStr,
+                                            original: rec
                                         };
 
                                         if (item.type === 'RECEITA') {
@@ -362,10 +337,10 @@ export default function FluxoCaixaView() {
 
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Forecast Selector */}
-                    <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                    <div className="flex w-full sm:w-auto bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
                         <button
                             onClick={() => { setForecastDays(null); setDisplayType('detailed'); }}
-                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === null ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            className={`flex-1 sm:flex-none px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === null ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'}`}
                         >
                             Mensal
                         </button>
@@ -373,7 +348,7 @@ export default function FluxoCaixaView() {
                             <button
                                 key={days}
                                 onClick={() => { setForecastDays(days); setDisplayType('detailed'); }}
-                                className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === days ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                                className={`flex-1 sm:flex-none px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === days ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'}`}
                             >
                                 {days} Dias
                             </button>
@@ -478,56 +453,70 @@ export default function FluxoCaixaView() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
-                                            <p className="text-indigo-200 text-[10px] font-black uppercase tracking-widest mb-1">Total Esperado</p>
-                                            <p className="text-3xl font-black text-white">{formatCurrency(detailData.totalPlannedIncome)}</p>
+                                            <p className="text-indigo-200 text-[9px] font-black uppercase tracking-widest mb-1">Total Previsto</p>
+                                            <p className="text-3xl font-black text-white tracking-tight">{formatCurrency(detailData.totalPlannedIncome + detailData.totalOverdueIncome)}</p>
                                         </div>
-                                        <div>
-                                            <p className="text-indigo-200 text-[10px] font-black uppercase tracking-widest mb-1">Total Recebido</p>
-                                            <p className="text-3xl font-black text-white">{formatCurrency(detailData.totalRealizedIncome)}</p>
+                                        <div className="text-right">
+                                            <p className="text-indigo-200 text-[9px] font-black uppercase tracking-widest mb-1">Total Recebido</p>
+                                            <p className="text-3xl font-black text-emerald-300 tracking-tight">{formatCurrency(detailData.totalRealizedIncome)}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <ArrowUpRight size={180} className="absolute -bottom-10 -right-10 text-white/5" />
+
+                                {/* Progress graph background decoration */}
+                                <div className="absolute bottom-0 left-0 w-full h-1 bg-white/10">
+                                    <div
+                                        className="h-full bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.5)] transition-all duration-1000"
+                                        style={{ width: `${Math.min(100, (detailData.totalRealizedIncome / (detailData.totalPlannedIncome + detailData.totalOverdueIncome || 1)) * 100)}%` }}
+                                    ></div>
+                                </div>
                             </div>
 
-                            <div className="p-4 flex-1">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50">
-                                            <tr>
-                                                <th className="px-4 py-4 text-left">Descrição</th>
-                                                <th className="px-4 py-4 text-right">Valor Prev.</th>
-                                                <th className="px-4 py-4 text-center">Data Prev.</th>
-                                                <th className="px-4 py-4 text-right">Valor Rec.</th>
-                                                <th className="px-4 py-4 text-center">Data Rec.</th>
+                            <div className="flex-1 overflow-hidden">
+                                <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="sticky top-0 bg-white z-10 shadow-sm">
+                                            <tr className="border-b border-slate-100">
+                                                <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Descrição</th>
+                                                <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Data</th>
+                                                <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Valor</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {detailData.incomes.length > 0 ? detailData.incomes.map(item => (
-                                                <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
+                                                <tr key={item.id}
+                                                    className="group hover:bg-slate-50 active:bg-slate-100 cursor-pointer transition-colors"
+                                                    onClick={() => { hapticFeedback?.(5); setSelectedItem(item); }}
+                                                >
                                                     <td className="px-4 py-4">
                                                         <span className="font-bold text-slate-700 text-sm block">{item.description}</span>
                                                         <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${item.status === 'PREVISTA' || item.status === 'PROJETADA' ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
                                                             {item.status}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-4 text-right font-black text-slate-400 text-sm">
-                                                        {formatCurrency(item.planned_amount)}
-                                                    </td>
-                                                    <td className="px-4 py-4 text-center text-xs font-bold text-slate-400">
-                                                        {formatDate(item.planned_date)}
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="text-xs font-bold text-slate-500 tabular-nums">{formatDate(item.planned_date)}</span>
                                                     </td>
                                                     <td className="px-4 py-4 text-right">
-                                                        <span className={`text-sm font-black ${item.actual_amount > 0 ? 'text-emerald-600' : 'text-slate-200'}`}>
-                                                            {item.actual_amount > 0 ? formatCurrency(item.actual_amount) : '—'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-center text-xs font-bold text-emerald-500">
-                                                        {item.actual_date ? formatDate(item.actual_date) : <span className="text-slate-200">—</span>}
+                                                        <div className={`text-sm font-black tabular-nums ${item.actual_amount > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                            {formatCurrency(item.planned_amount)}
+                                                        </div>
+                                                        {item.is_overdue && !item.actual_amount && (
+                                                            <span className="text-[8px] font-black text-rose-500 uppercase tracking-tighter">Atrasada</span>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             )) : (
-                                                <tr><td colSpan={5} className="py-10 text-center text-slate-300 font-bold uppercase tracking-widest text-xs">Nenhum lançamento</td></tr>
+                                                <tr>
+                                                    <td colSpan={3} className="py-20 text-center">
+                                                        <div className="flex flex-col items-center gap-3">
+                                                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
+                                                                <ArrowUpRight size={24} />
+                                                            </div>
+                                                            <p className="text-slate-400 text-sm font-medium italic">Nenhuma receita pendente.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -546,69 +535,83 @@ export default function FluxoCaixaView() {
 
                         {/* EXPENSES PANEL */}
                         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200 border border-slate-100 overflow-hidden flex flex-col">
-                            <div className="bg-rose-600 p-8 relative overflow-hidden">
+                            <div className="bg-slate-900 p-8 relative overflow-hidden">
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white">
+                                            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white">
                                                 <ArrowDownRight size={22} />
                                             </div>
                                             <h3 className="text-white font-black text-2xl uppercase tracking-tighter">Despesas</h3>
                                         </div>
-                                        <div className="text-rose-100 text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full">Programado</div>
+                                        <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest border border-slate-700 px-3 py-1 rounded-full">Projetado</div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
-                                            <p className="text-rose-200 text-[10px] font-black uppercase tracking-widest mb-1">Valor a Pagar</p>
-                                            <p className="text-3xl font-black text-white">{formatCurrency(detailData.totalPlannedExpense)}</p>
+                                            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">Total Previsto</p>
+                                            <p className="text-3xl font-black text-white tracking-tight">{formatCurrency(detailData.totalPlannedExpense + detailData.totalOverdueExpense)}</p>
                                         </div>
-                                        <div>
-                                            <p className="text-rose-200 text-[10px] font-black uppercase tracking-widest mb-1">Valor Pago</p>
-                                            <p className="text-3xl font-black text-white">{formatCurrency(detailData.totalRealizedExpense)}</p>
+                                        <div className="text-right">
+                                            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">Total Pago</p>
+                                            <p className="text-3xl font-black text-rose-400 tracking-tight">{formatCurrency(detailData.totalRealizedExpense)}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <ArrowDownRight size={180} className="absolute -bottom-10 -right-10 text-white/5" />
+                                <div className="absolute bottom-0 left-0 w-full h-1 bg-white/5">
+                                    <div
+                                        className="h-full bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.5)] transition-all duration-1000"
+                                        style={{ width: `${Math.min(100, (detailData.totalRealizedExpense / (detailData.totalPlannedExpense + detailData.totalOverdueExpense || 1)) * 100)}%` }}
+                                    ></div>
+                                </div>
                             </div>
 
-                            <div className="p-4 flex-1">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50">
-                                            <tr>
-                                                <th className="px-4 py-4 text-left">Descrição</th>
-                                                <th className="px-4 py-4 text-right">Valor Prev.</th>
-                                                <th className="px-4 py-4 text-center">Data Prev.</th>
-                                                <th className="px-4 py-4 text-right">Valor Pago</th>
-                                                <th className="px-4 py-4 text-center">Data Pago</th>
+                            <div className="flex-1 overflow-hidden">
+                                <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="sticky top-0 bg-white z-10 shadow-sm">
+                                            <tr className="border-b border-slate-100">
+                                                <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Descrição</th>
+                                                <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Data</th>
+                                                <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Valor</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {detailData.expenses.length > 0 ? detailData.expenses.map(item => (
-                                                <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
+                                                <tr key={item.id}
+                                                    className="group hover:bg-slate-50 active:bg-slate-100 cursor-pointer transition-colors"
+                                                    onClick={() => { hapticFeedback?.(5); setSelectedItem(item); }}
+                                                >
                                                     <td className="px-4 py-4">
                                                         <span className="font-bold text-slate-700 text-sm block">{item.description}</span>
                                                         <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${item.status === 'PREVISTA' || item.status === 'PROJETADA' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>
                                                             {item.status}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-4 text-right font-black text-slate-400 text-sm">
-                                                        {formatCurrency(item.planned_amount)}
-                                                    </td>
-                                                    <td className="px-4 py-4 text-center text-xs font-bold text-slate-400">
-                                                        {formatDate(item.planned_date)}
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="text-xs font-bold text-slate-500 tabular-nums">{formatDate(item.planned_date)}</span>
                                                     </td>
                                                     <td className="px-4 py-4 text-right">
-                                                        <span className={`text-sm font-black ${item.actual_amount > 0 ? 'text-rose-500' : 'text-slate-200'}`}>
-                                                            {item.actual_amount > 0 ? formatCurrency(item.actual_amount) : '—'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-center text-xs font-bold text-rose-400">
-                                                        {item.actual_date ? formatDate(item.actual_date) : <span className="text-slate-200">—</span>}
+                                                        <div className="text-sm font-black tabular-nums text-rose-500/80">
+                                                            {formatCurrency(item.planned_amount)}
+                                                        </div>
+                                                        {item.is_overdue && !item.actual_amount && (
+                                                            <span className="text-[8px] font-black text-rose-600 uppercase tracking-tighter flex items-center justify-end gap-1">
+                                                                <AlertCircle size={8} /> Atrasada
+                                                            </span>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             )) : (
-                                                <tr><td colSpan={5} className="py-10 text-center text-slate-300 font-bold uppercase tracking-widest text-xs">Nenhum lançamento</td></tr>
+                                                <tr>
+                                                    <td colSpan={3} className="py-20 text-center">
+                                                        <div className="flex flex-col items-center gap-3">
+                                                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
+                                                                <ArrowDownRight size={24} />
+                                                            </div>
+                                                            <p className="text-slate-400 text-sm font-medium italic">Nenhuma despesa pendente.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -787,6 +790,105 @@ export default function FluxoCaixaView() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {/* DETAIL MODAL */}
+            {selectedItem && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedItem(null)}></div>
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden animate-in fade-in zoom-in duration-300">
+                        <div className={`p-8 ${selectedItem.type === 'RECEITA' ? 'bg-emerald-600' : 'bg-rose-600'} text-white`}>
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 block mb-1">
+                                        {selectedItem.is_projection ? 'Lançamento Projetado' : 'Detalhes do Lançamento'}
+                                    </span>
+                                    <h3 className="text-2xl font-black tracking-tight">{selectedItem.description}</h3>
+                                </div>
+                                <button onClick={() => setSelectedItem(null)} className="p-2 hover:bg-white/20 rounded-xl transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6">
+                                <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Valor Planejado</p>
+                                <div className="text-4xl font-black">{formatCurrency(selectedItem.planned_amount)}</div>
+                            </div>
+                        </div>
+
+                        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                        <Calendar size={10} /> Vencimento
+                                    </p>
+                                    <p className="font-bold text-slate-700">{formatDate(selectedItem.planned_date)}</p>
+                                </div>
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${selectedItem.status === 'PREVISTA' || selectedItem.status === 'PROJETADA'
+                                        ? 'bg-amber-100 text-amber-700'
+                                        : 'bg-indigo-100 text-indigo-700'
+                                        }`}>
+                                        {selectedItem.status}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {selectedItem.original?.category_id && (
+                                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400">
+                                        <Tag size={20} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Categoria</p>
+                                        <p className="font-bold text-slate-700">
+                                            {categories.find((c: any) => c.id === selectedItem.original.category_id)?.name || 'Sem Categoria'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedItem.original?.account_id && (
+                                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400">
+                                        <Wallet size={20} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Conta/Origem</p>
+                                        <p className="font-bold text-slate-700">
+                                            {accounts.find((a: any) => a.id === selectedItem.original.account_id)?.name || 'Nenhuma'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedItem.actual_amount > 0 && (
+                                <div className="p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Valor Realizado</p>
+                                        <p className="text-[9px] font-bold text-emerald-500 uppercase">{formatDate(selectedItem.actual_date)}</p>
+                                    </div>
+                                    <p className="text-2xl font-black text-emerald-700">{formatCurrency(selectedItem.actual_amount)}</p>
+                                </div>
+                            )}
+
+                            {selectedItem.is_overdue && !selectedItem.actual_amount && (
+                                <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 flex items-center gap-3">
+                                    <AlertCircle className="text-rose-600" size={20} />
+                                    <p className="text-xs font-bold text-rose-700 italic">Atenção: Este lançamento está atrasado!</p>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={() => setSelectedItem(null)}
+                                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 active:scale-[0.98] transition-all shadow-xl shadow-slate-200"
+                            >
+                                Fechar Detalhes
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
