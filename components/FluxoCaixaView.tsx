@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
     Table, TrendingUp, TrendingDown, ChevronLeft, ChevronRight,
     Filter, Download, LayoutGrid, List, Calculator, Calendar,
-    ArrowUpRight, ArrowDownRight, CheckCircle2, AlertCircle
+    ArrowUpRight, ArrowDownRight, CheckCircle2, AlertCircle,
+    Plus, Minus, Equal
 } from 'lucide-react';
 import { Transaction, RecurringExpense, Category, TransactionType } from '../types';
 import { StorageService } from '../services/storage';
@@ -625,78 +626,97 @@ export default function FluxoCaixaView() {
                         </div>
                     </div>
 
-                    {/* FOCUSED SUMMARY CARD */}
-                    <div className="bg-slate-900 rounded-[3.5rem] p-12 text-white shadow-2xl relative overflow-hidden flex flex-col xl:flex-row items-center justify-between gap-12 group">
-                        <div className="relative z-10 w-full xl:w-2/3">
-                            <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-4">
-                                {forecastDays ? `Análise Financeira em ${forecastDays} dias` : 'Análise Financeira Projetada'}
+                    {/* FOCUSED SUMMARY CARD - REDESIGNED FOR MATHEMATICAL INTUITIVITY */}
+                    <div className="bg-slate-900 rounded-[3.5rem] p-8 xl:p-12 text-white shadow-2xl relative overflow-hidden group">
+                        <div className="relative z-10 w-full">
+                            <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-10 text-center xl:text-left">
+                                {forecastDays ? `Projeção de Saldo em ${forecastDays} dias` : 'Análise de Próximo Saldo Realista'}
                             </h4>
 
                             {(() => {
                                 const currentTotalBalance = accounts.reduce((sum, a) => sum + (a.current_balance || 0), 0);
-
-                                // Values SPECIFIC to this period (excluding past overdue)
                                 const periodPendingIn = detailData.totalPlannedIncome - detailData.totalRealizedIncome;
                                 const periodPendingOut = detailData.totalPlannedExpense - detailData.totalRealizedExpense;
-                                const periodResult = periodPendingIn - periodPendingOut;
 
-                                // TOTAL including overdue
-                                const finalPendingIn = periodPendingIn + detailData.totalOverdueIncome;
-                                const finalPendingOut = periodPendingOut + detailData.totalOverdueExpense;
-                                const projectedFinal = currentTotalBalance + finalPendingIn - finalPendingOut;
+                                const totalIn = periodPendingIn + detailData.totalOverdueIncome;
+                                const totalOut = periodPendingOut + detailData.totalOverdueExpense;
+                                const projectedFinal = currentTotalBalance + totalIn - totalOut;
 
                                 const isPositive = projectedFinal >= 0;
 
                                 return (
-                                    <div className="space-y-8">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8 border-b border-white/5">
-                                            <div>
-                                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-2">
-                                                    Resultado do Período
-                                                    <span className="text-[8px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded cursor-help" title="Apenas o que entra e sai no período selecionado">?</span>
-                                                </p>
-                                                <div className={`text-4xl font-black ${periodResult >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                    {formatCurrency(periodResult)}
+                                    <div className="flex flex-col xl:flex-row items-stretch justify-between gap-6 xl:gap-8 overflow-x-auto pb-4">
+                                        {/* STEP 1: CURRENT BALANCE */}
+                                        <div className="flex-1 min-w-[200px] p-6 rounded-[2rem] bg-indigo-500/5 border border-indigo-500/10 text-center flex flex-col justify-center">
+                                            <p className="text-slate-400 text-[8px] font-black uppercase tracking-widest mb-2">Saldo Hoje</p>
+                                            <div className="text-2xl font-black text-white">{formatCurrency(currentTotalBalance)}</div>
+                                            <p className="text-[9px] text-slate-500 font-medium mt-2">Disponível agora</p>
+                                        </div>
+
+                                        <div className="flex items-center justify-center text-indigo-500/40 opacity-50">
+                                            <Plus size={24} />
+                                        </div>
+
+                                        {/* STEP 2: TOTAL RECEIVABLE */}
+                                        <div className="flex-1 min-w-[200px] p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10 text-center">
+                                            <p className="text-emerald-400 text-[8px] font-black uppercase tracking-widest mb-2">Total a Receber</p>
+                                            <div className="text-2xl font-black text-emerald-400">{formatCurrency(totalIn)}</div>
+                                            <div className="mt-3 pt-3 border-t border-emerald-500/10 space-y-1">
+                                                <div className="flex justify-between text-[8px] font-black uppercase text-slate-500">
+                                                    <span>Deste Período:</span>
+                                                    <span className="text-emerald-300">{formatCurrency(periodPendingIn)}</span>
                                                 </div>
-                                                <p className="text-[11px] text-slate-500 font-medium mt-1">Lançamentos específicos deste mês.</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-2">
-                                                    Saldo de Atrasados
-                                                    <span className="text-[8px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded cursor-help" title="Contas que venceram no passado e não foram quitadas">?</span>
-                                                </p>
-                                                <div className={`text-4xl font-black ${detailData.totalOverdueIncome - detailData.totalOverdueExpense >= 0 ? 'text-indigo-300' : 'text-rose-400/80'}`}>
-                                                    {formatCurrency(detailData.totalOverdueIncome - detailData.totalOverdueExpense)}
+                                                <div className="flex justify-between text-[8px] font-black uppercase text-slate-500">
+                                                    <span>Contas Atrasadas:</span>
+                                                    <span className="text-indigo-400">{formatCurrency(detailData.totalOverdueIncome)}</span>
                                                 </div>
-                                                <p className="text-[11px] text-slate-500 font-medium mt-1">Impacto de títulos pendentes do passado.</p>
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <p className="text-indigo-400 text-[10px] font-black uppercase tracking-widest mb-2">Saldo Final Projetado (Realista)</p>
-                                            <div className={`text-7xl font-black tracking-tighter mb-4 ${isPositive ? 'text-white' : 'text-rose-400'}`}>
-                                                {formatCurrency(projectedFinal)}
+                                        <div className="flex items-center justify-center text-rose-500/40 opacity-50">
+                                            <Minus size={24} />
+                                        </div>
+
+                                        {/* STEP 3: TOTAL PAYABLE */}
+                                        <div className="flex-1 min-w-[200px] p-6 rounded-[2rem] bg-rose-500/5 border border-rose-500/10 text-center">
+                                            <p className="text-rose-400 text-[8px] font-black uppercase tracking-widest mb-2">Total a Pagar</p>
+                                            <div className="text-2xl font-black text-rose-400">{formatCurrency(totalOut)}</div>
+                                            <div className="mt-3 pt-3 border-t border-rose-500/10 space-y-1">
+                                                <div className="flex justify-between text-[8px] font-black uppercase text-slate-500">
+                                                    <span>Deste Período:</span>
+                                                    <span className="text-rose-300">{formatCurrency(periodPendingOut)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[8px] font-black uppercase text-slate-500">
+                                                    <span>Contas Atrasadas:</span>
+                                                    <span className="text-indigo-400">{formatCurrency(detailData.totalOverdueExpense)}</span>
+                                                </div>
                                             </div>
-                                            <p className="text-slate-400 font-medium max-w-2xl leading-relaxed">
-                                                Com base no saldo atual de <span className="text-slate-200 font-bold">{formatCurrency(currentTotalBalance)}</span>, somando o que você tem a receber e subtraindo tudo o que deve (incluindo as contas atrasadas), sua conta chegará ao final desse ciclo <span className={`font-black ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>{isPositive ? 'POSITIVA' : 'NEGATIVA'}</span>.
+                                        </div>
+
+                                        <div className="flex items-center justify-center text-indigo-400 opacity-50">
+                                            <Equal size={24} />
+                                        </div>
+
+                                        {/* TARGET: FINAL BALANCE */}
+                                        <div className={`flex-[1.2] min-w-[250px] p-8 rounded-[2.5rem] ${isPositive ? 'bg-indigo-600 shadow-xl shadow-indigo-500/20' : 'bg-rose-600 shadow-xl shadow-rose-500/20'} flex flex-col justify-center text-center relative overflow-hidden group/target`}>
+                                            <p className="text-white/60 text-[9px] font-black uppercase tracking-widest mb-3">Saldo Final Estimado</p>
+                                            <div className="text-4xl font-black text-white tracking-tighter">{formatCurrency(projectedFinal)}</div>
+                                            <p className="text-white/50 text-[9px] mt-4 font-medium max-w-[200px] mx-auto leading-tight">
+                                                Valor estimado para o fim do ciclo considerando todas as pendências.
                                             </p>
+                                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover/target:opacity-10 transition-opacity">
+                                                <Calculator size={60} />
+                                            </div>
                                         </div>
                                     </div>
                                 );
                             })()}
                         </div>
+                    </div>
 
-                        <div className="relative z-10 flex flex-col items-center">
-                            <div className="w-24 h-24 rounded-[2rem] bg-indigo-500 text-white flex items-center justify-center mb-4 shadow-2xl shadow-indigo-500/30">
-                                <Calculator size={40} />
-                            </div>
-                            <span className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em]">Cálculo Pro Max</span>
-                        </div>
-
-                        {/* Decoration */}
-                        <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                            <TrendingUp size={400} />
-                        </div>
+                    {/* Decoration */}
+                    <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <TrendingUp size={400} />
                     </div>
                 </div>
             ) : (
