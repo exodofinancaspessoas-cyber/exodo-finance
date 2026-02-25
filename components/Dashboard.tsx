@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowUpCircle, ArrowDownCircle, Wallet, Activity,
   Plus, ArrowRight, Loader2, ArrowRightLeft, TrendingUp,
-  TrendingDown, Landmark, CreditCard, ChevronLeft, ChevronRight, Calendar
+  TrendingDown, Landmark, CreditCard, ChevronLeft, ChevronRight, Calendar, Clock
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
@@ -264,6 +264,51 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
   // ── Transações Incompletas (Status: INCOMPLETA) ───────────────────────────
   const incompleteTransactions = useMemo(() => {
     return transactions.filter(t => t.status === 'INCOMPLETA').sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }, [transactions]);
+
+  // ── Contas a Pagar/Receber (Acumulado e Próximos) ──────────────────────────
+  const globalPendingStats = useMemo(() => {
+    const todayStr = toISODate(new Date());
+    const pending = transactions.filter(t =>
+      t.status !== 'EXCLUIDA' &&
+      (t.status === 'PREVISTA' || t.status === 'CONFIRMADA' || t.status === 'ATRASADA')
+    );
+
+    const totalPayable = pending.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
+    const overduePayable = pending.filter(t => t.type === 'DESPESA' && t.date < todayStr).reduce((s, t) => s + t.amount, 0);
+
+    const upcoming = pending
+      .filter(t => t.type === 'DESPESA')
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 5);
+
+    return { totalPayable, overduePayable, upcoming };
+  }, [transactions]);
+
+  const monthlyDebtProjection = useMemo(() => {
+    const today = new Date();
+    const months = [];
+    const map: Record<string, number> = {};
+
+    transactions
+      .filter(t => t.type === 'DESPESA' && (t.status === 'PREVISTA' || t.status === 'CONFIRMADA' || t.status === 'ATRASADA') && t.status !== 'EXCLUIDA')
+      .forEach(t => {
+        const p = parseSafeDate(t.date);
+        if (!p) return;
+        const key = `${p.y}-${String(p.m).padStart(2, '0')}`;
+        map[key] = (map[key] || 0) + t.amount;
+      });
+
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months.push({
+        label: d.toLocaleString('pt-BR', { month: 'short' }),
+        fullLabel: d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
+        amount: map[key] || 0
+      });
+    }
+    return months;
   }, [transactions]);
 
   // ── Progress do saldo entre inicial → atual → previsto ───────────────────
@@ -606,6 +651,86 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
             </div>
           </div>
 
+          {/* Card NOVO: Contas a Pagar (Geral) */}
+          <div
+            onClick={() => onChangeView('agenda')}
+            className={`group border rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer relative overflow-hidden ${globalPendingStats.overduePayable > 0 ? 'bg-rose-50 border-rose-100' : 'bg-slate-900 border-slate-800'}`}
+          >
+            <div className="absolute -right-3 -top-3 w-16 h-16 bg-white/5 rounded-full" />
+            <div className="relative z-10">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${globalPendingStats.overduePayable > 0 ? 'bg-rose-200' : 'bg-white/10'}`}>
+                <Clock size={17} className={globalPendingStats.overduePayable > 0 ? 'text-rose-700' : 'text-orange-400'} />
+              </div>
+              <p className={`text-xs font-medium mb-0.5 ${globalPendingStats.overduePayable > 0 ? 'text-rose-700' : 'text-slate-400'}`}>
+                {globalPendingStats.overduePayable > 0 ? 'Contas Atrasadas' : 'Total Contas a Pagar'}
+              </p>
+              <p className={`text-lg font-black leading-tight ${globalPendingStats.overduePayable > 0 ? 'text-rose-800' : 'text-white'}`}>
+                {formatCurrency(globalPendingStats.overduePayable > 0 ? globalPendingStats.overduePayable : globalPendingStats.totalPayable)}
+              </p>
+              <div className={`flex items-center gap-1 mt-2 text-xs font-semibold ${globalPendingStats.overduePayable > 0 ? 'text-rose-600' : 'text-orange-400'}`}>
+                <span>Ver agenda</span>
+                <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── SEÇÃO: Próximos Vencimentos e Projeção de Dívidas ───────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Próximos Pagamentos */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              <Calendar size={18} className="text-orange-500" /> Próximas Contas
+            </h3>
+            <button onClick={() => onChangeView('agenda')} className="text-xs font-bold text-indigo-600 hover:underline">Ver tudo</button>
+          </div>
+          <div className="space-y-3">
+            {globalPendingStats.upcoming.length > 0 ? globalPendingStats.upcoming.map(t => (
+              <div key={t.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100/50">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-800 truncate max-w-[140px]">{t.description}</span>
+                  <span className="text-[10px] text-slate-400 font-medium">{formatDate(t.date)}</span>
+                </div>
+                <span className="font-bold text-sm text-slate-900">{formatCurrency(t.amount)}</span>
+              </div>
+            )) : (
+              <div className="py-8 text-center text-slate-400 text-xs italic">Nenhum pagamento pendente.</div>
+            )}
+          </div>
+        </div>
+
+        {/* Projeção de Dívida Mensal */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              <Activity size={18} className="text-indigo-500" /> Dívidas por Mês
+            </h3>
+            <button onClick={() => onChangeView('projections')} className="text-xs font-bold text-indigo-600 hover:underline">Projeção detalhada</button>
+          </div>
+          <div className="flex items-end justify-between h-32 gap-2 pt-2">
+            {monthlyDebtProjection.map((m, i) => {
+              const maxDebt = Math.max(...monthlyDebtProjection.map(x => x.amount), 1);
+              const height = (m.amount / maxDebt) * 100;
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                  <div className="w-full relative group">
+                    <div
+                      className="w-full bg-slate-100 rounded-t-lg group-hover:bg-indigo-100 transition-all duration-500"
+                      style={{ height: `${Math.max(height, 5)}%` }}
+                    >
+                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 font-bold">
+                        {formatCurrency(m.amount)}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">{m.label}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 

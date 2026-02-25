@@ -10,6 +10,7 @@ export default function CardsView() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCard, setEditingCard] = useState<Card | null>(null);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
 
     // Invoice Setup Modal
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
@@ -36,14 +37,16 @@ export default function CardsView() {
     }, []);
 
     const loadData = async () => {
-        const [crds, cats, accs] = await Promise.all([
+        const [crds, cats, accs, trxs] = await Promise.all([
             StorageService.getCards(),
             StorageService.getCategories(),
-            StorageService.getAccounts()
+            StorageService.getAccounts(),
+            StorageService.getTransactions()
         ]);
         setCards(crds);
         setCategories(cats);
         setAccounts(accs);
+        setTransactions(trxs);
     };
 
     const handleOpenModal = (card?: Card) => {
@@ -141,6 +144,7 @@ export default function CardsView() {
 
         let importCount = 0;
         const newTransactions: Transaction[] = [];
+        const cardCategory = categories.find(c => c.name === 'Fatura de Cartão');
 
         invoiceSetupData.forEach(slot => {
             const amountVal = Number(slot.amount);
@@ -152,11 +156,12 @@ export default function CardsView() {
                     description: `Fatura de Cartão de Crédito - ${slot.month}/${slot.year}`,
                     amount: amountVal,
                     type: 'DESPESA',
-                    category_id: undefined, // Diversos/Sem categoria para setup inicial
+                    category_id: cardCategory?.id, // Assign category for better visibility
                     date: dueDate.toISOString().split('T')[0],
                     status: 'PREVISTA',
                     payment_method: 'CREDITO',
                     card_id: selectedCardForInvoice.id,
+                    account_id: selectedCardForInvoice.account_id, // Link to bank account for easier payment
                     created_at: new Date().toISOString(),
                     observation: 'Importado via Configuração Inicial de Cartão'
                 };
@@ -276,6 +281,30 @@ export default function CardsView() {
                                 <div className="flex justify-between text-xs pt-4 border-t border-slate-50 text-slate-500 font-medium">
                                     <p>Fecha dia {card.closing_day}</p>
                                     <p>Vence dia {card.due_day}</p>
+                                </div>
+
+                                {/* Próximas Faturas Lançadas */}
+                                <div className="pt-4 border-t border-slate-50">
+                                    <p className="text-[10px] text-slate-400 uppercase font-black mb-2 tracking-wider flex items-center justify-between">
+                                        <span>Próximas Faturas</span>
+                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">Lançadas</span>
+                                    </p>
+                                    <div className="space-y-2">
+                                        {transactions
+                                            .filter(t => t.card_id === card.id && t.status !== 'EXCLUIDA' && t.status !== 'PAGA')
+                                            .sort((a, b) => a.date.localeCompare(b.date))
+                                            .slice(0, 3)
+                                            .map(t => (
+                                                <div key={t.id} className="flex justify-between items-center text-[11px] bg-slate-50/50 p-2 rounded-lg border border-slate-100/50">
+                                                    <span className="font-bold text-slate-700">{t.date.split('-').reverse().slice(0, 2).join('/')}</span>
+                                                    <span className="text-slate-600 truncate max-w-[100px] mx-2">{t.description.split('-').pop()?.trim()}</span>
+                                                    <span className="font-black text-slate-900">{formatCurrency(t.amount)}</span>
+                                                </div>
+                                            ))}
+                                        {transactions.filter(t => t.card_id === card.id && t.status !== 'EXCLUIDA' && t.status !== 'PAGA').length === 0 && (
+                                            <p className="text-[10px] text-slate-400 italic text-center py-2">Nenhuma fatura lançada.</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
