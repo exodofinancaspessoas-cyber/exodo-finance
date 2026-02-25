@@ -243,11 +243,12 @@ export default function AccountsView() {
                                 <input
                                     type="number"
                                     step="0.01"
-                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none font-mono"
-                                    value={formData.initial_balance}
+                                    className="w-full pl-10 border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold text-slate-800"
+                                    value={formData.initial_balance || ''}
                                     onChange={e => setFormData({ ...formData, initial_balance: Number(e.target.value) })}
                                     onFocus={e => e.target.select()}
-                                    disabled={!!editingAccount}
+                                    placeholder="0,00"
+                                    required
                                 />
                                 {editingAccount && <p className="text-xs text-slate-500 mt-1">Para ajustar o saldo atual, crie uma transação de ajuste.</p>}
                             </div>

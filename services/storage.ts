@@ -21,8 +21,8 @@ const STORAGE_KEYS = {
     BUDGETS: 'exodo_budgets'
 };
 
-const APP_VERSION = '1.4.0';
-const DEPLOY_DATE = '2026-02-24 17:55';
+const APP_VERSION = '1.4.1';
+const DEPLOY_DATE = '2026-02-25 08:46';
 
 // --- HELPER FUNCTIONS ---
 const getStorage = <T>(key: string, defaultValue: T): T => {

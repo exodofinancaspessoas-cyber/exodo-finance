@@ -1234,8 +1234,8 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Valor Total</label>
                                         <input
                                             type="number" step="0.01"
-                                            className={`w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold ${formData.amount === '0' || Number(formData.amount) === 0 ? 'text-slate-400' : formData.type === 'RECEITA' ? 'text-green-600' : 'text-red-600'}`}
-                                            value={formData.amount}
+                                            className={`w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold ${formData.amount === '0' || formData.amount === '' || Number(formData.amount) === 0 ? 'text-slate-400' : formData.type === 'RECEITA' ? 'text-green-600' : 'text-red-600'}`}
+                                            value={formData.amount === '0' ? '' : formData.amount}
                                             onChange={e => setFormData({ ...formData, amount: e.target.value })}
                                             onFocus={e => e.target.select()}
                                             required
@@ -1532,9 +1532,9 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                                         <input
                                                             type="number"
                                                             step="0.01"
-                                                            placeholder="Mesmo valor de hoje"
+                                                            placeholder="0,00"
                                                             className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-2 outline-none text-sm font-bold text-indigo-600"
-                                                            value={formData.programmed_amount}
+                                                            value={formData.programmed_amount === '0' ? '' : formData.programmed_amount}
                                                             onChange={e => setFormData({ ...formData, programmed_amount: e.target.value })}
                                                         />
                                                     </div>
@@ -1650,7 +1650,7 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                                                 <input
                                                     type="number" step="0.01" min="0.01"
                                                     className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none font-mono text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500/20"
-                                                    value={transferData.amount}
+                                                    value={transferData.amount === '0' ? '' : transferData.amount}
                                                     onChange={e => setTransferData({ ...transferData, amount: e.target.value })}
                                                     placeholder="0,00"
                                                     required

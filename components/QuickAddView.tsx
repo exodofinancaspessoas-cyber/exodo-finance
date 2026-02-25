@@ -326,7 +326,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                     ref={amountInputRef}
                                     type="text"
                                     inputMode="decimal"
-                                    value={amount}
+                                    value={amount === '0' ? '' : amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="0,00"
                                     className={`bg-transparent border-none outline-none text-7xl md:text-8xl font-black text-center w-full max-w-[320px] placeholder:text-slate-200 transition-colors ${type === 'DESPESA' ? 'text-slate-900' : 'text-slate-900'}`}
@@ -490,9 +490,9 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                         <input
                                             type="text"
                                             inputMode="decimal"
-                                            placeholder="Mesmo valor de hoje"
+                                            placeholder="0,00"
                                             className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl pl-12 pr-6 py-4 outline-none text-xl font-black text-indigo-900 focus:bg-white focus:border-indigo-100 transition-all placeholder:text-slate-200"
-                                            value={programmedAmount}
+                                            value={programmedAmount === '0' ? '' : programmedAmount}
                                             onChange={e => setProgrammedAmount(e.target.value)}
                                         />
                                     </div>

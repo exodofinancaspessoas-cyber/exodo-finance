@@ -15,7 +15,6 @@ export default function CardsView() {
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
     const [selectedCardForInvoice, setSelectedCardForInvoice] = useState<Card | null>(null);
     const [invoiceSetupData, setInvoiceSetupData] = useState<{ month: string, year: number, monthIndex: number, amount: string }[]>([]);
-    const [invoiceCategory, setInvoiceCategory] = useState<string>('');
     const [isSavingInvoices, setIsSavingInvoices] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -113,12 +112,7 @@ export default function CardsView() {
     const handleOpenInvoiceSetup = (card: Card) => {
         setSelectedCardForInvoice(card);
 
-        // Prioritize "Fatura de Cartão" or "Outros"
-        const expenseCats = categories.filter(c => c.type === 'DESPESA');
-        const defaultCat = expenseCats.find(c => c.name === 'Fatura de Cartão') ||
-            expenseCats.find(c => c.name === 'Outros') ||
-            expenseCats[0];
-        if (defaultCat) setInvoiceCategory(defaultCat.id);
+
 
         // Generate next 12 months slots
         // Start from NEXT month if current day > closing day? 
@@ -158,7 +152,7 @@ export default function CardsView() {
                     description: `Fatura de Cartão de Crédito - ${slot.month}/${slot.year}`,
                     amount: amountVal,
                     type: 'DESPESA',
-                    category_id: invoiceCategory,
+                    category_id: undefined, // Diversos/Sem categoria para setup inicial
                     date: dueDate.toISOString().split('T')[0],
                     status: 'PREVISTA',
                     payment_method: 'CREDITO',
@@ -317,7 +311,7 @@ export default function CardsView() {
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Limite Total</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-3.5 text-slate-400 font-medium">R$</span>
-                                    <input type="number" step="0.01" className="w-full pl-10 border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold text-slate-800" value={formData.limit} onChange={e => setFormData({ ...formData, limit: Number(e.target.value) })} onFocus={e => e.target.select()} required />
+                                    <input type="number" step="0.01" className="w-full pl-10 border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold text-slate-800" value={formData.limit || ''} onChange={e => setFormData({ ...formData, limit: Number(e.target.value) })} onFocus={e => e.target.select()} placeholder="0,00" required />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -416,26 +410,21 @@ export default function CardsView() {
 
                         <div className="flex-1 overflow-y-auto p-6">
                             <div className="space-y-4">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="flex-1">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Categoria para estes lançamentos</label>
-                                        <select
-                                            className="w-full p-2 border border-slate-200 rounded-lg text-sm"
-                                            value={invoiceCategory}
-                                            onChange={e => setInvoiceCategory(e.target.value)}
-                                        >
-                                            {categories.filter(c => c.type === 'DESPESA').map(c => (
-                                                <option key={c.id} value={c.id}>{c.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="text-right">
-                                            <span className="text-xs font-bold text-slate-400 uppercase">Total a Importar</span>
-                                            <p className="text-2xl font-bold text-slate-800">
-                                                {formatCurrency(invoiceSetupData.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0))}
-                                            </p>
+                                <div className="flex items-center justify-between gap-4 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                                            <CreditCard size={20} />
                                         </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Lançamentos de</p>
+                                            <p className="text-sm font-bold text-slate-700">Saldos Anteriores</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs font-bold text-slate-400 uppercase">Total a Importar</span>
+                                        <p className="text-2xl font-black text-slate-900 leading-none mt-1">
+                                            {formatCurrency(invoiceSetupData.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0))}
+                                        </p>
                                     </div>
                                 </div>
 
@@ -465,7 +454,7 @@ export default function CardsView() {
                                                                 step="0.01"
                                                                 placeholder="0,00"
                                                                 className={`w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none font-bold transition-all ${Number(slot.amount) > 0 ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600'}`}
-                                                                value={slot.amount}
+                                                                value={slot.amount || ''}
                                                                 onFocus={e => e.target.select()}
                                                                 onChange={e => handleSlotChange(index, e.target.value)}
                                                             />

@@ -269,9 +269,10 @@ export default function RecurringExpensesView() {
                                             type="number"
                                             step="0.01"
                                             className="w-full border border-slate-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all font-bold text-slate-800"
-                                            value={formData.amount}
-                                            onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                                            value={formData.amount || ''}
+                                            onChange={e => setFormData({ ...formData, amount: Number(e.target.value) })}
                                             onFocus={e => e.target.select()}
+                                            placeholder="0,00"
                                             required
                                         />
                                     </div>

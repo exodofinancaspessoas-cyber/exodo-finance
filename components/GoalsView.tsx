@@ -188,11 +188,11 @@ export default function GoalsView() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Valor Alvo</label>
-                                    <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" value={formData.target_amount} onChange={e => setFormData({ ...formData, target_amount: Number(e.target.value) })} onFocus={e => e.target.select()} required />
+                                    <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" value={formData.target_amount || ''} onChange={e => setFormData({ ...formData, target_amount: Number(e.target.value) })} onFocus={e => e.target.select()} placeholder="0,00" required />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Já tenho guardado</label>
-                                    <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" value={formData.current_amount} onChange={e => setFormData({ ...formData, current_amount: Number(e.target.value) })} onFocus={e => e.target.select()} />
+                                    <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" value={formData.current_amount || ''} onChange={e => setFormData({ ...formData, current_amount: Number(e.target.value) })} onFocus={e => e.target.select()} placeholder="0,00" />
                                 </div>
                             </div>
 

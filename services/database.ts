@@ -11,6 +11,17 @@ const ensureArray = <T>(data: any): T[] => {
 // Helper to validate UUIDs
 const isValidUUID = (uuid: string | null | undefined): boolean => {
     if (!uuid) return false;
+
+    // Ignore dummy placeholder IDs used for local fallback
+    const dummies = [
+        '11111111-1111-4111-a111-111111111111',
+        '22222222-2222-4222-a222-222222222222',
+        '33333333-3333-4333-a333-333333333333',
+        '44444444-4444-4444-a444-444444444444',
+        '55555555-5555-4555-a555-555555555555'
+    ];
+    if (dummies.includes(uuid)) return false;
+
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
 };
