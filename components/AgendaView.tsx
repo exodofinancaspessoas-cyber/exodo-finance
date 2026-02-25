@@ -172,7 +172,7 @@ export default function AgendaView() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-                        <CalendarDays className="text-orange-600" size={28} />
+                        <CalendarDays className="text-rose-600" size={28} />
                         Agenda Financeira
                     </h1>
                     <p className="text-slate-500 text-sm">Controle o que entra e o que sai com precisão.</p>
@@ -235,7 +235,7 @@ export default function AgendaView() {
                 <div className="flex overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab('pendentes')}
-                        className={`px-6 py-4 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === 'pendentes' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                        className={`px-6 py-4 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === 'pendentes' ? 'border-rose-600 text-rose-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
                     >
                         A Pagar/Receber
                     </button>
@@ -255,13 +255,13 @@ export default function AgendaView() {
 
                 <div className="flex items-center gap-3 py-2 md:py-0">
                     <div className="relative group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-600 transition-colors" size={16} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-rose-600 transition-colors" size={16} />
                         <input
                             type="text"
                             placeholder="Buscar na agenda..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-slate-100 border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-orange-500 transition-all w-full md:w-64"
+                            className="bg-slate-100 border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-rose-500 transition-all w-full md:w-64"
                         />
                     </div>
                 </div>
@@ -282,9 +282,9 @@ export default function AgendaView() {
                         <div key={idx} className="space-y-3">
                             {viewMode === 'timeline' && (
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2 flex items-center gap-2">
-                                    <div className="w-1 h-3 bg-orange-600 rounded-full"></div>
+                                    <div className="w-1 h-3 bg-rose-600 rounded-full"></div>
                                     {group.title === 'Hoje' ? (
-                                        <span className="text-orange-600">Para Hoje</span>
+                                        <span className="text-rose-600">Para Hoje</span>
                                     ) : group.title === 'Em Atraso' ? (
                                         <span className="text-rose-600">Em Atraso</span>
                                     ) : (
@@ -302,7 +302,7 @@ export default function AgendaView() {
                                     return (
                                         <div
                                             key={trx.id}
-                                            className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 hover:border-orange-200 transition-all group active:scale-[0.98]"
+                                            className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 hover:border-rose-200 transition-all group active:scale-[0.98]"
                                         >
                                             <div className="flex items-center justify-between gap-4">
                                                 <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -346,7 +346,7 @@ export default function AgendaView() {
                                                             {trx.type === 'DESPESA' ? '-' : ''}{formatCurrency(trx.amount)}
                                                         </p>
                                                         <span className={`text-[10px] font-black tracking-tighter uppercase px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-700' :
-                                                            trx.date < toISODate(new Date()) ? 'bg-rose-100 text-rose-700' : 'bg-orange-100 text-orange-700'
+                                                            trx.date < toISODate(new Date()) ? 'bg-rose-100 text-rose-700' : 'bg-rose-100 text-rose-700'
                                                             }`}>
                                                             {trx.status}
                                                         </span>
@@ -377,7 +377,7 @@ export default function AgendaView() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 animate-in fade-in duration-200 backdrop-blur-sm">
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-6 text-center">
-                            <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <Wallet size={32} />
                             </div>
                             <h3 className="text-xl font-black text-slate-800 mb-2">Confirmar Pagamento</h3>
@@ -391,7 +391,7 @@ export default function AgendaView() {
                                     <select
                                         value={selectedAccountForPayment}
                                         onChange={(e) => setSelectedAccountForPayment(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 focus:border-orange-500 outline-none transition-all appearance-none cursor-pointer"
+                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 focus:border-rose-500 outline-none transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="">Selecione uma conta...</option>
                                         {accounts.map(acc => (
@@ -404,7 +404,7 @@ export default function AgendaView() {
                                     <button
                                         onClick={confirmPaymentWithAccount}
                                         disabled={!selectedAccountForPayment}
-                                        className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl shadow-lg shadow-orange-200 transition-all flex items-center justify-center gap-2"
+                                        className="w-full bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl shadow-lg shadow-rose-200 transition-all flex items-center justify-center gap-2"
                                     >
                                         <Check size={20} />
                                         Confirmar Pagamento

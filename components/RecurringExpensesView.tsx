@@ -132,7 +132,7 @@ export default function RecurringExpensesView() {
                     <div className="flex bg-slate-100 p-1 rounded-lg">
                         <button
                             onClick={() => setActiveTab('DESPESA')}
-                            className={`px-4 py-2 text-sm font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'DESPESA' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}
+                            className={`px-4 py-2 text-sm font-bold rounded-md transition-all flex items-center gap-2 ${activeTab === 'DESPESA' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-400'}`}
                         >
                             <ArrowDownCircle size={16} /> Despesas
                         </button>
@@ -164,7 +164,7 @@ export default function RecurringExpensesView() {
                             </div>
 
                             <div className="flex items-center space-x-3 mb-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${exp.active ? (activeTab === 'RECEITA' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600') : 'bg-slate-200 text-slate-400'}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${exp.active ? (activeTab === 'RECEITA' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600') : 'bg-slate-200 text-slate-400'}`}>
                                     <RotateCw size={20} />
                                 </div>
                                 <div className="flex-1 min-w-0">

@@ -574,12 +574,12 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
           {/* Card: Cartões — com barra de uso */}
           <div
             onClick={() => onChangeView('finance')}
-            className="group bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-orange-100 hover:-translate-y-0.5 transition-all cursor-pointer relative overflow-hidden"
+            className="group bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-100 hover:-translate-y-0.5 transition-all cursor-pointer relative overflow-hidden"
           >
-            <div className="absolute -right-3 -top-3 w-16 h-16 bg-orange-50 rounded-full opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute -right-3 -top-3 w-16 h-16 bg-rose-50 rounded-full opacity-60 group-hover:opacity-100 transition-opacity" />
             <div className="relative z-10">
-              <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center mb-3">
-                <CreditCard size={17} className="text-orange-500" />
+              <div className="w-9 h-9 rounded-xl bg-rose-100 flex items-center justify-center mb-3">
+                <CreditCard size={17} className="text-rose-500" />
               </div>
               <p className="text-xs text-slate-400 font-medium mb-0.5">Gasto em Cartão</p>
               <p className="text-lg font-black text-slate-800 leading-tight">{formatCurrency(monthlyCardUsed)}</p>
@@ -587,7 +587,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
                 <div className="mt-2">
                   <div className="w-full bg-slate-100 rounded-full h-1 overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-700 ${cardUsagePct > 80 ? 'bg-red-500' : cardUsagePct > 50 ? 'bg-orange-400' : 'bg-orange-300'
+                      className={`h-full rounded-full transition-all duration-700 ${cardUsagePct > 80 ? 'bg-red-500' : cardUsagePct > 50 ? 'bg-rose-400' : 'bg-rose-300'
                         }`}
                       style={{ width: `${cardUsagePct}%` }}
                     />
@@ -595,7 +595,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
                   <p className="text-[10px] text-slate-400 mt-1">{cardUsagePct.toFixed(0)}% do limite total</p>
                 </div>
               )}
-              <div className="flex items-center gap-1 mt-1.5 text-orange-500 text-xs font-semibold">
+              <div className="flex items-center gap-1 mt-1.5 text-rose-500 text-xs font-semibold">
                 <span>Ver cartões</span>
                 <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </div>
@@ -683,7 +683,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <Calendar size={18} className="text-orange-500" /> Próximas Contas
+              <Calendar size={18} className="text-rose-500" /> Próximas Contas
             </h3>
             <button onClick={() => onChangeView('agenda')} className="text-xs font-bold text-indigo-600 hover:underline">Ver tudo</button>
           </div>
@@ -706,7 +706,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <Activity size={18} className="text-indigo-500" /> Dívidas por Mês
+              <Activity size={18} className="text-rose-500" /> Dívidas por Mês
             </h3>
             <button onClick={() => onChangeView('projections')} className="text-xs font-bold text-indigo-600 hover:underline">Projeção detalhada</button>
           </div>
@@ -718,7 +718,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
                 <div key={i} className="flex-1 flex flex-col items-center gap-2">
                   <div className="w-full relative group">
                     <div
-                      className="w-full bg-slate-100 rounded-t-lg group-hover:bg-indigo-100 transition-all duration-500"
+                      className="w-full bg-rose-50 rounded-t-lg group-hover:bg-rose-100 transition-all duration-500"
                       style={{ height: `${Math.max(height, 5)}%` }}
                     >
                       <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 font-bold">

@@ -464,24 +464,24 @@ export default function FluxoCaixaView() {
 
                         {/* EXPENSES PANEL */}
                         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200 border border-slate-100 overflow-hidden flex flex-col">
-                            <div className="bg-slate-800 p-8 relative overflow-hidden">
+                            <div className="bg-rose-600 p-8 relative overflow-hidden">
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white">
+                                            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white">
                                                 <ArrowDownRight size={22} />
                                             </div>
                                             <h3 className="text-white font-black text-2xl uppercase tracking-tighter">Despesas</h3>
                                         </div>
-                                        <div className="text-slate-400 text-[10px] font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">Programado</div>
+                                        <div className="text-rose-100 text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full">Programado</div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
-                                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Valor a Pagar</p>
+                                            <p className="text-rose-200 text-[10px] font-black uppercase tracking-widest mb-1">Valor a Pagar</p>
                                             <p className="text-3xl font-black text-white">{formatCurrency(detailData.totalPlannedExpense)}</p>
                                         </div>
                                         <div>
-                                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Valor Pago</p>
+                                            <p className="text-rose-200 text-[10px] font-black uppercase tracking-widest mb-1">Valor Pago</p>
                                             <p className="text-3xl font-black text-white">{formatCurrency(detailData.totalRealizedExpense)}</p>
                                         </div>
                                     </div>
@@ -648,9 +648,9 @@ export default function FluxoCaixaView() {
                                 ))}
 
                                 {/* DESPESAS */}
-                                <tr className="bg-slate-100/30">
-                                    <td className="sticky left-0 z-10 bg-slate-100/80 backdrop-blur-sm p-3 pl-6 text-[10px] font-black text-slate-700 uppercase tracking-widest border-r border-slate-200">Saídas</td>
-                                    {months.map(col => <td key={col.key} className="p-3 border-r border-slate-50/30 last:border-r-0"></td>)}
+                                <tr className="bg-rose-50/20">
+                                    <td className="sticky left-0 z-10 bg-rose-50/80 backdrop-blur-sm p-3 pl-6 text-[10px] font-black text-rose-700 uppercase tracking-widest border-r border-rose-100">Saídas</td>
+                                    {months.map(col => <td key={col.key} className="p-3 border-r border-rose-50/30 last:border-r-0"></td>)}
                                 </tr>
                                 {rows.filter(r => r.type === 'DESPESA').map(row => (
                                     <tr key={row.categoryId} className="hover:bg-slate-50 transition-colors group">
@@ -658,8 +658,8 @@ export default function FluxoCaixaView() {
                                         {months.map(col => {
                                             const val = row.values[col.key];
                                             return (
-                                                <td key={col.key} className={`p-4 text-center border-r border-slate-50 last:border-r-0 ${col.isCurrent ? 'bg-indigo-50/10' : ''}`}>
-                                                    {val ? <div className={`inline-block px-3 py-1 rounded-lg text-sm font-black ${val.isProjected ? 'text-indigo-400 border border-dashed border-indigo-200' : 'text-slate-800'}`}>{formatCurrency(val.amount)}</div> : <span className="text-slate-100">—</span>}
+                                                <td key={col.key} className={`p-4 text-center border-r border-slate-50 last:border-r-0 ${col.isCurrent ? 'bg-rose-50/10' : ''}`}>
+                                                    {val ? <div className={`inline-block px-3 py-1 rounded-lg text-sm font-black ${val.isProjected ? 'text-rose-400 border border-dashed border-rose-200' : 'text-rose-600'}`}>{formatCurrency(val.amount)}</div> : <span className="text-slate-100">—</span>}
                                                 </td>
                                             );
                                         })}
