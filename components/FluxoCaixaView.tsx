@@ -626,7 +626,7 @@ export default function FluxoCaixaView() {
                         </div>
                     </div>
 
-                    {/* FOCUSED SUMMARY CARD - REDESIGNED FOR MATHEMATICAL INTUITIVITY */}
+                    {/* FOCUSED SUMMARY CARD - REDESIGNED FOR MATHEMATICAL INTUITIVITY  */}
                     <div className="bg-slate-900 rounded-[3.5rem] p-8 xl:p-12 text-white shadow-2xl relative overflow-hidden group">
                         <div className="relative z-10 w-full">
                             <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-10 text-center xl:text-left">
