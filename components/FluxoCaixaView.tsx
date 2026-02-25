@@ -191,9 +191,12 @@ export default function FluxoCaixaView() {
                 const monthExpenses: any[] = [];
                 let pInc = 0, rInc = 0, pExp = 0, rExp = 0;
 
-                // Actual transactions
+                // Actual transactions + Overdue (unpaid from the past)
                 transactions.filter(t => {
-                    return t.date >= startISO && t.date <= endISO && t.status !== 'EXCLUIDA';
+                    if (t.status === 'EXCLUIDA') return false;
+                    const isInRange = t.date >= startISO && t.date <= endISO;
+                    const isOverdue = (t.status === 'PREVISTA' || t.status === 'CONFIRMADA' || t.status === 'ATRASADA') && t.date < todayStr;
+                    return isInRange || isOverdue;
                 }).forEach(t => {
                     const isPaid = (t.type === 'RECEITA' && (t.status === 'RECEBIDA' || t.status === 'CONFIRMADA' || t.status === 'PAGA')) ||
                         (t.type === 'DESPESA' && t.status === 'PAGA');
