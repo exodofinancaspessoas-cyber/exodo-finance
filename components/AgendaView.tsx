@@ -86,6 +86,7 @@ export default function AgendaView() {
 
     const filteredData = useMemo(() => {
         const today = toISODate(new Date());
+        const targetMonthKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
 
         return transactions.filter(t => {
             if (t.status === 'EXCLUIDA') return false;
@@ -93,8 +94,7 @@ export default function AgendaView() {
             // Matches Search
             if (searchTerm && !t.description.toLowerCase().includes(searchTerm.toLowerCase())) return false;
 
-            const trxDate = new Date(t.date);
-            const isTrxInMonth = isSameMonth(trxDate, currentMonth);
+            const isTrxInMonth = t.date.startsWith(targetMonthKey);
 
             if (activeTab === 'pendentes') {
                 return isTrxInMonth && (t.status === 'PREVISTA' || t.status === 'CONFIRMADA') && t.date >= today;
@@ -111,7 +111,8 @@ export default function AgendaView() {
 
     const stats = useMemo(() => {
         const today = toISODate(new Date());
-        const currentMonthTrxs = transactions.filter(t => t.status !== 'EXCLUIDA' && isSameMonth(new Date(t.date), currentMonth));
+        const targetMonthKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+        const currentMonthTrxs = transactions.filter(t => t.status !== 'EXCLUIDA' && t.date.startsWith(targetMonthKey));
 
         const balance = {
             pending_income: 0,
@@ -123,7 +124,7 @@ export default function AgendaView() {
 
         transactions.forEach(t => {
             if (t.status === 'EXCLUIDA') return;
-            const trxInMonth = isSameMonth(new Date(t.date), currentMonth);
+            const trxInMonth = t.date.startsWith(targetMonthKey);
 
             const isOverdue = (t.status === 'PREVISTA' || t.status === 'CONFIRMADA' || t.status === 'ATRASADA') && t.date < today;
             if (isOverdue) {

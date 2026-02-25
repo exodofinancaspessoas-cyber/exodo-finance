@@ -1,6 +1,6 @@
 
-const APP_VERSION = '1.5.2'; // Increment this on every deploy
-const DEPLOY_DATE = '2026-02-25 15:20';
+const APP_VERSION = '1.5.3'; // Increment this on every deploy
+const DEPLOY_DATE = '2026-02-25 15:23';
 
 export const VersionInfo = {
     version: APP_VERSION,
