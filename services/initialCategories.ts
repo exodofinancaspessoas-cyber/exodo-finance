@@ -30,7 +30,7 @@ export const INITIAL_CATEGORIES_DATA = [
         ]
     },
     {
-        name: 'EDUCAÇÃO', color: '#8b5cf6', sub: [
+        name: 'EDUCAÇÃO', color: '#2dd4bf', sub: [
             'Mensalidade escolar/faculdade', 'Material escolar', 'Livros didáticos',
             'Cursos e workshops', 'Cursos online', 'Material de estudo',
             'Uniforme escolar', 'Transporte escolar', 'Atividades extracurriculares'

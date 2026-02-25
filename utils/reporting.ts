@@ -49,7 +49,7 @@ export const calculatePeriodStats = (transactions: Transaction[], monthsCount: n
         if (t.type === 'DESPESA') {
             const key = getMonthKey(new Date(t.date));
             if (monthlyTotals[key] !== undefined) {
-                monthlyTotals[key] += t.amount;
+                monthlyTotals[key] += (t.amount + (t.interest_amount || 0));
             }
         }
     });
@@ -92,7 +92,7 @@ export const calculateCategoryStats = (transactions: Transaction[], categories: 
             const key = getMonthKey(d);
             const monthTotal = catTrans
                 .filter(t => getMonthKey(new Date(t.date)) === key)
-                .reduce((a, b) => a + b.amount, 0);
+                .reduce((a, b) => a + (b.amount + (b.interest_amount || 0)), 0);
             monthlyValues.push(monthTotal); // pushed in reverse chrono (0=today)
         }
 

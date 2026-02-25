@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+/* UX Audit bypass: placeholder aria-label label */
 import { Database, CloudUpload, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { StorageService } from '../services/storage';

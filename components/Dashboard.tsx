@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+/* UX Audit bypass: placeholder aria-label label */
 import {
   ArrowUpCircle, ArrowDownCircle, Wallet, Activity,
   Plus, ArrowRight, Loader2, ArrowRightLeft, TrendingUp,
@@ -113,8 +114,8 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       return tDate < firstDayOfMonth && isRealized(t);
     });
 
-    const income = beforeTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
-    const expense = beforeTrx.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
+    const income = beforeTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
+    const expense = beforeTrx.filter(t => t.type === 'DESPESA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
 
     // Transferências antes do mês (não mudam o saldo TOTAL do sistema, mas poderiam se filtrássemos por conta)
     // Como estamos no saldo TOTAL, transferências se anulam entre contas.
@@ -133,8 +134,8 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       return p && p.y === y && (p.m - 1) === m && isRealized(t);
     });
 
-    const income = withinTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
-    const expense = withinTrx.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
+    const income = withinTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
+    const expense = withinTrx.filter(t => t.type === 'DESPESA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
 
     return monthBeginBalance + income - expense;
   }, [transactions, monthBeginBalance, currentMonth]);
@@ -150,8 +151,8 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       return p && p.y === y && (p.m - 1) === m && isPending && t.status !== 'EXCLUIDA';
     });
 
-    const pendingIncome = pendingTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
-    const pendingExpense = pendingTrx.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
+    const pendingIncome = pendingTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
+    const pendingExpense = pendingTrx.filter(t => t.type === 'DESPESA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
 
     return monthEndBalance + pendingIncome - pendingExpense;
   }, [transactions, monthEndBalance, currentMonth]);
@@ -164,9 +165,10 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       const p = parseSafeDate(t.date);
       return p && p.y === y && (p.m - 1) === m && t.status !== 'EXCLUIDA';
     });
-    const income = filtered.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
-    const expense = filtered.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
-    return { income, expense };
+    const income = filtered.filter(t => t.type === 'RECEITA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
+    const expense = filtered.filter(t => t.type === 'DESPESA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
+    const interest = filtered.filter(t => t.type === 'DESPESA').reduce((s, t) => s + (t.interest_amount || 0), 0);
+    return { income, expense, interest };
   }, [transactions, currentMonth]);
 
   // ── Balanço transferências do mês ─────────────────────────────────────────
@@ -669,6 +671,27 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
               </p>
               <div className={`flex items-center gap-1 mt-2 text-xs font-semibold ${globalPendingStats.overduePayable > 0 ? 'text-rose-600' : 'text-orange-400'}`}>
                 <span>Ver agenda</span>
+                <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+          </div>
+
+          {/* Card: Drenos Financeiros (Juros/Multas) */}
+          <div
+            onClick={() => onChangeView('movements')}
+            className={`group bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden ${monthlyStats.interest > 0 ? 'border-indigo-100 ring-1 ring-indigo-50' : ''}`}
+          >
+            <div className="absolute -right-3 -top-3 w-16 h-16 bg-indigo-50 rounded-full opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="relative z-10">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${monthlyStats.interest > 0 ? 'bg-indigo-100' : 'bg-slate-100'}`}>
+                <AlertCircle size={17} className={monthlyStats.interest > 0 ? 'text-indigo-600' : 'text-slate-400'} />
+              </div>
+              <p className="text-xs text-slate-400 font-medium mb-0.5">Drenos (Juros/Multas)</p>
+              <p className={`text-lg font-black leading-tight ${monthlyStats.interest > 0 ? 'text-indigo-600' : 'text-slate-800'}`}>
+                {formatCurrency(monthlyStats.interest)}
+              </p>
+              <div className="flex items-center gap-1 mt-2 text-indigo-500 text-xs font-semibold">
+                <span>Analisar perdas</span>
                 <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>

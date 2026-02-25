@@ -70,6 +70,7 @@ create table public.transactions (
   installments_total integer,
   observation text,
   recurrence_id uuid references public.recurring_expenses(id) on delete set null,
+  interest_amount numeric(15,2) default 0,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

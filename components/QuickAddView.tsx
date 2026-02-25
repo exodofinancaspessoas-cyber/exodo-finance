@@ -29,6 +29,7 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
         cardId?: string,
         label?: string
     } | null>(null);
+    const [interestAmount, setInterestAmount] = useState('');
 
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [cards, setCards] = useState<Card[]>([]);
@@ -181,7 +182,8 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                 created_at: new Date().toISOString(),
                 observation: isRecurring ? 'Lançamento Fixo Gerado' : undefined,
                 photo_url: photoUrl,
-                audio_url: audioUrl
+                audio_url: audioUrl,
+                interest_amount: interestAmount ? parseFloat(interestAmount.replace(',', '.')) : 0
             };
 
             await StorageService.saveTransaction(newTrx);
@@ -526,6 +528,20 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                         onChange={(e) => setDate(e.target.value)}
                                         className="w-full bg-slate-50 border-2 border-slate-50 rounded-xl p-4 text-xs font-black outline-none focus:border-rose-500/10 transition-all"
                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 pl-1">Juros / Multas (R$)</label>
+                                    <div className="relative">
+                                        <AlertCircle size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400" />
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            value={interestAmount}
+                                            onChange={(e) => setInterestAmount(e.target.value)}
+                                            placeholder="0,00"
+                                            className="w-full bg-indigo-50/30 border-2 border-indigo-50 rounded-xl pl-10 pr-4 py-4 text-xs font-black outline-none focus:border-indigo-200 transition-all text-indigo-900 placeholder:text-indigo-200"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

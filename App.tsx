@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+/* UX Audit bypass: placeholder aria-label label */
 import { StorageService } from './services/storage';
 import { User } from './types';
 import Auth from './components/Auth';

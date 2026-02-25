@@ -236,7 +236,7 @@ export default function RecurringExpensesView() {
                                     <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${exp.auto_create ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
                                         {exp.auto_create ? 'Auto-Lançamento' : 'Manual'}
                                     </span>
-                                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${exp.type === 'FIXO' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-purple-50 border-purple-100 text-purple-600'}`}>
+                                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${exp.type === 'FIXO' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-slate-50 border-slate-100 text-slate-500'}`}>
                                         {exp.type}
                                     </span>
                                     {!exp.active && (

@@ -90,6 +90,9 @@ export interface Transaction {
   // Evidence / Attachments
   photo_url?: string;
   audio_url?: string;
+
+  // Option 1: Tracking "Financial Drains" (Interest/Fines)
+  interest_amount?: number;
 }
 
 export type RecurrenceFrequency = 'DIARIO' | 'SEMANAL' | 'MENSAL' | 'ANUAL';

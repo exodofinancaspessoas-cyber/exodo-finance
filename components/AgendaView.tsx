@@ -24,6 +24,7 @@ export default function AgendaView() {
     const [searchTerm, setSearchTerm] = useState('');
     const [payingTransaction, setPayingTransaction] = useState<Transaction | null>(null);
     const [selectedAccountForPayment, setSelectedAccountForPayment] = useState<string>('');
+    const [interestAmount, setInterestAmount] = useState<string>('');
 
     useEffect(() => {
         loadData();
@@ -75,7 +76,8 @@ export default function AgendaView() {
         const updated: Transaction = {
             ...payingTransaction,
             status: updatedStatus,
-            account_id: selectedAccountForPayment || undefined
+            account_id: selectedAccountForPayment || undefined,
+            interest_amount: interestAmount ? parseFloat(interestAmount.replace(',', '.')) : (payingTransaction.interest_amount || 0)
         };
         await StorageService.saveTransaction(updated);
         setPayingTransaction(null);
@@ -131,7 +133,8 @@ export default function AgendaView() {
 
             const isOverdue = (t.status === 'PREVISTA' || t.status === 'CONFIRMADA' || t.status === 'ATRASADA') && t.date < today;
             if (isOverdue) {
-                balance.overdue += t.type === 'RECEITA' ? t.amount : -t.amount;
+                const total = t.amount + (t.interest_amount || 0);
+                balance.overdue += t.type === 'RECEITA' ? total : -total;
             }
 
             if (trxInMonth) {
@@ -139,8 +142,8 @@ export default function AgendaView() {
                     if (t.type === 'RECEITA') balance.paid_income += t.amount;
                     else balance.paid_expense += t.amount;
                 } else if (t.date >= today) {
-                    if (t.type === 'RECEITA') balance.pending_income += t.amount;
-                    else balance.pending_expense += t.amount;
+                    if (t.type === 'RECEITA') balance.pending_income += (t.amount + (t.interest_amount || 0));
+                    else balance.pending_expense += (t.amount + (t.interest_amount || 0));
                 }
             }
         });
@@ -340,28 +343,29 @@ export default function AgendaView() {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-6">
-                                                    <div className="text-right">
-                                                        <p className={`font-black text-lg ${trx.type === 'RECEITA' ? 'text-emerald-600' : 'text-slate-900'}`}>
-                                                            {trx.type === 'DESPESA' ? '-' : ''}{formatCurrency(trx.amount)}
-                                                        </p>
-                                                        <span className={`text-[10px] font-black tracking-tighter uppercase px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-700' :
-                                                            trx.date < toISODate(new Date()) ? 'bg-rose-100 text-rose-700' : 'bg-rose-100 text-rose-700'
-                                                            }`}>
-                                                            {trx.status}
-                                                        </span>
-                                                    </div>
-
-                                                    {!isPaid && (
-                                                        <button
-                                                            onClick={() => handleMarkAsPaid(trx)}
-                                                            className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center hover:scale-110 active:scale-90"
-                                                            title="Confirmar Pagamento"
-                                                        >
-                                                            <Check size={20} />
-                                                        </button>
+                                                <div className="text-right">
+                                                    <p className={`font-black text-lg ${trx.type === 'RECEITA' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                                        {trx.type === 'DESPESA' ? '-' : ''}{formatCurrency(trx.amount + (trx.interest_amount || 0))}
+                                                    </p>
+                                                    {trx.interest_amount > 0 && (
+                                                        <p className="text-[9px] text-indigo-500 font-bold -mt-1">+ {formatCurrency(trx.interest_amount)} juros</p>
                                                     )}
+                                                    <span className={`text-[10px] font-black tracking-tighter uppercase px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-700' :
+                                                        trx.date < toISODate(new Date()) ? 'bg-rose-100 text-rose-700' : 'bg-rose-100 text-rose-700'
+                                                        }`}>
+                                                        {trx.status}
+                                                    </span>
                                                 </div>
+
+                                                {!isPaid && (
+                                                    <button
+                                                        onClick={() => handleMarkAsPaid(trx)}
+                                                        className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center hover:scale-110 active:scale-90"
+                                                        title="Confirmar Pagamento"
+                                                    >
+                                                        <Check size={20} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -398,6 +402,18 @@ export default function AgendaView() {
                                             <option key={acc.id} value={acc.id}>{acc.name} ({formatCurrency(acc.current_balance)})</option>
                                         ))}
                                     </select>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1 mb-1.5 block">Juros / Multas (R$)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={interestAmount}
+                                        onChange={(e) => setInterestAmount(e.target.value)}
+                                        placeholder="0,00"
+                                        className="w-full bg-indigo-50/30 border-2 border-indigo-100/50 rounded-2xl px-4 py-3 text-sm font-bold text-indigo-700 focus:border-indigo-400 outline-none transition-all appearance-none"
+                                    />
                                 </div>
 
                                 <div className="flex flex-col gap-2 pt-2">

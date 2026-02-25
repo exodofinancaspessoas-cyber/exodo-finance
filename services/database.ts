@@ -209,6 +209,7 @@ export const DatabaseService = {
                 const supabaseTransactions = (data as any[]).map(t => ({
                     ...t,
                     amount: Number(t.amount || 0),
+                    interest_amount: Number(t.interest_amount || 0),
                     account_id: t.account_id,
                     category_id: t.category_id,
                     card_id: t.card_id,
@@ -264,7 +265,8 @@ export const DatabaseService = {
             const parsed = stored ? JSON.parse(stored) : [];
             return ensureArray<Transaction>(parsed).map(t => ({
                 ...t,
-                amount: Number(t.amount || 0)
+                amount: Number(t.amount || 0),
+                interest_amount: Number(t.interest_amount || 0)
             }));
         } catch {
             return [];
@@ -281,6 +283,7 @@ export const DatabaseService = {
                         user_id: user.id,
                         description: transaction.description,
                         amount: transaction.amount,
+                        interest_amount: transaction.interest_amount || 0,
                         type: transaction.type,
                         category_id: isValidUUID(transaction.category_id) ? transaction.category_id : null,
                         account_id: isValidUUID(transaction.account_id) ? transaction.account_id : null,
@@ -322,6 +325,7 @@ export const DatabaseService = {
                     user_id: user.id,
                     description: t.description,
                     amount: t.amount,
+                    interest_amount: t.interest_amount || 0,
                     type: t.type,
                     category_id: isValidUUID(t.category_id) ? t.category_id : null,
                     account_id: isValidUUID(t.account_id) ? t.account_id : null,
