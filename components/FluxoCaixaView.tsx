@@ -32,6 +32,8 @@ export default function FluxoCaixaView() {
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'all' | 'receita' | 'despesa'>('all');
     const [displayType, setDisplayType] = useState<'table' | 'detailed'>('detailed');
+    const [forecastDays, setForecastDays] = useState<number | null>(null);
+    const [accounts, setAccounts] = useState<any[]>([]);
 
     // Period controls
     const [startMonthOffset, setStartMonthOffset] = useState(0);
@@ -54,16 +56,18 @@ export default function FluxoCaixaView() {
 
     useEffect(() => {
         loadData();
-    }, [startMonthOffset, numMonths, selectedMonthIndex]);
+    }, [startMonthOffset, numMonths, selectedMonthIndex, forecastDays]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const [transactions, recurring, categories] = await Promise.all([
+            const [transactions, recurring, categories, accs] = await Promise.all([
                 StorageService.getTransactions(),
                 StorageService.getRecurringExpenses(),
-                StorageService.getCategories()
+                StorageService.getCategories(),
+                StorageService.getAccounts()
             ]);
+            setAccounts(accs);
 
             const today = new Date();
             const currentYear = today.getFullYear();
@@ -140,18 +144,35 @@ export default function FluxoCaixaView() {
                 .sort((a, b) => a.type === b.type ? a.categoryName.localeCompare(b.categoryName) : (a.type === 'RECEITA' ? -1 : 1)));
 
             // 3. Prepare Detailed View Data
-            const selMonth = cols[selectedMonthIndex];
-            if (selMonth) {
+            const todayStr = toISODate(today);
+            let selMonth = cols[selectedMonthIndex];
+            let rangeStart: Date, rangeEnd: Date;
+
+            if (forecastDays) {
+                rangeStart = new Date();
+                rangeEnd = new Date();
+                rangeEnd.setDate(rangeStart.getDate() + forecastDays);
+            } else if (selMonth) {
+                const [y, m] = selMonth.key.split('-').map(Number);
+                rangeStart = new Date(y, m - 1, 1);
+                rangeEnd = new Date(y, m, 0); // Last day of month
+            } else {
+                return;
+            }
+
+            const startISO = toISODate(rangeStart);
+            const endISO = toISODate(rangeEnd);
+
+            if (rangeStart && rangeEnd) {
                 const monthIncomes: any[] = [];
                 const monthExpenses: any[] = [];
                 let pInc = 0, rInc = 0, pExp = 0, rExp = 0;
 
                 // Actual transactions
                 transactions.filter(t => {
-                    const d = new Date(t.date);
-                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === selMonth.key && t.status !== 'EXCLUIDA';
+                    return t.date >= startISO && t.date <= endISO && t.status !== 'EXCLUIDA';
                 }).forEach(t => {
-                    const isPaid = (t.type === 'RECEITA' && (t.status === 'RECEBIDA' || t.status === 'CONFIRMADA')) ||
+                    const isPaid = (t.type === 'RECEITA' && (t.status === 'RECEBIDA' || t.status === 'CONFIRMADA' || t.status === 'PAGA')) ||
                         (t.type === 'DESPESA' && t.status === 'PAGA');
 
                     const item = {
@@ -178,41 +199,47 @@ export default function FluxoCaixaView() {
 
                 // Projected recurring
                 recurring.filter(rec => rec.active).forEach(rec => {
-                    const [y, m] = selMonth.key.split('-').map(Number);
-                    const targetMonthDate = new Date(y, m - 1, 1);
-                    const startDate = rec.start_date ? new Date(rec.start_date) : new Date(0);
-                    const endDate = rec.end_date ? new Date(rec.end_date) : new Date(9999, 11, 31);
-                    const isWithinRange = targetMonthDate >= new Date(startDate.getFullYear(), startDate.getMonth(), 1) &&
-                        targetMonthDate <= endDate;
+                    // Check occurrences within range
+                    // Simple logic for monthly recurring: check if day_of_month falls within range
+                    let checkDate = new Date(rangeStart);
+                    checkDate.setHours(0, 0, 0, 0);
+                    const endLimit = new Date(rangeEnd);
+                    endLimit.setHours(23, 59, 59, 999);
 
-                    if (isWithinRange) {
-                        const alreadyExists = transactions.some(t => {
-                            const d = new Date(t.date);
-                            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === selMonth.key && t.recurrence_id === rec.id;
-                        });
+                    // Iterate through days in range to find occurrences
+                    // (For forecast days > 31 it might find multiple occurrences, for < 31 it might find 0 or 1)
+                    let iterDate = new Date(checkDate);
+                    while (iterDate <= endLimit) {
+                        if (iterDate.getDate() === rec.day_of_month) {
+                            const dateISO = toISODate(iterDate);
+                            const alreadyExists = transactions.some(t => {
+                                return t.recurrence_id === rec.id && t.date === dateISO && t.status !== 'EXCLUIDA';
+                            });
 
-                        if (!alreadyExists) {
-                            const amount = rec.programmed_amount || rec.amount;
-                            const item = {
-                                id: 'proj_' + rec.id,
-                                description: rec.description,
-                                planned_amount: amount,
-                                actual_amount: 0,
-                                planned_date: `${selMonth.key}-${String(rec.day_of_month || 1).padStart(2, '0')}`,
-                                actual_date: null,
-                                status: 'PROJETADA',
-                                is_projection: true
-                            };
+                            if (!alreadyExists) {
+                                const amount = rec.programmed_amount || rec.amount;
+                                const item = {
+                                    id: 'proj_' + rec.id + '_' + dateISO,
+                                    description: rec.description,
+                                    planned_amount: amount,
+                                    actual_amount: 0,
+                                    planned_date: dateISO,
+                                    actual_date: null,
+                                    status: 'PROJETADA',
+                                    is_projection: true
+                                };
 
-                            const cat = categories.find(c => c.id === rec.category_id);
-                            if (cat?.type === 'RECEITA') {
-                                monthIncomes.push(item);
-                                pInc += amount;
-                            } else {
-                                monthExpenses.push(item);
-                                pExp += amount;
+                                const cat = categories.find(c => c.id === rec.category_id);
+                                if (cat?.type === 'RECEITA') {
+                                    monthIncomes.push(item);
+                                    pInc += amount;
+                                } else {
+                                    monthExpenses.push(item);
+                                    pExp += amount;
+                                }
                             }
                         }
+                        iterDate.setDate(iterDate.getDate() + 1);
                     }
                 });
 
@@ -253,63 +280,101 @@ export default function FluxoCaixaView() {
                         <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200">
                             <Table size={24} />
                         </div>
-                        Fluxo de Caixa Mensal
+                        {forecastDays ? `Previsão de ${forecastDays} Dias` : 'Fluxo de Caixa Mensal'}
                     </h2>
-                    <p className="text-slate-500 font-medium ml-1">Análise focada no planejado versus realizado.</p>
+                    <p className="text-slate-500 font-medium ml-1">
+                        {forecastDays ? 'Visão antecipada de entradas e saídas.' : 'Análise focada no planejado versus realizado.'}
+                    </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                    {/* Forecast Selector */}
+                    <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                        <button
+                            onClick={() => { setForecastDays(null); setDisplayType('detailed'); }}
+                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === null ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            Mensal
+                        </button>
+                        {[10, 20, 30].map(days => (
+                            <button
+                                key={days}
+                                onClick={() => { setForecastDays(days); setDisplayType('detailed'); }}
+                                className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === days ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            >
+                                {days} Dias
+                            </button>
+                        ))}
+                    </div>
+
                     {/* View Switcher */}
                     <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
                         <button
                             onClick={() => setDisplayType('detailed')}
-                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${displayType === 'detailed' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${displayType === 'detailed' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
                         >
                             <List size={14} /> Foco Mensal
                         </button>
                         <button
                             onClick={() => setDisplayType('table')}
-                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${displayType === 'table' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${displayType === 'table' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
                         >
                             <LayoutGrid size={14} /> Tabela Geral
                         </button>
                     </div>
 
-                    {/* Period Navigator */}
-                    <div className="flex items-center gap-1 bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
-                        <button onClick={() => { setStartMonthOffset(p => p - 1); setSelectedMonthIndex(0); }} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"><ChevronLeft size={20} /></button>
-                        <div className="px-4 text-xs font-black uppercase tracking-widest text-slate-600">Navegar</div>
-                        <button onClick={() => { setStartMonthOffset(p => p + 1); setSelectedMonthIndex(0); }} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"><ChevronRight size={20} /></button>
-                    </div>
+                    {!forecastDays && (
+                        <div className="flex items-center gap-1 bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                            <button onClick={() => { setStartMonthOffset(p => p - 1); setSelectedMonthIndex(0); }} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"><ChevronLeft size={20} /></button>
+                            <div className="px-4 text-xs font-black uppercase tracking-widest text-slate-600">Navegar</div>
+                            <button onClick={() => { setStartMonthOffset(p => p + 1); setSelectedMonthIndex(0); }} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"><ChevronRight size={20} /></button>
+                        </div>
+                    )}
                 </div>
             </div>
 
+            {/* Selection Area Area */}
             {/* Custom Modern Month Selection */}
-            <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-none no-scrollbar py-2">
-                {months.map((m, idx) => (
-                    <button
-                        key={m.key}
-                        onClick={() => setSelectedMonthIndex(idx)}
-                        className={`flex-shrink-0 px-6 py-4 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center min-w-[120px] relative overflow-hidden
+            {!forecastDays && (
+                <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-none no-scrollbar py-2">
+                    {months.map((m, idx) => (
+                        <button
+                            key={m.key}
+                            onClick={() => setSelectedMonthIndex(idx)}
+                            className={`flex-shrink-0 px-6 py-4 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center min-w-[120px] relative overflow-hidden
                             ${selectedMonthIndex === idx
-                                ? 'bg-white border-indigo-500 shadow-2xl shadow-indigo-100 scale-105 z-10'
-                                : 'bg-white/40 border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-white/60'
-                            }`}
-                    >
-                        {m.isCurrent && !selectedMonthIndex === idx && (
-                            <div className="absolute top-0 right-0 p-1">
-                                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                            </div>
-                        )}
-                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${selectedMonthIndex === idx ? 'text-indigo-400' : 'text-slate-300'}`}>
-                            {m.key.split('-')[0]}
-                        </span>
-                        <span className={`text-xl font-black uppercase ${selectedMonthIndex === idx ? 'text-indigo-900' : 'text-slate-500'}`}>
-                            {m.label.split(' ')[0]}
-                        </span>
-                    </button>
-                ))}
-            </div>
+                                    ? 'bg-white border-indigo-500 shadow-2xl shadow-indigo-100 scale-105 z-10'
+                                    : 'bg-white/40 border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-white/60'
+                                }`}
+                        >
+                            {m.isCurrent && !selectedMonthIndex === idx && (
+                                <div className="absolute top-0 right-0 p-1">
+                                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                                </div>
+                            )}
+                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${selectedMonthIndex === idx ? 'text-indigo-400' : 'text-slate-300'}`}>
+                                {m.key.split('-')[0]}
+                            </span>
+                            <span className={`text-xl font-black uppercase ${selectedMonthIndex === idx ? 'text-indigo-900' : 'text-slate-500'}`}>
+                                {m.label.split(' ')[0]}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {forecastDays && (
+                <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h4 className="text-indigo-900 font-black text-xl">Previsão de {forecastDays} Dias Corridos</h4>
+                        <p className="text-indigo-600 text-sm font-medium">Análise de hoje até {(new Date(Date.now() + forecastDays * 86400000)).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div className="bg-white/50 backdrop-blur-sm px-6 py-3 rounded-2xl border border-indigo-200 flex items-center gap-3">
+                        <Calendar className="text-indigo-500" size={20} />
+                        <span className="text-indigo-900 font-bold text-sm">Período Selecionado</span>
+                    </div>
+                </div>
+            )}
 
             {displayType === 'detailed' ? (
                 /* DETAILED VIEW - Side by Side Panels */
@@ -482,27 +547,49 @@ export default function FluxoCaixaView() {
                     {/* FOCUSED SUMMARY CARD */}
                     <div className="bg-slate-900 rounded-[3.5rem] p-12 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-12 group">
                         <div className="relative z-10">
-                            <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-4">Resultado Projetado</h4>
-                            <div className="text-7xl font-black tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400">
-                                {formatCurrency(detailData.totalPlannedIncome - detailData.totalPlannedExpense)}
-                            </div>
-                            <p className="text-slate-400 font-medium max-w-lg leading-relaxed">
-                                Este é o seu saldo final esperado para <span className="text-white font-black">{months[selectedMonthIndex]?.label}</span>.
-                                Ele reflete a diferença entre tudo o que você planejou receber e tudo o que estimou gastar.
-                            </p>
+                            <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-4">
+                                {forecastDays ? `Saldo Final em ${forecastDays} dias` : 'Resultado Projetado'}
+                            </h4>
+
+                            {(() => {
+                                const currentTotalBalance = accounts.reduce((sum, a) => sum + (a.current_balance || 0), 0);
+                                const pendingIn = detailData.totalPlannedIncome - detailData.totalRealizedIncome;
+                                const pendingOut = detailData.totalPlannedExpense - detailData.totalRealizedExpense;
+                                const projectedFinal = currentTotalBalance + pendingIn - pendingOut;
+                                const isPositive = projectedFinal >= 0;
+
+                                return (
+                                    <>
+                                        <div className={`text-7xl font-black tracking-tighter mb-4 ${isPositive ? 'text-white' : 'text-rose-400'}`}>
+                                            {formatCurrency(projectedFinal)}
+                                        </div>
+                                        <p className="text-slate-400 font-medium max-w-lg leading-relaxed">
+                                            {forecastDays
+                                                ? `Considerando seu saldo atual de ${formatCurrency(currentTotalBalance)}, em ${forecastDays} dias sua conta estará `
+                                                : `Este é o seu saldo final esperado para ${months[selectedMonthIndex]?.label}. Suas contas estarão `
+                                            }
+                                            <span className={`font-black ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                {isPositive ? 'POSITIVA' : 'NEGATIVA'}
+                                            </span>.
+                                        </p>
+                                    </>
+                                );
+                            })()}
                         </div>
 
-                        <div className="relative z-10 flex gap-8 items-center">
+                        <div className="relative z-10 flex gap-8 items-center text-center md:text-left">
                             <div className="p-8 rounded-[2.5rem] bg-white/5 backdrop-blur-xl border border-white/10 flex flex-col items-center group-hover:bg-white/10 transition-all">
-                                <span className="text-[10px] font-black text-emerald-400 uppercase mb-2">Sobra</span>
-                                <span className="text-2xl font-black">{formatCurrency(Math.max(0, detailData.totalPlannedIncome - detailData.totalPlannedExpense))}</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase mb-2">Resultado do Período</span>
+                                <span className={`text-2xl font-black ${detailData.totalPlannedIncome - detailData.totalPlannedExpense >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                    {formatCurrency(detailData.totalPlannedIncome - detailData.totalPlannedExpense)}
+                                </span>
                             </div>
-                            <div className="w-px h-20 bg-white/10"></div>
+                            <div className="w-px h-20 bg-white/10 hidden md:block"></div>
                             <div className="flex flex-col items-center">
                                 <div className="w-20 h-20 rounded-3xl bg-indigo-500/20 flex items-center justify-center mb-3">
                                     <Calculator className="text-indigo-400" size={32} />
                                 </div>
-                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Simulação</span>
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Saldo Projetado</span>
                             </div>
                         </div>
 
