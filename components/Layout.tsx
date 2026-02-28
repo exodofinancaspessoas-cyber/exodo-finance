@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Menu, LogOut, LayoutDashboard, Landmark,
     User as UserIcon, TrendingUp, Target, PieChart, Calculator,
@@ -24,6 +24,21 @@ interface SidebarProps {
 
 export default function Layout({ currentView, onChangeView, user, onLogout, onOpenTraining, onQuickAdd, insightCount = 0, children }: SidebarProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [menuVisible, setMenuVisible] = useState(false);
+
+    // Smooth open/close: show DOM first, then animate in
+    const openMenu = () => { setMenuVisible(true); requestAnimationFrame(() => setIsMobileMenuOpen(true)); hapticFeedback(5); };
+    const closeMenu = () => { setIsMobileMenuOpen(false); setTimeout(() => setMenuVisible(false), 300); hapticFeedback(5); };
+
+    // Lock body scroll when drawer is open
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [isMobileMenuOpen]);
 
     const isActive = (id: string) => {
         if (id === 'finance') return ['finance', 'accounts', 'cards'].includes(currentView);
@@ -142,7 +157,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                         </div>
                     </div>
                     <button
-                        onClick={() => { hapticFeedback(5); setIsMobileMenuOpen(!isMobileMenuOpen); }}
+                        onClick={openMenu}
                         className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-xl transition-colors tap-highlight-none"
                         aria-label="Abrir menu"
                     >
@@ -218,44 +233,89 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 </div>
             </nav>
 
-            {/* Mobile Menu Overlay */}
-            {isMobileMenuOpen && (
-                <div className="md:hidden fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-sm text-white p-6 animate-fade-in flex flex-col">
-                    <div className="flex justify-between items-center mb-10">
-                        <h3 className="font-black text-2xl tracking-tight">Menu Principal</h3>
-                        <button
-                            onClick={() => { hapticFeedback(5); setIsMobileMenuOpen(false); }}
-                            className="w-10 h-10 flex items-center justify-center bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
-                    </div>
+            {/* Mobile Right Drawer */}
+            {menuVisible && (
+                <div className="md:hidden fixed inset-0 z-[60] flex">
+                    {/* Backdrop — tap to close */}
+                    <div
+                        className={`flex-1 bg-black/50 backdrop-blur-[2px] transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'}`}
+                        onClick={closeMenu}
+                        aria-label="Fechar menu"
+                    />
 
-                    <nav className="space-y-4 flex-1">
-                        {detailedMenuItems.map(item => (
+                    {/* Drawer panel — slides from right */}
+                    <div className={`w-[78vw] max-w-[320px] h-full bg-slate-900 text-white flex flex-col shadow-2xl transform transition-transform duration-300 ease-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                        {/* Drawer header */}
+                        <div className="flex items-center justify-between px-5 pt-safe pt-6 pb-4 border-b border-slate-800">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">Ê</div>
+                                <div>
+                                    <p className="font-black text-sm text-white leading-tight">{user.name}</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                        v{VersionInfo.version}
+                                        {isSupabaseConfigured() ? (
+                                            <Cloud size={9} className="text-emerald-500" />
+                                        ) : (
+                                            <CloudOff size={9} className="text-amber-500" />
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
                             <button
-                                key={item.id}
-                                onClick={() => { onChangeView(item.id); setIsMobileMenuOpen(false); }}
-                                className={`flex items-center space-x-4 w-full p-4 rounded-xl transition-all
-                  ${isActive(item.id) ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300'}
-                `}
+                                onClick={closeMenu}
+                                className="w-9 h-9 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors tap-highlight-none"
+                                aria-label="Fechar menu"
                             >
-                                <item.icon size={24} className={isActive(item.id) ? 'text-white' : 'text-slate-500'} />
-                                <span className="text-lg font-medium">{item.label}</span>
+                                <X size={18} />
                             </button>
-                        ))}
-                    </nav>
+                        </div>
 
-                    <div className="pt-6 border-t border-slate-800">
-                        <button
-                            onClick={onLogout}
-                            className="flex items-center justify-center space-x-3 w-full p-4 rounded-xl bg-slate-800 text-red-400 hover:bg-slate-700 transition-colors font-medium"
-                        >
-                            <LogOut size={20} /> <span>Sair do App</span>
-                        </button>
+                        {/* Nav items */}
+                        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+                            {detailedMenuItems.map(item => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => { onChangeView(item.id); closeMenu(); }}
+                                    className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all tap-highlight-none ${isActive(item.id)
+                                        ? 'bg-orange-600 text-white shadow-md'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-700'
+                                        }`}
+                                >
+                                    <div className="relative shrink-0">
+                                        <item.icon size={20} className={isActive(item.id) ? 'text-white' : 'text-slate-500'} />
+                                        {item.id === 'dashboard' && insightCount > 0 && (
+                                            <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-red-500 text-white text-[8px] font-black flex items-center justify-center">
+                                                {insightCount > 9 ? '9+' : insightCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="font-medium text-sm">{item.label}</span>
+                                    {isActive(item.id) && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white/60" />}
+                                </button>
+                            ))}
+                        </nav>
+
+                        {/* Footer actions */}
+                        <div className="px-3 pb-safe pb-6 pt-3 border-t border-slate-800 space-y-1">
+                            <button
+                                onClick={() => { onOpenTraining(); closeMenu(); }}
+                                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-orange-400 hover:bg-slate-800 transition-colors tap-highlight-none"
+                            >
+                                <Sparkles size={18} />
+                                <span className="text-sm font-bold">Treinamento Inicial</span>
+                            </button>
+                            <button
+                                onClick={() => { onLogout(); closeMenu(); }}
+                                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-400 hover:bg-slate-800 transition-colors tap-highlight-none"
+                            >
+                                <LogOut size={18} />
+                                <span className="text-sm font-medium">Sair da conta</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
+
             {/* SEO Metadata for Indexing - Optimized for Search Bots */}
             {/* meta name="description" content="BRUK Finance - Gestão Financeira Completa" */}
             {/* property="og:title" content="BRUK Finance" */}
