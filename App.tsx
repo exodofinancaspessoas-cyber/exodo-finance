@@ -27,6 +27,7 @@ import AgendaView from './components/AgendaView';
 import FluxoCaixaView from './components/FluxoCaixaView';
 import { Sparkles } from 'lucide-react';
 import FinanceChat from './components/FinanceChat';
+import { generateInsights } from './services/aiInsights';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -34,6 +35,7 @@ export default function App() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [insightCount, setInsightCount] = useState(0);
 
   // Onboarding states
   const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -76,6 +78,18 @@ export default function App() {
           }
 
           console.log('[App] Recurring expenses processing complete.');
+
+          // Compute insight count for sidebar badge
+          const [txs, cats, accs, budgets, goals, recurring] = await Promise.all([
+            StorageService.getTransactions(),
+            StorageService.getCategories(),
+            StorageService.getAccounts(),
+            StorageService.getBudgets?.() ?? Promise.resolve([]),
+            StorageService.getGoals?.() ?? Promise.resolve([]),
+            StorageService.getRecurringExpenses?.() ?? Promise.resolve([]),
+          ]);
+          const generated = generateInsights({ transactions: txs, categories: cats, accounts: accs, budgets, goals, recurring, currentMonth });
+          setInsightCount(generated.length);
         } catch (e) {
           console.error('[App] Error processing recurring expenses:', e);
         }
@@ -153,6 +167,7 @@ export default function App() {
           setShowManual(true);
         }}
         onQuickAdd={() => setIsQuickAddOpen(true)}
+        insightCount={insightCount}
       >
         <div className="relative h-full w-full">
           {renderView()}

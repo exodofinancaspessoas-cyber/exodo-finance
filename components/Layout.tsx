@@ -18,10 +18,11 @@ interface SidebarProps {
     onLogout: () => void;
     onOpenTraining: () => void;
     onQuickAdd?: () => void;
+    insightCount?: number;
     children: React.ReactNode;
 }
 
-export default function Layout({ currentView, onChangeView, user, onLogout, onOpenTraining, onQuickAdd, children }: SidebarProps) {
+export default function Layout({ currentView, onChangeView, user, onLogout, onOpenTraining, onQuickAdd, insightCount = 0, children }: SidebarProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const isActive = (id: string) => {
@@ -79,7 +80,14 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                                 }
               `}
                         >
-                            <item.icon size={20} className={isActive(item.id) ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'} />
+                            <div className="relative shrink-0">
+                                <item.icon size={20} className={isActive(item.id) ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'} />
+                                {item.id === 'dashboard' && insightCount > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center border border-slate-900">
+                                        {insightCount > 9 ? '9+' : insightCount}
+                                    </span>
+                                )}
+                            </div>
                             <span className="font-medium">{item.label}</span>
                         </button>
                     ))}
@@ -156,12 +164,19 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                             key={item.id}
                             onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
                             className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
-                                    ? 'bg-orange-50 text-orange-600'
-                                    : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
+                                ? 'bg-orange-50 text-orange-600'
+                                : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
                                 }`}
                             aria-label={item.label}
                         >
-                            <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
+                            <div className="relative">
+                                <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
+                                {item.id === 'dashboard' && insightCount > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                                        {insightCount > 9 ? '9+' : insightCount}
+                                    </span>
+                                )}
+                            </div>
                             <span className={`text-[10px] font-bold uppercase tracking-tight leading-none mt-0.5 ${isActive(item.id) ? 'text-orange-600' : 'text-slate-400'
                                 }`}>
                                 {item.label}
@@ -188,8 +203,8 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                             key={item.id}
                             onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
                             className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
-                                    ? 'bg-orange-50 text-orange-600'
-                                    : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
+                                ? 'bg-orange-50 text-orange-600'
+                                : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
                                 }`}
                             aria-label={item.label}
                         >

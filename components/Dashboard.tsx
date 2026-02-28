@@ -36,7 +36,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
     recurring: RecurringExpense[];
   }>({ transactions: [], categories: [], accounts: [], cards: [], transfers: [], budgets: [], goals: [], recurring: [] });
   const [dismissedInsights, setDismissedInsights] = useState<Set<string>>(new Set());
-  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -382,58 +382,34 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
   return (
     <div className={`animate-fade-in space-y-6 pb-20 transition-all duration-300 ${isTransitioning ? 'opacity-50 scale-[0.99] grayscale-[0.2]' : 'opacity-100 scale-100'}`}>
 
-      {/* ── INSIGHTS POPUP (floating, collapsible) ───────────────────────── */}
+      {/* ── INSIGHTS PANEL (inline, collapsible) ─────────────────────────── */}
       {visibleInsights.length > 0 && (
-        <div className="fixed bottom-[88px] md:bottom-6 left-4 z-[89] flex flex-col items-start gap-2">
-          {/* Expanded panel */}
-          {isInsightsOpen && (
-            <div className="w-[calc(100vw-2rem)] md:w-[420px] bg-white rounded-2xl shadow-2xl shadow-slate-900/15 border border-slate-100 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
-              {/* Panel header */}
-              <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800">
-                <div className="flex items-center gap-2">
-                  <Sparkles size={14} className="text-orange-400" />
-                  <span className="text-xs font-black uppercase tracking-widest text-white">Êxodo IA — Insights</span>
-                </div>
-                <button
-                  onClick={() => setIsInsightsOpen(false)}
-                  className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all"
-                  aria-label="Minimizar insights"
-                >
-                  <ChevronDown size={13} />
-                </button>
-              </div>
-              {/* Alerts list */}
-              <div className="divide-y divide-slate-50 max-h-[60dvh] overflow-y-auto custom-scrollbar">
-                {visibleInsights.map(insight => (
-                  <InsightCard key={insight.id} insight={insight} onDismiss={dismissInsight} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Collapsed badge trigger */}
+        <div className="rounded-2xl overflow-hidden border border-slate-100 shadow-sm bg-white">
+          {/* Header — click to expand/collapse */}
           <button
             onClick={() => setIsInsightsOpen(prev => !prev)}
-            className={`flex items-center gap-2 pl-3 pr-3.5 py-2 rounded-full shadow-lg transition-all active:scale-95 tap-highlight-none ${isInsightsOpen
-              ? 'bg-slate-900 text-white'
-              : 'bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:shadow-orange-100'
-              }`}
-            aria-label="Ver alertas da IA"
+            className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 transition-colors"
           >
-            <Sparkles size={14} className={isInsightsOpen ? 'text-orange-400' : 'text-orange-500'} />
-            <span className="text-xs font-black">
-              {isInsightsOpen ? 'Minimizar' : `${visibleInsights.length} alerta${visibleInsights.length > 1 ? 's' : ''} da IA`}
-            </span>
-            {!isInsightsOpen && (
-              <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-2">
+              <Sparkles size={14} className="text-orange-400" />
+              <span className="text-xs font-black uppercase tracking-widest text-white">Êxodo IA — Insights</span>
+              <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
                 {visibleInsights.length}
               </span>
-            )}
-            <ChevronUp size={13} className={`transition-transform duration-200 ${isInsightsOpen ? 'rotate-180' : ''} ${isInsightsOpen ? 'text-white/60' : 'text-slate-400'}`} />
+            </div>
+            <ChevronDown size={15} className={`text-slate-400 transition-transform duration-200 ${isInsightsOpen ? '' : '-rotate-90'}`} />
           </button>
+
+          {/* Alert list — animated collapse */}
+          {isInsightsOpen && (
+            <div className="divide-y divide-slate-50">
+              {visibleInsights.map(insight => (
+                <InsightCard key={insight.id} insight={insight} onDismiss={dismissInsight} />
+              ))}
+            </div>
+          )}
         </div>
       )}
-
 
       {/* ── ALERTA: Lançamentos Incompletos ───────────────────────────────── */}
       {incompleteTransactions.length > 0 && (
