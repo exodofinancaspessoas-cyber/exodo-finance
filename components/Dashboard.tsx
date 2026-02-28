@@ -4,17 +4,18 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowUpCircle, ArrowDownCircle, Wallet, Activity,
   Plus, ArrowRight, Loader2, ArrowRightLeft, TrendingUp,
-  TrendingDown, Landmark, CreditCard, ChevronLeft, ChevronRight, Calendar, Clock
+  TrendingDown, Landmark, CreditCard, ChevronLeft, ChevronRight, Calendar, Clock, Sparkles, X as XIcon
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 import { StorageService } from '../services/storage';
 import { formatCurrency, formatDate, toISODate, parseSafeDate } from '../utils';
-import { Account, Card, Transaction, Category, Transfer, TransactionStatus } from '../types';
+import { Account, Card, Transaction, Category, Transfer, TransactionStatus, Budget, Goal, RecurringExpense } from '../types';
 import SupabaseSync from './SupabaseSync';
 import { AlertCircle, Smartphone } from 'lucide-react';
 import { Skeleton, hapticFeedback } from './ui/Skeleton';
+import { generateInsights, Insight, InsightSeverity } from '../services/aiInsights';
 
 interface DashboardProps {
   currentMonth: Date;
@@ -30,7 +31,11 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
     accounts: Account[];
     cards: Card[];
     transfers: Transfer[];
-  }>({ transactions: [], categories: [], accounts: [], cards: [], transfers: [] });
+    budgets: Budget[];
+    goals: Goal[];
+    recurring: RecurringExpense[];
+  }>({ transactions: [], categories: [], accounts: [], cards: [], transfers: [], budgets: [], goals: [], recurring: [] });
+  const [dismissedInsights, setDismissedInsights] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -50,14 +55,17 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
     // Só mostra o loading na primeira carga
     if (data.transactions.length === 0) setLoading(true);
     try {
-      const [trxs, cats, accs, crds, trs] = await Promise.all([
+      const [trxs, cats, accs, crds, trs, bdgs, gls, rec] = await Promise.all([
         StorageService.getTransactions(),
         StorageService.getCategories(),
         StorageService.getAccounts(),
         StorageService.getCards(),
         StorageService.getTransfers(),
+        StorageService.getBudgets(),
+        StorageService.getGoals(),
+        StorageService.getRecurringExpenses(),
       ]);
-      setData({ transactions: trxs, categories: cats, accounts: accs, cards: crds, transfers: trs });
+      setData({ transactions: trxs, categories: cats, accounts: accs, cards: crds, transfers: trs, budgets: bdgs, goals: gls, recurring: rec });
     } catch (e) {
       console.error('Dashboard load error:', e);
     } finally {
@@ -83,6 +91,26 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
   };
 
   const { transactions, categories, accounts, transfers } = data;
+
+  // ── AI Insights (rule-based, no external API) ────────────────────────────
+  const insights = useMemo(() => generateInsights({
+    transactions: data.transactions,
+    budgets: data.budgets,
+    categories: data.categories,
+    accounts: data.accounts,
+    recurring: data.recurring,
+    goals: data.goals,
+    currentMonth,
+  }), [data, currentMonth]);
+
+  const visibleInsights = useMemo(
+    () => insights.filter(i => !dismissedInsights.has(i.id)),
+    [insights, dismissedInsights]
+  );
+
+  const dismissInsight = (id: string) => {
+    setDismissedInsights(prev => new Set([...prev, id]));
+  };
 
   // ── Cálculos Históricos Baseados no Mês Selecionado ──────────────────────────
 
@@ -352,6 +380,25 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
 
   return (
     <div className={`animate-fade-in space-y-6 pb-20 transition-all duration-300 ${isTransitioning ? 'opacity-50 scale-[0.99] grayscale-[0.2]' : 'opacity-100 scale-100'}`}>
+
+      {/* ── INSIGHTS PANEL ─────────────────────────────────────────────────── */}
+      {visibleInsights.length > 0 && (
+        <div className="rounded-2xl overflow-hidden border border-slate-100 shadow-sm bg-white">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50 bg-gradient-to-r from-slate-900 to-slate-800">
+            <div className="flex items-center gap-2">
+              <Sparkles size={14} className="text-orange-400" />
+              <span className="text-xs font-black uppercase tracking-widest text-white">Êxodo IA — Insights</span>
+            </div>
+            <span className="text-[10px] text-slate-400 font-bold">{visibleInsights.length} alerta(s)</span>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {visibleInsights.map(insight => (
+              <InsightCard key={insight.id} insight={insight} onDismiss={dismissInsight} />
+            ))}
+          </div>
+        </div>
+      )}
+
 
       {/* ── ALERTA: Lançamentos Incompletos ───────────────────────────────── */}
       {incompleteTransactions.length > 0 && (
@@ -881,6 +928,36 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       </div>
 
       <SupabaseSync />
+    </div>
+  );
+}
+
+// ─── InsightCard sub-component ───────────────────────────────────────────────
+const InsightCard: React.FC<{ insight: Insight; onDismiss: (id: string) => void }> = ({ insight, onDismiss }) => {
+  const severityStyles: Record<InsightSeverity, string> = {
+    CRITICAL: 'bg-red-50 border-l-4 border-l-red-500',
+    WARNING: 'bg-amber-50 border-l-4 border-l-amber-400',
+    INFO: 'bg-slate-50 border-l-4 border-l-slate-300',
+  };
+  const textStyles: Record<InsightSeverity, string> = {
+    CRITICAL: 'text-red-800',
+    WARNING: 'text-amber-800',
+    INFO: 'text-slate-700',
+  };
+
+  return (
+    <div className={`flex items-start gap-3 px-4 py-3.5 ${severityStyles[insight.severity]} transition-all`}>
+      <span className="text-base shrink-0 mt-0.5">{insight.icon}</span>
+      <p className={`text-xs font-medium leading-relaxed flex-1 ${textStyles[insight.severity]}`}>
+        {insight.message}
+      </p>
+      <button
+        onClick={() => onDismiss(insight.id)}
+        className="shrink-0 p-1 rounded-full hover:bg-black/5 text-slate-400 hover:text-slate-600 transition-colors"
+        aria-label="Dispensar insight"
+      >
+        <XIcon size={13} />
+      </button>
     </div>
   );
 }

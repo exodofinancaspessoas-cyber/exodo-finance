@@ -26,12 +26,14 @@ import QuickAddView from './components/QuickAddView';
 import AgendaView from './components/AgendaView';
 import FluxoCaixaView from './components/FluxoCaixaView';
 import { Sparkles } from 'lucide-react';
+import FinanceChat from './components/FinanceChat';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState('dashboard');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Onboarding states
   const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -42,22 +44,15 @@ export default function App() {
     return !localStorage.getItem('onboarding_completed') && !localStorage.getItem('onboarding_stage');
   });
 
-  // Auto-open Quick Add on Mobile or via URL
+  // Auto-open Quick Add only via URL param (removed mobile auto-open to avoid jarring UX)
   useEffect(() => {
     if (user) {
       const urlParams = new URLSearchParams(window.location.search);
-      const isMobile = window.innerWidth < 768;
       const hasQuickAddParam = urlParams.get('view') === 'quick-add';
-      const hasOpenedBefore = sessionStorage.getItem('quick_add_auto_opened');
 
-      if ((hasQuickAddParam || isMobile) && !hasOpenedBefore) {
+      if (hasQuickAddParam) {
         setIsQuickAddOpen(true);
-        sessionStorage.setItem('quick_add_auto_opened', 'true');
-
-        // Clean up URL if present
-        if (hasQuickAddParam) {
-          window.history.replaceState({}, '', window.location.pathname);
-        }
+        window.history.replaceState({}, '', window.location.pathname);
       }
     }
   }, [user]);
@@ -206,6 +201,22 @@ export default function App() {
           />
         </div>
       )}
+
+      {/* ── AI CHAT BUTTON (Floating) ── */}
+      {!isQuickAddOpen && !isChatOpen && (
+        <button
+          id="ai-chat-button"
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-[88px] md:bottom-6 right-4 z-[90] w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-white shadow-xl shadow-slate-900/30 flex items-center justify-center transition-all active:scale-90 hover:shadow-2xl hover:scale-105 tap-highlight-none"
+          title="Assistente IA"
+          aria-label="Abrir assistente IA"
+        >
+          <Sparkles size={18} className="text-orange-400 md:w-[22px] md:h-[22px]" />
+        </button>
+      )}
+
+      {/* ── AI CHAT DRAWER ── */}
+      <FinanceChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </>
   );
 }

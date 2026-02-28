@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, CreditCard, Banknote, Landmark, Check, AlertCircle, ChevronDown, Calendar, Tag, RefreshCw, Search, ChevronRight, Camera, Mic, Trash2, StopCircle, Play } from 'lucide-react';
+import { X, Plus, Minus, CreditCard, Banknote, Landmark, Check, AlertCircle, ChevronDown, Calendar, Tag, RefreshCw, Search, ChevronRight, Camera, Mic, Trash2, StopCircle, Play, Sparkles, ScanLine, Loader2 } from 'lucide-react';
 import { Skeleton, hapticFeedback } from './ui/Skeleton';
 import { StorageService } from '../services/storage';
 import { Transaction, TransactionType, PaymentMethod, Account, Card, Category, TransactionStatus, RecurrenceType, RecurrenceFrequency } from '../types';
 import { formatCurrency, toISODate } from '../utils';
+import { suggestCategory, scanReceipt as scanReceiptAI } from '../services/aiService';
 
 interface QuickAddViewProps {
     onClose: () => void;
@@ -44,6 +45,11 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
     const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
     const [recordingActive, setRecordingActive] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
+    const [isAISuggesting, setIsAISuggesting] = useState(false);
+    const [aiSuggestedCategoryId, setAiSuggestedCategoryId] = useState<string | null>(null);
+    const [isOCRScanning, setIsOCRScanning] = useState(false);
+    const ocrInputRef = useRef<HTMLInputElement>(null);
+
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const recordingIntervalRef = useRef<number | null>(null);
@@ -125,6 +131,55 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
         if (file) {
             setCapturedPhoto(file);
             setPhotoPreview(URL.createObjectURL(file));
+        }
+    };
+
+    // AI: Categorization on description blur
+    const handleDescriptionBlur = async () => {
+        if (description.trim().length < 3 || categoryId) return;
+        setIsAISuggesting(true);
+        try {
+            const result = await suggestCategory(description, categories);
+            if (result?.category_id) {
+                const matchedCat = categories.find(c => c.id === result.category_id);
+                if (matchedCat) {
+                    setCategoryId(result.category_id);
+                    setAiSuggestedCategoryId(result.category_id);
+                }
+            }
+        } catch (e) {
+            console.warn('[AI] Categorization failed:', e);
+        } finally {
+            setIsAISuggesting(false);
+        }
+    };
+
+    // AI: OCR scan of receipt image
+    const handleOCRCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsOCRScanning(true);
+        try {
+            const result = await scanReceiptAI(file);
+            if (result) {
+                if (result.description) setDescription(result.description);
+                if (result.amount) setAmount(String(result.amount));
+                if (result.date) setDate(result.date);
+                if (result.description && !categoryId) {
+                    const catResult = await suggestCategory(result.description, categories);
+                    if (catResult?.category_id) {
+                        setCategoryId(catResult.category_id);
+                        setAiSuggestedCategoryId(catResult.category_id);
+                    }
+                }
+            } else {
+                alert('Ótima tentativa! Não consegui extrair os dados. Tente com a imagem mais nítida.');
+            }
+        } catch (e) {
+            console.warn('[AI] OCR failed:', e);
+            alert('Erro ao processar a imagem. Tente novamente.');
+        } finally {
+            setIsOCRScanning(false);
         }
     };
 
@@ -249,6 +304,26 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                     </label>
 
                     <div className="flex gap-4 mb-4">
+                        {/* OCR Scanner button */}
+                        <div className="relative">
+                            <input type="file" accept="image/*" capture="environment" className="hidden" ref={ocrInputRef} onChange={handleOCRCapture} />
+                            <button
+                                onClick={(e) => { e.stopPropagation(); ocrInputRef.current?.click(); }}
+                                disabled={isOCRScanning}
+                                title="Escanear nota fiscal"
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-90 ${isOCRScanning
+                                        ? 'bg-orange-100 text-orange-500 animate-pulse cursor-not-allowed'
+                                        : 'bg-slate-50 border border-slate-100 text-slate-400 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100'
+                                    }`}
+                            >
+                                {isOCRScanning ? <Loader2 size={20} className="animate-spin" /> : <ScanLine size={20} strokeWidth={2} />}
+                            </button>
+                            {isOCRScanning && (
+                                <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold text-orange-500 uppercase tracking-wider">
+                                    Lendo...
+                                </div>
+                            )}
+                        </div>
                         <div className="relative">
                             <input type="file" accept="image/*" capture="environment" className="hidden" ref={photoInputRef} onChange={handlePhotoCapture} />
                             {photoPreview ? (
@@ -444,17 +519,33 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                         <div className="bg-white rounded-[28px] p-6 space-y-6 shadow-sm">
                             <div className="space-y-4">
                                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">O que é isso? <span className="text-rose-600">*</span></label>
-                                <input
-                                    type="text"
-                                    placeholder="Descreva este lançamento..."
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-5 text-lg outline-none focus:bg-white focus:border-rose-500/10 transition-all font-black placeholder:text-slate-200"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Descreva este lançamento..."
+                                        value={description}
+                                        onChange={(e) => { setDescription(e.target.value); if (aiSuggestedCategoryId) setAiSuggestedCategoryId(null); }}
+                                        onBlur={handleDescriptionBlur}
+                                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-5 text-lg outline-none focus:bg-white focus:border-rose-500/10 transition-all font-black placeholder:text-slate-200"
+                                    />
+                                    {isAISuggesting && (
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                                            <Loader2 size={14} className="animate-spin text-orange-500" />
+                                            <span className="text-[9px] font-bold text-orange-500 uppercase tracking-wide">IA...</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Categoria <span className="text-rose-600">*</span></label>
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Categoria <span className="text-rose-600">*</span></label>
+                                    {aiSuggestedCategoryId && categoryId === aiSuggestedCategoryId && (
+                                        <span className="flex items-center gap-1 text-[9px] font-black text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
+                                            <Sparkles size={9} /> Sugerido pela IA ✨
+                                        </span>
+                                    )}
+                                </div>
                                 <button
                                     onClick={() => {
                                         hapticFeedback(5);

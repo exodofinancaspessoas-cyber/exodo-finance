@@ -5,7 +5,7 @@ import {
     Table, TrendingUp, TrendingDown, ChevronLeft, ChevronRight,
     Filter, Download, LayoutGrid, List, Calculator, Calendar,
     ArrowUpRight, ArrowDownRight, CheckCircle2, AlertCircle,
-    Plus, Minus, Equal, X, Wallet, CreditCard, Tag
+    Plus, Minus, Equal, X, Wallet, CreditCard, Tag, ChevronDown
 } from 'lucide-react';
 import { Transaction, RecurringExpense, Category, TransactionType } from '../types';
 import { StorageService } from '../services/storage';
@@ -40,6 +40,17 @@ export default function FluxoCaixaView() {
     const [accounts, setAccounts] = useState<any[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
 
+    // Extended days menu
+    const [showDaysMenu, setShowDaysMenu] = useState(false);
+    const daysMenuRef = useRef<HTMLDivElement>(null);
+    const datePickerRef = useRef<HTMLDivElement>(null);
+
+    // Custom date range
+    const [customStartDate, setCustomStartDate] = useState('');
+    const [customEndDate, setCustomEndDate] = useState('');
+    const [useCustomRange, setUseCustomRange] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+
     // Period controls
     const [startMonthOffset, setStartMonthOffset] = useState(0);
     const [numMonths, setNumMonths] = useState(7);
@@ -64,9 +75,23 @@ export default function FluxoCaixaView() {
 
     const [selectedItem, setSelectedItem] = useState<any>(null);
 
+    // Close days menu and date picker on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (daysMenuRef.current && !daysMenuRef.current.contains(e.target as Node)) {
+                setShowDaysMenu(false);
+            }
+            if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+                setShowDatePicker(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
     useEffect(() => {
         loadData();
-    }, [startMonthOffset, numMonths, selectedMonthIndex, forecastDays, showProjections]);
+    }, [startMonthOffset, numMonths, selectedMonthIndex, forecastDays, showProjections, useCustomRange, customStartDate, customEndDate]);
 
     const loadData = async () => {
         setLoading(true);
@@ -175,7 +200,10 @@ export default function FluxoCaixaView() {
             let selMonth = cols[selectedMonthIndex];
             let rangeStart: Date, rangeEnd: Date;
 
-            if (forecastDays) {
+            if (useCustomRange && customStartDate && customEndDate) {
+                rangeStart = new Date(customStartDate + 'T12:00:00');
+                rangeEnd = new Date(customEndDate + 'T12:00:00');
+            } else if (forecastDays) {
                 rangeStart = new Date();
                 rangeEnd = new Date();
                 rangeEnd.setDate(rangeStart.getDate() + forecastDays);
@@ -328,31 +356,127 @@ export default function FluxoCaixaView() {
                         <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200">
                             <Table size={24} />
                         </div>
-                        {forecastDays ? `Previsão de ${forecastDays} Dias` : 'Fluxo de Caixa Mensal'}
+                        {useCustomRange ? 'Período Personalizado' : forecastDays ? `Previsão de ${forecastDays} Dias` : 'Fluxo de Caixa Mensal'}
                     </h2>
                     <p className="text-slate-500 font-medium ml-1">
-                        {forecastDays ? 'Visão antecipada de entradas e saídas.' : 'Análise focada no planejado versus realizado.'}
+                        {useCustomRange ? 'Visão detalhada do período selecionado.' : forecastDays ? 'Visão antecipada de entradas e saídas.' : 'Análise focada no planejado versus realizado.'}
                     </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Forecast Selector */}
                     <div className="flex w-full sm:w-auto bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                        {/* Mensal */}
                         <button
-                            onClick={() => { setForecastDays(null); setDisplayType('detailed'); }}
-                            className={`flex-1 sm:flex-none px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === null ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'}`}
+                            onClick={() => { setForecastDays(null); setUseCustomRange(false); setDisplayType('detailed'); }}
+                            className={`flex-1 sm:flex-none px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === null && !useCustomRange ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'}`}
                         >
                             Mensal
                         </button>
+
+                        {/* Quick days: 10, 20, 30 */}
                         {[10, 20, 30].map(days => (
                             <button
                                 key={days}
-                                onClick={() => { setForecastDays(days); setDisplayType('detailed'); }}
-                                className={`flex-1 sm:flex-none px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === days ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'}`}
+                                onClick={() => { setForecastDays(days); setUseCustomRange(false); setDisplayType('detailed'); }}
+                                className={`flex-1 sm:flex-none px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === days && !useCustomRange ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'}`}
                             >
                                 {days} Dias
                             </button>
                         ))}
+
+                        {/* Extended days dropdown trigger */}
+                        <div className="relative" ref={daysMenuRef}>
+                            <button
+                                onClick={() => setShowDaysMenu(p => !p)}
+                                className={`flex items-center gap-1 px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${([60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].includes(forecastDays ?? 0) && !useCustomRange)
+                                    ? 'bg-indigo-600 text-white shadow-md'
+                                    : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'
+                                    }`}
+                            >
+                                {([60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].includes(forecastDays ?? 0) && !useCustomRange)
+                                    ? `${forecastDays} Dias`
+                                    : 'Mais'
+                                }
+                                <ChevronDown size={12} className={`transition-transform duration-200 ${showDaysMenu ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {showDaysMenu && (
+                                <div className="absolute top-full right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 overflow-hidden py-1 min-w-[130px] animate-in fade-in slide-in-from-top-2 duration-150">
+                                    {[60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].map(days => (
+                                        <button
+                                            key={days}
+                                            onClick={() => { setForecastDays(days); setUseCustomRange(false); setDisplayType('detailed'); setShowDaysMenu(false); }}
+                                            className={`w-full text-left px-5 py-2.5 text-[11px] font-black uppercase tracking-wider transition-colors ${forecastDays === days && !useCustomRange
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-700'
+                                                }`}
+                                        >
+                                            {days} Dias
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Custom Date Range Picker */}
+                    <div className="relative" ref={datePickerRef}>
+                        <button
+                            onClick={() => setShowDatePicker(p => !p)}
+                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl border shadow-sm transition-all ${useCustomRange
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-200'
+                                : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                                }`}
+                        >
+                            <Calendar size={14} />
+                            {useCustomRange && customStartDate && customEndDate
+                                ? `${new Date(customStartDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} → ${new Date(customEndDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
+                                : 'Período'
+                            }
+                        </button>
+
+                        {showDatePicker && (
+                            <div className="absolute top-full right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 p-5 min-w-[280px] animate-in fade-in slide-in-from-top-2 duration-150">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Selecionar Período</p>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5">Data Inicial</label>
+                                        <input
+                                            type="date"
+                                            value={customStartDate}
+                                            onChange={e => setCustomStartDate(e.target.value)}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5">Data Final</label>
+                                        <input
+                                            type="date"
+                                            value={customEndDate}
+                                            min={customStartDate}
+                                            onChange={e => setCustomEndDate(e.target.value)}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 pt-1">
+                                        <button
+                                            onClick={() => { setCustomStartDate(''); setCustomEndDate(''); setUseCustomRange(false); setShowDatePicker(false); }}
+                                            className="flex-1 py-2 rounded-xl border border-slate-200 text-[10px] font-black uppercase text-slate-500 hover:bg-slate-50 transition-all"
+                                        >
+                                            Limpar
+                                        </button>
+                                        <button
+                                            disabled={!customStartDate || !customEndDate}
+                                            onClick={() => { if (customStartDate && customEndDate) { setUseCustomRange(true); setForecastDays(null); setDisplayType('detailed'); setShowDatePicker(false); } }}
+                                            className="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                        >
+                                            Aplicar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* View Switcher */}
@@ -380,7 +504,7 @@ export default function FluxoCaixaView() {
                         </button>
                     </div>
 
-                    {!forecastDays && (
+                    {!forecastDays && !useCustomRange && (
                         <div className="flex items-center gap-1 bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
                             <button onClick={() => { setStartMonthOffset(p => p - 1); setSelectedMonthIndex(0); }} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"><ChevronLeft size={20} /></button>
                             <div className="px-4 text-xs font-black uppercase tracking-widest text-slate-600">Navegar</div>
@@ -392,7 +516,7 @@ export default function FluxoCaixaView() {
 
             {/* Selection Area Area */}
             {/* Custom Modern Month Selection */}
-            {!forecastDays && (
+            {!forecastDays && !useCustomRange && (
                 <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-none no-scrollbar py-2">
                     {months.map((m, idx) => (
                         <button
@@ -420,11 +544,22 @@ export default function FluxoCaixaView() {
                 </div>
             )}
 
-            {forecastDays && (
+            {(forecastDays || useCustomRange) && (
                 <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-4">
                     <div>
-                        <h4 className="text-indigo-900 font-black text-xl">Previsão de {forecastDays} Dias Corridos</h4>
-                        <p className="text-indigo-600 text-sm font-medium">Análise de hoje até {(new Date(Date.now() + forecastDays * 86400000)).toLocaleDateString('pt-BR')}</p>
+                        {useCustomRange ? (
+                            <>
+                                <h4 className="text-indigo-900 font-black text-xl">Período Personalizado</h4>
+                                <p className="text-indigo-600 text-sm font-medium">
+                                    {new Date(customStartDate + 'T12:00:00').toLocaleDateString('pt-BR')} até {new Date(customEndDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <h4 className="text-indigo-900 font-black text-xl">Previsão de {forecastDays} Dias Corridos</h4>
+                                <p className="text-indigo-600 text-sm font-medium">Análise de hoje até {(new Date(Date.now() + (forecastDays ?? 0) * 86400000)).toLocaleDateString('pt-BR')}</p>
+                            </>
+                        )}
                     </div>
                     <div className="bg-white/50 backdrop-blur-sm px-6 py-3 rounded-2xl border border-indigo-200 flex items-center gap-3">
                         <Calendar className="text-indigo-500" size={20} />

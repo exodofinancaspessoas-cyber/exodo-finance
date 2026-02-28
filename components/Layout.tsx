@@ -26,7 +26,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
 
     const isActive = (id: string) => {
         if (id === 'finance') return ['finance', 'accounts', 'cards'].includes(currentView);
-        if (id === 'movements') return ['movements', 'incomes', 'expenses', 'transfers', 'recurring'].includes(currentView);
+        if (id === 'movements') return ['movements', 'incomes', 'expenses', 'transfers', 'recurring', 'movements_incomplete'].includes(currentView);
         if (id === 'analytics') return ['analytics', 'projection', 'reports'].includes(currentView);
         if (id === 'planning') return ['planning', 'goals', 'budgets'].includes(currentView);
         return currentView === id;
@@ -42,6 +42,20 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
         { id: 'planning', icon: BookOpen, label: 'Planejamento' },
         { id: 'settings', icon: Settings, label: 'Configurações' },
     ];
+
+    // Bottom nav: 4 key items around the central FAB
+    const bottomNavLeft = [
+        { id: 'dashboard', icon: LayoutDashboard, label: 'Início' },
+        { id: 'agenda', icon: CalendarDays, label: 'Agenda' },
+    ];
+    const bottomNavRight = [
+        { id: 'movements', icon: Wallet, label: 'Lançar' },
+        { id: 'finance', icon: Landmark, label: 'Contas' },
+    ];
+
+    // Get active page label for mobile header
+    const activeItem = detailedMenuItems.find(item => isActive(item.id));
+    const activeMobileLabel = activeItem?.label ?? 'Êxodo';
 
     return (
         <div className="flex h-screen bg-slate-50 relative overflow-hidden font-sans text-slate-900">
@@ -107,68 +121,87 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
             <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50 w-full">
 
                 {/* Mobile Header */}
-                <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shadow-sm z-20">
-                    <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold">Ê</div>
-                        <span className="font-bold text-lg text-slate-800">Êxodo</span>
-                        {!isSupabaseConfigured() && (
-                            <span className="bg-amber-100 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded uppercase flex items-center gap-0.5">
-                                <CloudOff size={8} /> Local
-                            </span>
-                        )}
+                <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 shadow-sm z-20 min-h-[56px]">
+                    <div className="flex items-center space-x-2.5">
+                        <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold shrink-0">Ê</div>
+                        <div className="flex flex-col">
+                            <span className="font-black text-slate-900 text-sm leading-tight">{activeMobileLabel}</span>
+                            {!isSupabaseConfigured() && (
+                                <span className="text-amber-600 text-[9px] font-bold uppercase flex items-center gap-0.5">
+                                    <CloudOff size={8} /> modo local
+                                </span>
+                            )}
+                        </div>
                     </div>
-                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-                        <Menu size={24} />
+                    <button
+                        onClick={() => { hapticFeedback(5); setIsMobileMenuOpen(!isMobileMenuOpen); }}
+                        className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-xl transition-colors tap-highlight-none"
+                        aria-label="Abrir menu"
+                    >
+                        <Menu size={22} />
                     </button>
                 </header>
 
                 {/* Scrollable Content */}
-                <main className="flex-1 overflow-y-auto p-4 pb-24 md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
+                <main className="flex-1 overflow-y-auto p-4 pb-28 md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
                     {children}
                 </main>
             </div>
 
             {/* Mobile Bottom Navigation */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 z-[40] bg-white/80 backdrop-blur-lg border-t border-slate-200 px-2 pb-safe-offset-2 pt-2 flex items-center justify-around shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
-                {detailedMenuItems.slice(0, 2).map(item => (
-                    <button
-                        key={item.id}
-                        onClick={() => onChangeView(item.id)}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${isActive(item.id) ? 'text-orange-600 font-bold' : 'text-slate-400'}`}
-                    >
-                        <item.icon size={20} className={isActive(item.id) ? 'text-orange-600' : 'text-slate-400'} />
-                        <span className="text-[10px] uppercase tracking-tighter">
-                            {item.id === 'finance' ? 'Finanças' : item.label}
-                        </span>
-                    </button>
-                ))}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[40] bg-white/95 backdrop-blur-xl border-t border-slate-100 pb-safe-offset-0 shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
+                <div className="flex items-center justify-around px-1 pt-1 pb-2">
+                    {bottomNavLeft.map(item => (
+                        <button
+                            key={item.id}
+                            onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
+                            className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
+                                    ? 'bg-orange-50 text-orange-600'
+                                    : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
+                                }`}
+                            aria-label={item.label}
+                        >
+                            <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
+                            <span className={`text-[10px] font-bold uppercase tracking-tight leading-none mt-0.5 ${isActive(item.id) ? 'text-orange-600' : 'text-slate-400'
+                                }`}>
+                                {item.label}
+                            </span>
+                        </button>
+                    ))}
 
-                {/* Central Action: Quick Add */}
-                <div className="relative -top-6">
-                    <button
-                        onClick={() => { hapticFeedback(15); onQuickAdd?.(); }}
-                        className="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 border-[4px] border-white active:scale-90 transition-all group btn-mobile-active"
-                    >
-                        <div className="relative">
-                            <Plus size={28} className="group-hover:rotate-90 transition-transform duration-300" />
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-600 rounded-full border-2 border-white" />
+                    {/* Central FAB */}
+                    <div className="relative -top-5">
+                        <button
+                            onClick={() => { hapticFeedback(15); onQuickAdd?.(); }}
+                            className="w-[60px] h-[60px] bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 border-[3px] border-white active:scale-90 transition-all group btn-mobile-active tap-highlight-none"
+                            aria-label="Novo Lançamento"
+                        >
+                            <Plus size={26} className="group-active:rotate-90 transition-transform duration-200" strokeWidth={2.5} />
+                        </button>
+                        <div className="absolute -top-1 -right-0 w-4 h-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
+                            <Plus size={8} strokeWidth={3.5} className="text-white" />
                         </div>
-                    </button>
-                </div>
+                    </div>
 
-                {detailedMenuItems.slice(2, 4).map(item => (
-                    <button
-                        key={item.id}
-                        onClick={() => onChangeView(item.id)}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${isActive(item.id) ? 'text-orange-600 font-bold' : 'text-slate-400'}`}
-                    >
-                        <item.icon size={20} className={isActive(item.id) ? 'text-orange-600' : 'text-slate-400'} />
-                        <span className="text-[10px] uppercase tracking-tighter">
-                            {item.id === 'movements' ? 'Lançar' : item.label}
-                        </span>
-                    </button>
-                ))}
-            </div>
+                    {bottomNavRight.map(item => (
+                        <button
+                            key={item.id}
+                            onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
+                            className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
+                                    ? 'bg-orange-50 text-orange-600'
+                                    : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
+                                }`}
+                            aria-label={item.label}
+                        >
+                            <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
+                            <span className={`text-[10px] font-bold uppercase tracking-tight leading-none mt-0.5 ${isActive(item.id) ? 'text-orange-600' : 'text-slate-400'
+                                }`}>
+                                {item.label}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </nav>
 
             {/* Mobile Menu Overlay */}
             {isMobileMenuOpen && (
