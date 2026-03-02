@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
-import { CreditCard, PlusCircle, Edit, Trash2, FileText, Check, AlertCircle } from 'lucide-react';
+import { CreditCard, PlusCircle, Edit, Trash2, FileText, Check, AlertCircle, MoreHorizontal, Landmark, ShieldCheck, CreditCard as CardIcon, Loader2 } from 'lucide-react';
 import { Card, Category, Transaction, Account } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency } from '../utils';
+import { Skeleton, hapticFeedback } from './ui/Skeleton';
 
 export default function CardsView() {
     const [cards, setCards] = useState<Card[]>([]);
@@ -78,6 +78,7 @@ export default function CardsView() {
 
     const handleDelete = async (id: string) => {
         if (confirm('Tem certeza que deseja excluir este cartão?')) {
+            hapticFeedback(20);
             await StorageService.deleteCard(id);
             loadData();
         }
@@ -88,12 +89,13 @@ export default function CardsView() {
         if (isSaving) return;
 
         setIsSaving(true);
+        hapticFeedback(10);
         try {
             const newCard: Card = {
                 id: editingCard ? editingCard.id : StorageService.generateId(),
                 name: formData.name,
                 limit: Number(formData.limit),
-                limit_used: editingCard ? editingCard.limit_used : 0, // Recalc by service
+                limit_used: editingCard ? editingCard.limit_used : 0,
                 closing_day: Number(formData.closing_day),
                 due_day: Number(formData.due_day),
                 bank: formData.bank,
@@ -113,25 +115,19 @@ export default function CardsView() {
 
     // --- Invoice Setup Logic ---
     const handleOpenInvoiceSetup = (card: Card) => {
+        hapticFeedback(5);
         setSelectedCardForInvoice(card);
 
-
-
-        // Generate next 12 months slots
-        // Start from NEXT month if current day > closing day? 
-        // User wants to input "Future Invoices".
-        // Let's just list Current Month + 11.
         const today = new Date();
         const slots = [];
         for (let i = 0; i < 12; i++) {
             const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
             const monthName = d.toLocaleDateString('pt-BR', { month: 'long' });
-            // Capitalize
             const monthLabel = monthName.charAt(0).toUpperCase() + monthName.slice(1);
             slots.push({
                 month: monthLabel,
                 year: d.getFullYear(),
-                monthIndex: d.getMonth(), // 0-11
+                monthIndex: d.getMonth(),
                 amount: ''
             });
         }
@@ -156,12 +152,12 @@ export default function CardsView() {
                     description: `Fatura de Cartão de Crédito - ${slot.month}/${slot.year}`,
                     amount: amountVal,
                     type: 'DESPESA',
-                    category_id: cardCategory?.id, // Assign category for better visibility
+                    category_id: cardCategory?.id,
                     date: dueDate.toISOString().split('T')[0],
                     status: 'PREVISTA',
                     payment_method: 'CREDITO',
                     card_id: selectedCardForInvoice.id,
-                    account_id: selectedCardForInvoice.account_id, // Link to bank account for easier payment
+                    account_id: selectedCardForInvoice.account_id,
                     created_at: new Date().toISOString(),
                     observation: 'Importado via Configuração Inicial de Cartão'
                 };
@@ -173,13 +169,12 @@ export default function CardsView() {
 
         if (importCount > 0) {
             setIsSavingInvoices(true);
+            hapticFeedback(15);
             try {
-                // Batch save is MUCH faster and prevents duplicates by disabling the button
                 await StorageService.saveTransactions(newTransactions);
-
                 alert(`${importCount} faturas importadas com sucesso!`);
                 setIsInvoiceModalOpen(false);
-                await loadData(); // Update limits used
+                await loadData();
             } catch (error: any) {
                 console.error('Erro ao importar faturas:', error);
                 alert(`Erro ao salvar faturas: ${error.message || 'Verifique sua conexão.'}`);
@@ -198,19 +193,20 @@ export default function CardsView() {
     };
 
     return (
-        <div className="animate-fade-in pb-20">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-800">Meus Cartões</h2>
-                    <p className="text-slate-500">Gerencie seus limites e faturas.</p>
+        <div className="animate-in fade-in duration-700 space-y-8 pb-20">
+            {/* LARGE TITLE HEADER */}
+            <div className="flex justify-between items-end px-1">
+                <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black text-[#5856d6] uppercase tracking-widest leading-none">Meus Recursos</span>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Cartões</h1>
                 </div>
                 <button
                     id="trigger-new-card"
-                    onClick={() => handleOpenModal()}
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl flex items-center shadow-lg hover:shadow-xl transition-all font-bold"
+                    onClick={() => { hapticFeedback(10); handleOpenModal(); }}
+                    className="bg-slate-900 hover:bg-slate-800 text-white w-14 h-14 ios-squircle flex items-center justify-center shadow-lg shadow-slate-900/20 transition-all active:scale-95"
+                    aria-label="Novo Cartão"
                 >
-                    <PlusCircle size={20} className="mr-2" />
-                    Novo Cartão
+                    <PlusCircle size={24} strokeWidth={3} />
                 </button>
             </div>
 
@@ -220,90 +216,111 @@ export default function CardsView() {
                     const percentUsed = (card.limit_used / card.limit) * 100;
 
                     return (
-                        <div key={card.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative group">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg ${card.brand === 'MASTERCARD' ? 'bg-orange-500' :
-                                    card.brand === 'VISA' ? 'bg-blue-600' :
-                                        card.brand === 'ELO' ? 'bg-red-500' :
-                                            card.brand === 'AMEX' ? 'bg-slate-500' : 'bg-slate-800'
-                                    }`}>
-                                    <CreditCard size={24} />
-                                </div>
-                                <div className="flex space-x-1">
-                                    <button
-                                        id="trigger-invoice-setup"
-                                        onClick={() => handleOpenInvoiceSetup(card)}
-                                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
-                                        title="Importar Faturas/Saldos Anteriores"
-                                    >
-                                        <FileText size={18} />
-                                    </button>
-                                    <button onClick={() => handleOpenModal(card)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
-                                        <Edit size={18} />
-                                    </button>
-                                    <button onClick={() => handleDelete(card.id)} className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors">
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="mb-6">
-                                <h4 className="font-bold text-lg text-slate-800 mb-1">{card.name}</h4>
-                                <p className="text-xs text-slate-400 font-bold tracking-wider uppercase">{card.bank} • {card.brand}</p>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <div className="flex justify-between text-xs mb-2 font-medium">
-                                        <span className="text-slate-500">Limite Utilizado</span>
-                                        <span className="text-slate-800">{Math.round(percentUsed)}%</span>
+                        <div key={card.id} className="bg-white/80 backdrop-blur-xl ios-squircle-md shadow-sm border border-slate-100 hover:shadow-xl hover:translate-y-[-4px] transition-all relative group overflow-hidden">
+                            <div className="p-6">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className={`w-14 h-14 ios-squircle flex items-center justify-center text-white shadow-lg ${card.brand === 'MASTERCARD' ? 'bg-gradient-to-br from-[#eb001b] to-[#ff5f00]' :
+                                        card.brand === 'VISA' ? 'bg-gradient-to-br from-[#061c6b] to-[#0052cc]' :
+                                            card.brand === 'ELO' ? 'bg-gradient-to-br from-[#000000] to-[#555555]' :
+                                                card.brand === 'AMEX' ? 'bg-gradient-to-br from-[#007ed5] to-[#c2d7ed]' : 'bg-slate-900'
+                                        }`}>
+                                        <CardIcon size={28} strokeWidth={2} />
                                     </div>
-                                    <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-1000 ease-out ${percentUsed > 90 ? 'bg-red-500' : percentUsed > 50 ? 'bg-yellow-500' : 'bg-green-500'
-                                                }`}
-                                            style={{ width: `${Math.min(percentUsed, 100)}%` }}
-                                        ></div>
+                                    <div className="flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => handleOpenInvoiceSetup(card)}
+                                            className="w-10 h-10 ios-squircle bg-slate-100/50 flex items-center justify-center text-slate-400 hover:text-[#007aff] transition-all"
+                                            title="Configurar Início"
+                                        >
+                                            <FileText size={18} strokeWidth={2.5} />
+                                        </button>
+                                        <button
+                                            onClick={() => { hapticFeedback(5); handleOpenModal(card); }}
+                                            className="w-10 h-10 ios-squircle bg-slate-100/50 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-all"
+                                        >
+                                            <Edit size={18} strokeWidth={2.5} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(card.id)}
+                                            className="w-10 h-10 ios-squircle bg-slate-100/50 flex items-center justify-center text-slate-400 hover:text-[#ff3b30] transition-all"
+                                        >
+                                            <Trash2 size={18} strokeWidth={2.5} />
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 pt-2">
-                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Fatura Atual</p>
-                                        <p className="font-bold text-slate-800">{formatCurrency(card.limit_used)}</p>
-                                    </div>
-                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-right">
-                                        <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Disponível</p>
-                                        <p className="font-bold text-green-600">{formatCurrency(available)}</p>
+                                <div className="mb-6">
+                                    <h4 className="font-black text-xl text-slate-900 tracking-tight leading-tight mb-1">{card.name}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{card.brand}</span>
+                                        <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                                        <span className="text-[10px] font-black text-[#5856d6] uppercase tracking-widest">{card.bank}</span>
                                     </div>
                                 </div>
 
-                                <div className="flex justify-between text-xs pt-4 border-t border-slate-50 text-slate-500 font-medium">
-                                    <p>Fecha dia {card.closing_day}</p>
-                                    <p>Vence dia {card.due_day}</p>
-                                </div>
+                                <div className="space-y-6">
+                                    <div>
+                                        <div className="flex justify-between text-[10px] mb-2 font-black uppercase tracking-widest">
+                                            <span className="text-slate-400">Uso do Limite</span>
+                                            <span className={`${percentUsed > 90 ? 'text-[#ff3b30]' : 'text-slate-900'}`}>{Math.round(percentUsed)}%</span>
+                                        </div>
+                                        <div className="w-full h-2.5 bg-slate-100 ios-squircle overflow-hidden">
+                                            <div
+                                                className={`h-full ios-squircle transition-all duration-1000 ease-out ${percentUsed > 90 ? 'bg-[#ff3b30]' : percentUsed > 70 ? 'bg-[#ff9500]' : 'bg-[#34c759]'
+                                                    }`}
+                                                style={{ width: `${Math.min(percentUsed, 100)}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
 
-                                {/* Próximas Faturas Lançadas */}
-                                <div className="pt-4 border-t border-slate-50">
-                                    <p className="text-[10px] text-slate-400 uppercase font-black mb-2 tracking-wider flex items-center justify-between">
-                                        <span>Próximas Faturas</span>
-                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">Lançadas</span>
-                                    </p>
-                                    <div className="space-y-2">
-                                        {transactions
-                                            .filter(t => t.card_id === card.id && t.status !== 'EXCLUIDA' && t.status !== 'PAGA')
-                                            .sort((a, b) => a.date.localeCompare(b.date))
-                                            .slice(0, 3)
-                                            .map(t => (
-                                                <div key={t.id} className="flex justify-between items-center text-[11px] bg-slate-50/50 p-2 rounded-lg border border-slate-100/50">
-                                                    <span className="font-bold text-slate-700">{t.date.split('-').reverse().slice(0, 2).join('/')}</span>
-                                                    <span className="text-slate-600 truncate max-w-[100px] mx-2">{t.description.split('-').pop()?.trim()}</span>
-                                                    <span className="font-black text-slate-900">{formatCurrency(t.amount)}</span>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 bg-slate-50 ios-squircle-sm border border-slate-100">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Fatura Atual</p>
+                                            <p className="font-black text-lg text-slate-900 tracking-tight leading-none">{formatCurrency(card.limit_used)}</p>
+                                        </div>
+                                        <div className="p-4 bg-slate-50 ios-squircle-sm border border-slate-100">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Disponível</p>
+                                            <p className="font-black text-lg text-[#34c759] tracking-tight leading-none">{formatCurrency(available)}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between text-[10px] pt-2 font-black uppercase tracking-widest text-slate-400">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-2 h-2 rounded-full bg-[#ff3b30]"></div>
+                                            <span>Fecha dia {card.closing_day}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-2 h-2 rounded-full bg-[#ff9500]"></div>
+                                            <span>Vence dia {card.due_day}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* PROXIMAS FATURAS */}
+                                    <div className="pt-6 border-t border-slate-100">
+                                        <p className="text-[9px] font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center justify-between">
+                                            <span>Lançamentos Futuros</span>
+                                            <ShieldCheck size={14} className="text-[#34c759]" />
+                                        </p>
+                                        <div className="space-y-2.5">
+                                            {transactions
+                                                .filter(t => t.card_id === card.id && t.status !== 'EXCLUIDA' && t.status !== 'PAGA')
+                                                .sort((a, b) => a.date.localeCompare(b.date))
+                                                .slice(0, 3)
+                                                .map(t => (
+                                                    <div key={t.id} className="flex justify-between items-center bg-slate-50/50 p-3 ios-squircle-sm border border-slate-100/50">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.date.split('-').reverse().slice(0, 2).join('/')}</span>
+                                                            <span className="text-[11px] font-bold text-slate-900 truncate max-w-[120px]">{t.description.split('-').pop()?.trim()}</span>
+                                                        </div>
+                                                        <span className="font-black text-xs text-slate-900">{formatCurrency(t.amount)}</span>
+                                                    </div>
+                                                ))}
+                                            {transactions.filter(t => t.card_id === card.id && t.status !== 'EXCLUIDA' && t.status !== 'PAGA').length === 0 && (
+                                                <div className="py-4 text-center bg-slate-50/50 ios-squircle-sm border border-dashed border-slate-200">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tudo em dia</p>
                                                 </div>
-                                            ))}
-                                        {transactions.filter(t => t.card_id === card.id && t.status !== 'EXCLUIDA' && t.status !== 'PAGA').length === 0 && (
-                                            <p className="text-[10px] text-slate-400 italic text-center py-2">Nenhuma fatura lançada.</p>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -312,51 +329,93 @@ export default function CardsView() {
                 })}
 
                 {cards.length === 0 && (
-                    <div className="col-span-full py-16 text-center text-slate-400 bg-white rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center">
-                        <CreditCard size={48} className="mb-4 opacity-50" />
-                        <p className="text-xl font-bold text-slate-600">Nenhum cartão cadastrado</p>
-                        <p className="max-w-md mx-auto mt-2">Adicione seus cartões de crédito para controlar limites, vencimentos e faturas num só lugar.</p>
-                        <button onClick={() => handleOpenModal()} className="mt-6 text-orange-600 font-bold hover:underline">
-                            Cadastrar primeiro cartão
+                    <div className="col-span-full py-24 ios-squircle-md border-2 border-dashed border-slate-200 flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm">
+                        <div className="w-20 h-20 ios-squircle bg-slate-100 flex items-center justify-center text-slate-300 mb-6">
+                            <CreditCard size={40} />
+                        </div>
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight mb-2">Sem Cartões Ativos</h2>
+                        <p className="text-slate-400 text-sm font-medium max-w-xs text-center mb-8 px-4">Cadastre seus cartões para gerenciar limites, faturas e parcelamentos.</p>
+                        <button
+                            onClick={() => { hapticFeedback(5); handleOpenModal(); }}
+                            className="bg-slate-900 text-white px-8 py-4 ios-squircle text-xs font-black uppercase tracking-widest shadow-lg shadow-slate-900/20 active:scale-95 transition-all"
+                        >
+                            Começar Agora
                         </button>
                     </div>
                 )}
             </div>
 
-            {/* EDIT MODAL */}
+            {/* MODAL - EDIT / NEW */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <h3 className="font-bold text-lg text-slate-800">{editingCard ? 'Editar Cartão' : 'Novo Cartão'}</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">&times;</button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in backdrop-blur-md">
+                    <div className="bg-white/95 backdrop-blur-xl rounded-3xl ios-squircle-md shadow-2xl w-full max-w-md overflow-hidden border border-white/50">
+                        <div className="p-7 border-b border-slate-100 flex justify-between items-center bg-white/20">
+                            <h3 className="font-black text-xl text-slate-900 tracking-tight">{editingCard ? 'Editar Dados' : 'Novo Cartão'}</h3>
+                            <button onClick={() => { hapticFeedback(5); setIsModalOpen(false); }} className="w-10 h-10 ios-squircle bg-slate-100 text-slate-400 hover:text-slate-900 transition-all flex items-center justify-center text-2xl leading-none">&times;</button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome do Cartão (Apelido)</label>
-                                <input type="text" className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 text-slate-800 font-medium" placeholder="Ex: Nubank Principal" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                        <form onSubmit={handleSubmit} className="p-7 space-y-6">
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nome do Cartão (Apelido)</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-bold text-slate-900 placeholder:text-slate-300 shadow-inner"
+                                    placeholder="Ex: Nubank Black, Itaú Visa..."
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                />
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Limite Total</label>
+
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Limite Total do Cartão</label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-3.5 text-slate-400 font-medium">R$</span>
-                                    <input type="number" step="0.01" className="w-full pl-10 border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold text-slate-800" value={formData.limit || ''} onChange={e => setFormData({ ...formData, limit: Number(e.target.value) })} onFocus={e => e.target.select()} placeholder="0,00" required />
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">R$</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm pl-11 pr-4 py-5 focus:bg-white outline-none transition-all font-black text-2xl text-slate-900 shadow-inner"
+                                        value={formData.limit || ''}
+                                        onChange={e => setFormData({ ...formData, limit: Number(e.target.value) })}
+                                        onFocus={e => e.target.select()}
+                                        placeholder="0,00"
+                                        required
+                                    />
                                 </div>
                             </div>
+
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Dia Fechamento</label>
-                                    <input type="number" min="1" max="31" className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 text-center font-bold text-slate-700" value={formData.closing_day} onChange={e => setFormData({ ...formData, closing_day: Number(e.target.value) })} onFocus={e => e.target.select()} required />
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Dia Fechamento</label>
+                                    <input
+                                        type="number"
+                                        min="1" max="31"
+                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-black text-center text-slate-900 shadow-inner"
+                                        value={formData.closing_day}
+                                        onChange={e => setFormData({ ...formData, closing_day: Number(e.target.value) })}
+                                        onFocus={e => e.target.select()} required
+                                    />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Dia Vencimento</label>
-                                    <input type="number" min="1" max="31" className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 text-center font-bold text-slate-700" value={formData.due_day} onChange={e => setFormData({ ...formData, due_day: Number(e.target.value) })} onFocus={e => e.target.select()} required />
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Dia Vencimento</label>
+                                    <input
+                                        type="number"
+                                        min="1" max="31"
+                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-black text-center text-slate-900 shadow-inner"
+                                        value={formData.due_day}
+                                        onChange={e => setFormData({ ...formData, due_day: Number(e.target.value) })}
+                                        onFocus={e => e.target.select()} required
+                                    />
                                 </div>
                             </div>
+
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Bandeira</label>
-                                    <select className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none bg-white text-sm font-medium text-slate-700" value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })}>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Bandeira</label>
+                                    <select
+                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none shadow-inner cursor-pointer"
+                                        value={formData.brand}
+                                        onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                                    >
                                         <option value="VISA">Visa</option>
                                         <option value="MASTERCARD">Mastercard</option>
                                         <option value="ELO">Elo</option>
@@ -365,44 +424,60 @@ export default function CardsView() {
                                         <option value="OUTRO">Outro</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Banco Emissor</label>
-                                    <input type="text" className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none text-sm font-medium text-slate-700" placeholder="Ex: Itaú" value={formData.bank} onChange={e => setFormData({ ...formData, bank: e.target.value })} />
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Banco Emissor</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-bold text-slate-900 placeholder:text-slate-300 shadow-inner"
+                                        placeholder="Ex: Itaú"
+                                        value={formData.bank}
+                                        onChange={e => setFormData({ ...formData, bank: e.target.value })}
+                                    />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Vincular a Conta Bancária (Opcional)</label>
-                                <select className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none bg-white text-sm font-medium text-slate-700" value={formData.account_id} onChange={e => {
-                                    const accId = e.target.value;
-                                    const acc = accounts.find(a => a.id === accId);
-                                    setFormData({
-                                        ...formData,
-                                        account_id: accId,
-                                        bank: acc ? acc.bank || acc.name : formData.bank
-                                    });
-                                }}>
+
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Vincular a Conta Bancária</label>
+                                <select
+                                    className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none shadow-inner cursor-pointer"
+                                    value={formData.account_id}
+                                    onChange={e => {
+                                        const accId = e.target.value;
+                                        const acc = accounts.find(a => a.id === accId);
+                                        setFormData({
+                                            ...formData,
+                                            account_id: accId,
+                                            bank: acc ? acc.bank || acc.name : formData.bank
+                                        });
+                                    }}
+                                >
                                     <option value="">Nenhuma (Cartão Avulso)</option>
                                     {accounts.map(acc => (
                                         <option key={acc.id} value={acc.id}>{acc.name} {acc.bank ? `(${acc.bank})` : ''}</option>
                                     ))}
                                 </select>
-                                <p className="text-[10px] text-slate-400 mt-1">Ao vincular, o banco emissor será preenchido automaticamente.</p>
                             </div>
 
-                            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-slate-100">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium">Cancelar</button>
+                            <div className="flex flex-col md:flex-row gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => { hapticFeedback(5); setIsModalOpen(false); }}
+                                    className="flex-1 py-4 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 ios-squircle transition-colors"
+                                >
+                                    Cancelar
+                                </button>
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    className="flex-[2] py-4 bg-slate-900 hover:bg-slate-800 text-white ios-squircle text-xs font-black uppercase tracking-widest shadow-lg shadow-slate-900/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? (
                                         <>
-                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            Salvando...
+                                            <Loader2 size={16} className="animate-spin" />
+                                            <span>Salvando...</span>
                                         </>
                                     ) : (
-                                        'Salvar'
+                                        <span>Confirmar</span>
                                     )}
                                 </button>
                             </div>
@@ -411,96 +486,94 @@ export default function CardsView() {
                 </div>
             )}
 
-            {/* INVOICE SETUP MODAL */}
+            {/* MODAL - INVOICE STARTUP */}
             {isInvoiceModalOpen && selectedCardForInvoice && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-6 border-b border-slate-100 bg-slate-50">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in backdrop-blur-md">
+                    <div className="bg-white/95 backdrop-blur-xl rounded-3xl ios-squircle-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/50">
+                        <div className="p-7 border-b border-slate-100 bg-white/20">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="font-bold text-xl text-slate-800 flex items-center gap-2">
-                                        <FileText className="text-blue-600" /> Configuração Inicial de Fatura
+                                    <h3 className="font-black text-2xl text-slate-900 tracking-tight leading-none mb-2 flex items-center gap-3">
+                                        <div className="w-10 h-10 ios-squircle bg-[#007aff]/10 flex items-center justify-center text-[#007aff]">
+                                            <FileText size={20} strokeWidth={2.5} />
+                                        </div>
+                                        Lançamento Inicial
                                     </h3>
-                                    <p className="text-slate-500 text-sm mt-1">
-                                        Cartão: <strong className="text-slate-700">{selectedCardForInvoice.name}</strong>
-                                    </p>
+                                    <div className="flex items-center gap-2 pl-1">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cartão:</span>
+                                        <span className="text-sm font-black text-[#5856d6] tracking-tight">{selectedCardForInvoice.name}</span>
+                                    </div>
                                 </div>
-                                <button onClick={() => setIsInvoiceModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">&times;</button>
+                                <button onClick={() => { hapticFeedback(5); setIsInvoiceModalOpen(false); }} className="w-10 h-10 ios-squircle bg-slate-100 text-slate-400 hover:text-slate-900 transition-all flex items-center justify-center text-2xl leading-none">&times;</button>
                             </div>
 
-                            <div className="mt-4 bg-blue-50 text-blue-800 text-sm p-3 rounded-lg flex gap-3 border border-blue-100">
-                                <AlertCircle size={20} className="shrink-0" />
-                                <p>
-                                    Use esta tela para lançar <span className="font-bold">valores totais que você já deve</span> para os próximos meses (ex: compras parceladas antigas).
-                                    Isso garantirá que seu orçamento futuro considere essas dívidas pré-existentes.
+                            <div className="mt-6 bg-[#007aff]/5 text-[#007aff] text-[11px] p-4 ios-squircle-sm border border-[#007aff]/10 flex gap-4">
+                                <AlertCircle size={20} className="shrink-0" strokeWidth={2.5} />
+                                <p className="font-bold leading-relaxed">
+                                    Utilize esta tela para registrar saldos de faturas futuras (compras já parceladas).
+                                    Isso sincroniza seu limite atual e prevê seus gastos dos próximos meses.
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6">
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between gap-4 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                                            <CreditCard size={20} />
+                        <div className="flex-1 overflow-y-auto p-7 ios-scrollbar">
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between p-5 bg-slate-50 ios-squircle-sm border border-slate-100 shadow-inner">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 ios-squircle bg-[#007aff] text-white flex items-center justify-center shadow-lg shadow-[#007aff]/20">
+                                            <Landmark size={24} strokeWidth={2.5} />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Lançamentos de</p>
-                                            <p className="text-sm font-bold text-slate-700">Saldos Anteriores</p>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo Total das Próximas Faturas</p>
+                                            <p className="text-2xl font-black text-slate-900 tracking-tight leading-none">
+                                                {formatCurrency(invoiceSetupData.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0))}
+                                            </p>
                                         </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-xs font-bold text-slate-400 uppercase">Total a Importar</span>
-                                        <p className="text-2xl font-black text-slate-900 leading-none mt-1">
-                                            {formatCurrency(invoiceSetupData.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0))}
-                                        </p>
                                     </div>
                                 </div>
 
-                                <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
-                                            <tr>
-                                                <th className="px-4 py-3">Mês de Referência</th>
-                                                <th className="px-4 py-3">Vencimento Estimado</th>
-                                                <th className="px-4 py-3 w-1/3">Valor da Fatura (R$)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {invoiceSetupData.map((slot, index) => {
-                                                const dueDate = new Date(slot.year, slot.monthIndex, selectedCardForInvoice.due_day);
-                                                return (
-                                                    <tr key={`${slot.year}-${slot.monthIndex}`} className="hover:bg-slate-50 transition-colors">
-                                                        <td className="px-4 py-3 font-medium text-slate-700">
-                                                            {slot.month} de {slot.year}
-                                                        </td>
-                                                        <td className="px-4 py-3 text-slate-500 text-sm">
-                                                            {dueDate.toLocaleDateString()}
-                                                        </td>
-                                                        <td className="px-4 py-2">
-                                                            <input
-                                                                type="number"
-                                                                step="0.01"
-                                                                placeholder="0,00"
-                                                                className={`w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none font-bold transition-all ${Number(slot.amount) > 0 ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600'}`}
-                                                                value={slot.amount || ''}
-                                                                onFocus={e => e.target.select()}
-                                                                onChange={e => handleSlotChange(index, e.target.value)}
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
+                                <div className="space-y-3">
+                                    {invoiceSetupData.map((slot, index) => {
+                                        const dueDate = new Date(slot.year, slot.monthIndex, selectedCardForInvoice.due_day);
+                                        const isActive = Number(slot.amount) > 0;
+
+                                        return (
+                                            <div key={`${slot.year}-${slot.monthIndex}`} className={`p-4 ios-squircle-sm border transition-all flex items-center justify-between ${isActive ? 'bg-[#007aff]/5 border-[#007aff]/20' : 'bg-white border-slate-100 hover:border-slate-200'}`}>
+                                                <div className="flex items-center gap-5">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{slot.year}</span>
+                                                        <span className={`text-sm font-black tracking-tight ${isActive ? 'text-[#007aff]' : 'text-slate-900'}`}>{slot.month}</span>
+                                                    </div>
+                                                    <div className="h-6 w-px bg-slate-100"></div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Pagamento</span>
+                                                        <span className="text-[10px] font-bold text-slate-500">{dueDate.toLocaleDateString()}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-40 relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">R$</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        placeholder="0,00"
+                                                        className={`w-full py-3 pl-8 pr-4 ios-squircle-sm outline-none font-black text-right text-sm transition-all shadow-inner ${isActive ? 'bg-[#007aff]/10 border-none text-[#007aff]' : 'bg-slate-100/50 border-none text-slate-900 focus:bg-white'}`}
+                                                        value={slot.amount || ''}
+                                                        onFocus={e => e.target.select()}
+                                                        onChange={e => handleSlotChange(index, e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                        <div className="p-7 border-t border-slate-100 bg-slate-50 flex flex-col md:flex-row gap-3">
                             <button
-                                onClick={() => setIsInvoiceModalOpen(false)}
-                                className="px-5 py-3 text-slate-600 font-bold hover:bg-slate-200 rounded-xl transition-colors"
+                                onClick={() => { hapticFeedback(5); setIsInvoiceModalOpen(false); }}
+                                className="flex-1 py-4 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-200 ios-squircle transition-colors"
                                 disabled={isSavingInvoices}
                             >
                                 Cancelar
@@ -508,16 +581,17 @@ export default function CardsView() {
                             <button
                                 onClick={handleSaveInvoices}
                                 disabled={isSavingInvoices}
-                                className={`px-6 py-3 text-white font-bold rounded-xl shadow-lg flex items-center gap-2 transition-all ${isSavingInvoices ? 'bg-slate-400 cursor-not-allowed opacity-70' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 active:scale-95'}`}
+                                className="flex-[2] py-4 bg-[#007aff] hover:bg-[#007aff]/90 text-white ios-squircle text-xs font-black uppercase tracking-widest shadow-lg shadow-[#007aff]/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isSavingInvoices ? (
                                     <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Salvando...
+                                        <Loader2 size={16} className="animate-spin" />
+                                        <span>Processando...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Check size={20} /> Confirmar Importação
+                                        <Check size={18} strokeWidth={3} />
+                                        <span>Salvar Histórico</span>
                                     </>
                                 )}
                             </button>

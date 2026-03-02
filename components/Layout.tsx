@@ -74,101 +74,102 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
     const activeMobileLabel = activeItem?.label ?? 'Êxodo';
 
     return (
-        <div className="flex h-screen bg-slate-50 relative overflow-hidden font-sans text-slate-900">
+        <div className="flex h-screen bg-[#f2f2f7] relative overflow-hidden font-sans text-slate-900">
             {/* Sidebar Desktop */}
-            <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white border-r border-slate-800 shrink-0 transition-all duration-300">
-                <div className="p-6 flex items-center space-x-3 border-b border-slate-800">
-                    <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">Ê</div>
-                    <h1 className="text-xl font-bold tracking-tight">Êxodo Finance</h1>
+            <aside className="hidden md:flex flex-col w-72 h-[calc(100vh-32px)] m-4 ios-glass ios-squircle-lg border border-white/40 shadow-xl shadow-black/5 shrink-0 transition-all duration-300 z-50">
+                <div className="p-8 flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 ios-squircle flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-orange-500/20">Ê</div>
+                    <div className="flex flex-col">
+                        <h1 className="text-xl font-black text-slate-800 tracking-tight leading-tight">Êxodo</h1>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Finance Pro</p>
+                    </div>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto pt-4 pb-6 space-y-1 px-3">
-                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 mb-2 opacity-50">Menu Principal</div>
-
+                <nav className="flex-1 overflow-y-auto pt-2 pb-6 space-y-1.5 px-4 custom-scrollbar">
                     {detailedMenuItems.map(item => (
                         <button
                             key={item.id}
                             id={`nav-${item.id}`}
                             onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
-                            className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-all duration-200 group
+                            className={`flex items-center space-x-3 w-full px-5 py-3.5 ios-squircle transition-all duration-300 group
                 ${isActive(item.id)
-                                    ? 'bg-orange-600/90 text-white shadow-lg shadow-orange-900/20 translate-x-1'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                    ? 'bg-white text-[#ff9500] shadow-sm scale-[1.02]'
+                                    : 'text-slate-500 hover:bg-white/50 hover:text-slate-800'
                                 }
               `}
                         >
-                            <div className="relative shrink-0">
-                                <item.icon size={20} className={isActive(item.id) ? 'text-white' : 'text-slate-500 group-hover:text-white transition-colors'} />
+                            <div className="relative shrink-0 transition-transform duration-300 group-hover:scale-110">
+                                <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 2} className={isActive(item.id) ? 'text-[#ff9500]' : 'text-slate-400 group-hover:text-slate-600'} />
                                 {item.id === 'dashboard' && insightCount > 0 && (
-                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center border border-slate-900">
+                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-white">
                                         {insightCount > 9 ? '9+' : insightCount}
                                     </span>
                                 )}
                             </div>
-                            <span className="font-medium">{item.label}</span>
+                            <span className={`text-sm font-bold tracking-tight ${isActive(item.id) ? 'text-slate-900' : 'text-slate-500'}`}>{item.label}</span>
                         </button>
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-slate-800 bg-slate-900/50">
-                    <div className="flex items-center space-x-3 mb-4 px-2">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-                            <UserIcon size={20} className="text-slate-400" />
+                <div className="p-6 border-t border-white/20">
+                    <div className="flex items-center space-x-4 mb-6 px-2 bg-white/40 p-3 ios-squircle">
+                        <div className="w-12 h-12 ios-squircle bg-white flex items-center justify-center shadow-sm border border-white">
+                            <UserIcon size={24} className="text-slate-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{user.name}</p>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
-                                Versão {VersionInfo.version}
+                            <p className="text-sm font-black text-slate-800 truncate">{user.name}</p>
+                            <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider flex items-center gap-1">
+                                v{VersionInfo.version}
                                 {isSupabaseConfigured() ? (
-                                    <span className="text-emerald-500" title="Cloud Active"><Cloud size={10} /></span>
+                                    <Cloud size={10} className="text-[#34c759]" />
                                 ) : (
-                                    <span className="text-amber-500" title="Local Only Mode"><CloudOff size={10} /></span>
+                                    <CloudOff size={10} className="text-[#ff9500]" />
                                 )}
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={onOpenTraining}
-                        className="flex items-center space-x-2 text-orange-500 hover:text-orange-600 text-[11px] font-bold px-2 w-full transition-colors hover:bg-orange-50 p-2 rounded-lg mb-1"
-                    >
-                        <Sparkles size={14} /> <span>Treinamento Inicial</span>
-                    </button>
+
                     <button
                         onClick={onLogout}
-                        className="flex items-center space-x-2 text-slate-500 hover:text-red-400 text-sm px-2 w-full transition-colors hover:bg-slate-800/50 p-2 rounded-lg"
+                        className="flex items-center justify-center space-x-2 text-slate-400 hover:text-red-500 text-xs font-bold w-full transition-all hover:bg-red-50 py-3 ios-squircle"
                     >
-                        <LogOut size={16} /> <span>Sair da conta</span>
+                        <LogOut size={16} /> <span>Encerrar Sessão</span>
                     </button>
                 </div>
             </aside>
 
             {/* Main Content Area (Mobile + Desktop) */}
-            <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50 w-full">
+            <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-transparent w-full">
 
                 {/* Mobile Header */}
-                <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 shadow-sm z-20 min-h-[56px]">
-                    <div className="flex flex-col">
-                        <span className="font-black text-slate-900 text-sm leading-tight">{activeMobileLabel}</span>
-                        {!isSupabaseConfigured() && (
-                            <span className="text-amber-600 text-[9px] font-bold uppercase flex items-center gap-0.5">
-                                <CloudOff size={8} /> modo local
-                            </span>
-                        )}
+                <header className="md:hidden flex items-center justify-between px-6 py-4 bg-[#f2f2f7]/80 backdrop-blur-xl z-20 min-h-[64px]">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 ios-squircle flex items-center justify-center text-white font-black text-lg shadow-md shadow-orange-500/10">Ê</div>
+                        <div className="flex flex-col">
+                            <h2 className="text-lg font-black text-slate-800 tracking-tight leading-tight">{activeMobileLabel}</h2>
+                            {!isSupabaseConfigured() && (
+                                <span className="text-[#ff9500] text-[8px] font-black uppercase tracking-widest flex items-center gap-0.5">
+                                    Offline
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <button
                         onClick={openMenu}
-                        className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded-xl transition-colors tap-highlight-none"
+                        className="w-10 h-10 flex items-center justify-center text-[#007aff] ios-glass ios-squircle border border-white/50 transition-all active:scale-95 tap-highlight-none"
                         aria-label="Abrir menu"
                     >
-                        <Menu size={22} />
+                        <Menu size={20} strokeWidth={2.5} className="text-[#ff9500]" />
                     </button>
                 </header>
 
                 {/* Scrollable Content */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
+                <main className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto custom-scrollbar px-4 pt-4 md:px-12 md:pt-12">
                     {/* ── VISÃO GERAL — Grid de Cards ───────────────────────────────────── */}
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-black text-slate-800 tracking-tight">Visão Geral</h3>
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-3xl font-black text-slate-900 tracking-tighter">
+                            {isActive('dashboard') ? 'Resumo' : activeMobileLabel}
+                        </h3>
                     </div>
 
                     {children}
@@ -177,51 +178,44 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 </main>
 
                 {/* Mobile Bottom Navigation */}
-                <nav className="md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-100 pb-safe-offset-0 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] shrink-0">
-                    <div className="flex items-center justify-around px-1 pt-1 pb-2">
+                <nav className="md:hidden bg-white/80 backdrop-blur-2xl border-t border-white/20 pb-safe-offset-0 shadow-[0_-4px_32px_rgba(0,0,0,0.04)] shrink-0 z-50">
+                    <div className="flex items-center justify-around px-3 pt-2 pb-6">
                         {bottomNavLeft.map(item => (
                             <button
                                 key={item.id}
                                 onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
-                                className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
-                                    ? 'bg-orange-50 text-orange-600'
-                                    : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
+                                className={`flex flex-col items-center gap-1 min-w-[64px] transition-all tap-highlight-none ${isActive(item.id)
+                                    ? 'text-[#ff9500]'
+                                    : 'text-slate-400'
                                     }`}
                                 aria-label={item.label}
                             >
                                 <div className="relative">
-                                    <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
+                                    <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.5} />
                                     {item.id === 'dashboard' && insightCount > 0 && (
-                                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-[#f2f2f7]">
                                             {insightCount > 9 ? '9+' : insightCount}
                                         </span>
                                     )}
                                 </div>
-                                <span className={`text-[10px] font-bold uppercase tracking-tight leading-none mt-0.5 ${isActive(item.id) ? 'text-orange-600' : 'text-slate-400'
-                                    }`}>
-                                    {item.label}
-                                </span>
+                                <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
                             </button>
                         ))}
 
-                        {/* Botão Central removido para consolidar no botão flutuante flutuante do App.tsx */}
-
+                        <div className="w-10" /> {/* Spacer for central dynamic add (if any) */}
 
                         {bottomNavRight.map(item => (
                             <button
                                 key={item.id}
                                 onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
-                                className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
-                                    ? 'bg-orange-50 text-orange-600'
-                                    : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
+                                className={`flex flex-col items-center gap-1 min-w-[64px] transition-all tap-highlight-none ${isActive(item.id)
+                                    ? 'text-[#ff9500]'
+                                    : 'text-slate-400'
                                     }`}
                                 aria-label={item.label}
                             >
-                                <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
-                                <span className={`text-[10px] font-bold uppercase tracking-tight leading-none mt-0.5 ${isActive(item.id) ? 'text-orange-600' : 'text-slate-400'
-                                    }`}>
-                                    {item.label}
-                                </span>
+                                <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.5} />
+                                <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
                             </button>
                         ))}
                     </div>
@@ -272,7 +266,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                                     key={item.id}
                                     onClick={() => { onChangeView(item.id); closeMenu(); }}
                                     className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all tap-highlight-none ${isActive(item.id)
-                                        ? 'bg-orange-600 text-white shadow-md'
+                                        ? 'bg-[#ff9500] text-white shadow-md'
                                         : 'text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-700'
                                         }`}
                                 >
@@ -294,7 +288,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                         <div className="px-3 pb-safe pb-6 pt-3 border-t border-slate-800 space-y-1">
                             <button
                                 onClick={() => { onOpenTraining(); closeMenu(); }}
-                                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-orange-400 hover:bg-slate-800 transition-colors tap-highlight-none"
+                                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[#007aff] hover:bg-slate-800 transition-colors tap-highlight-none"
                             >
                                 <Sparkles size={18} />
                                 <span className="text-sm font-bold">Treinamento Inicial</span>

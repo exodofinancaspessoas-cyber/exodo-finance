@@ -60,8 +60,8 @@ export default function BudgetsView() {
         <div className="space-y-6">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <PieChart className="text-pink-500" /> Orçamentos Mensais
+                    <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        <PieChart className="text-[#ff9500]" /> Orçamentos Mensais
                     </h2>
                     <p className="text-slate-500">Defina limites para suas categorias e evite surpresas.</p>
                 </div>
@@ -82,7 +82,7 @@ export default function BudgetsView() {
 
                     if (editingBudget === cat.id) {
                         return (
-                            <div key={cat.id} className="bg-white rounded-xl shadow-lg border-2 border-pink-100 p-6 scale-105 z-10">
+                            <div key={cat.id} className="bg-white rounded-xl shadow-lg border-2 border-[#ff9500]/20 p-6 scale-105 z-10 transition-all">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="font-bold text-slate-700 flex items-center gap-2">{cat.name}</span>
                                     <button onClick={() => setEditingBudget(null)}><X size={18} className="text-slate-400 hover:text-red-500" /></button>
@@ -91,13 +91,13 @@ export default function BudgetsView() {
                                 <input
                                     type="number"
                                     autoFocus
-                                    className="w-full text-2xl font-bold border-b-2 border-pink-500 outline-none pb-1 mb-6 text-slate-800"
+                                    className="w-full text-2xl font-black border-b-2 border-[#ff9500] outline-none pb-1 mb-6 text-slate-800 bg-transparent"
                                     value={editValue || ''}
                                     onChange={e => setEditValue(Number(e.target.value))}
                                     onFocus={e => e.target.select()}
                                     placeholder="0,00"
                                 />
-                                <button onClick={() => handleSaveBudget(cat.id)} className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-500/30">
+                                <button onClick={() => handleSaveBudget(cat.id)} className="w-full bg-[#ff9500] hover:bg-[#ff9500]/90 text-white py-3 rounded-lg font-black flex items-center justify-center gap-2 shadow-lg shadow-[#ff9500]/20 uppercase text-xs tracking-widest transition-all">
                                     <Save size={18} /> Salvar Orçamento
                                 </button>
                             </div>
@@ -105,17 +105,17 @@ export default function BudgetsView() {
                     }
 
                     return (
-                        <div key={cat.id} className={`bg-white rounded-xl p-6 border transition-all hover:shadow-md ${isOver ? 'border-red-200 bg-red-50' : isWarning ? 'border-yellow-200 bg-yellow-50' : 'border-slate-100'}`}>
+                        <div key={cat.id} className={`bg-white rounded-xl p-6 border transition-all hover:shadow-md ${isOver ? 'border-[#ff3b30]/20 bg-[#ff3b30]/5' : isWarning ? 'border-yellow-200 bg-yellow-50' : 'border-slate-100'}`}>
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${isOver ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-black ${isOver ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : 'bg-slate-100 text-slate-600'}`}>
                                         {/* Simplified Icon mapping or generic */}
                                         {cat.name[0]}
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-slate-800">{cat.name}</h3>
                                         {limit > 0 ? (
-                                            <p className={`text-xs font-medium ${isOver ? 'text-red-600' : 'text-slate-500'}`}>
+                                            <p className={`text-xs font-black uppercase tracking-widest ${isOver ? 'text-[#ff3b30]' : 'text-slate-500'}`}>
                                                 {isOver ? `Estourou ${formatCurrency(spent - limit)}` : `Resta ${formatCurrency(limit - spent)}`}
                                             </p>
                                         ) : (
@@ -123,7 +123,7 @@ export default function BudgetsView() {
                                         )}
                                     </div>
                                 </div>
-                                <button onClick={() => { setEditingBudget(cat.id); setEditValue(limit); }} className="text-slate-300 hover:text-pink-500 transition-colors">
+                                <button onClick={() => { setEditingBudget(cat.id); setEditValue(limit); }} className="text-slate-300 hover:text-[#ff9500] transition-colors">
                                     <Edit3 size={16} />
                                 </button>
                             </div>
@@ -136,13 +136,13 @@ export default function BudgetsView() {
                                     </div>
                                     <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                                         <div
-                                            className={`h-full rounded-full ${isOver ? 'bg-red-500' : isWarning ? 'bg-yellow-400' : 'bg-green-500'}`}
+                                            className={`h-full rounded-full transition-all duration-1000 ${isOver ? 'bg-[#ff3b30]' : isWarning ? 'bg-yellow-400' : 'bg-[#34c759]'}`}
                                             style={{ width: `${Math.min(percentage, 100)}%` }}
                                         ></div>
                                     </div>
                                 </div>
                             ) : (
-                                <button onClick={() => { setEditingBudget(cat.id); setEditValue(0); }} className="w-full py-2 border border-dashed border-slate-300 rounded-lg text-sm text-slate-500 hover:border-pink-300 hover:text-pink-600 hover:bg-pink-50 transition-all font-medium">
+                                <button onClick={() => { setEditingBudget(cat.id); setEditValue(0); }} className="w-full py-3 border border-dashed border-slate-300 rounded-lg text-xs tracking-widest uppercase text-slate-500 hover:border-[#ff9500]/50 hover:text-[#ff9500] hover:bg-[#ff9500]/5 transition-all font-black">
                                     + Definir Teto de Gastos
                                 </button>
                             )}

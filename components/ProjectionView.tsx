@@ -156,8 +156,8 @@ export default function ProjectionView() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <TrendingUp className="text-teal-600" /> Projeção Financeira
+                    <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        <TrendingUp className="text-[#ff9500]" /> Projeção Financeira
                     </h2>
                     <p className="text-slate-500">Veja o futuro do seu dinheiro e prepare-se.</p>
                 </div>
@@ -167,7 +167,7 @@ export default function ProjectionView() {
                         <button
                             key={p}
                             onClick={() => setPeriod(p)}
-                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${period === p ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-md transition-all ${period === p ? 'bg-white shadow text-[#ff9500]' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             {p} Meses
                         </button>
@@ -181,7 +181,7 @@ export default function ProjectionView() {
                         {/* Header Card */}
                         <div
                             onClick={() => toggleMonth(m.month)}
-                            className={`p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors ${m.status === 'NEGATIVE' ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-green-500'}`}
+                            className={`p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors ${m.status === 'NEGATIVE' ? 'border-l-4 border-[#ff3b30]' : 'border-l-4 border-[#34c759]'}`}
                         >
                             <div className="flex items-center space-x-4">
                                 <div className="w-12 h-12 rounded-lg bg-slate-100 flex flex-col items-center justify-center border border-slate-200">
@@ -190,8 +190,8 @@ export default function ProjectionView() {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-lg text-slate-800 capitalize">{m.label}</h3>
-                                    <p className="text-sm text-slate-500">
-                                        Inicia com <span className={m.start_balance >= 0 ? "text-slate-700" : "text-red-500"}>{formatCurrency(m.start_balance)}</span>
+                                    <p className="text-sm text-slate-500 font-bold uppercase tracking-tight">
+                                        Inicia com <span className={m.start_balance >= 0 ? "text-slate-900" : "text-[#ff3b30]"}>{formatCurrency(m.start_balance)}</span>
                                     </p>
                                 </div>
                             </div>
@@ -199,7 +199,7 @@ export default function ProjectionView() {
                             <div className="flex items-center space-x-6 text-right">
                                 <div className="text-right">
                                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">Resultado</p>
-                                    <p className={`text-base md:text-lg font-black leading-none ${m.end_balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    <p className={`text-base md:text-lg font-black leading-none ${m.end_balance >= 0 ? 'text-[#34c759]' : 'text-[#ff3b30]'}`}>
                                         {formatCurrency(m.end_balance)}
                                     </p>
                                 </div>
@@ -213,24 +213,24 @@ export default function ProjectionView() {
 
                                 {/* Alert Message */}
                                 {m.status === 'NEGATIVE' && (
-                                    <div className="bg-red-50 border border-red-100 rounded-lg p-4 mb-6 flex items-start gap-3">
-                                        <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={20} />
+                                    <div className="bg-[#ff3b30]/10 border border-[#ff3b30]/20 rounded-xl p-5 mb-6 flex items-start gap-4 animate-overdue">
+                                        <AlertTriangle className="text-[#ff3b30] shrink-0 mt-0.5" size={24} strokeWidth={3} />
                                         <div>
-                                            <h4 className="font-bold text-red-800">Atenção: Saldo Negativo Projetado</h4>
-                                            <p className="text-sm text-red-700 mt-1">
-                                                Você deve encerrar este mês devendo <strong>{formatCurrency(m.end_balance)}</strong>.
-                                                Considere reduzir despesas ou antecipar receitas.
+                                            <h4 className="font-black text-[#ff3b30] uppercase text-sm tracking-tight">Atenção: Saldo Negativo Projetado</h4>
+                                            <p className="text-xs text-[#ff3b30] font-bold mt-1">
+                                                A projeção indica um saldo de <strong>{formatCurrency(m.end_balance)}</strong>.
+                                                Considere reduzir custos ou buscar novas receitas.
                                             </p>
                                         </div>
                                     </div>
                                 )}
-
+                                drum
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* Incomes */}
                                     <div>
-                                        <h4 className="font-bold text-slate-700 mb-4 flex items-center justify-between">
+                                        <h4 className="font-black text-slate-800 uppercase text-[10px] tracking-widest mb-4 flex items-center justify-between">
                                             <span>Receitas Previstas</span>
-                                            <span className="text-green-600">{formatCurrency(m.incomes)}</span>
+                                            <span className="text-[#007aff]">{formatCurrency(m.incomes)}</span>
                                         </h4>
                                         <div className="space-y-3">
                                             {m.details.incomes.length > 0 ? (
@@ -239,8 +239,8 @@ export default function ProjectionView() {
                                                         <div className="flex items-center gap-2">
                                                             <div className="w-2 h-2 rounded-full bg-green-400"></div>
                                                             <div className="flex flex-col">
-                                                                <span className="text-slate-700">{t.description}</span>
-                                                                {isRealized(t) && <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-tighter">Confirmado</span>}
+                                                                <span className="text-slate-800 font-bold">{t.description}</span>
+                                                                {isRealized(t) && <span className="text-[10px] text-[#34c759] font-black uppercase tracking-widest">Confirmado</span>}
                                                             </div>
                                                         </div>
                                                         <span className="font-medium text-slate-900">{formatCurrency(t.amount + (t.interest_amount || 0))}</span>
@@ -254,9 +254,9 @@ export default function ProjectionView() {
 
                                     {/* Expenses */}
                                     <div>
-                                        <h4 className="font-bold text-slate-700 mb-4 flex items-center justify-between">
+                                        <h4 className="font-black text-slate-800 uppercase text-[10px] tracking-widest mb-4 flex items-center justify-between">
                                             <span>Despesas Previstas</span>
-                                            <span className="text-red-600">{formatCurrency(m.expenses)}</span>
+                                            <span className="text-[#ff3b30]">{formatCurrency(m.expenses)}</span>
                                         </h4>
                                         <div className="space-y-3">
                                             {/* Transactions */}
@@ -284,7 +284,7 @@ export default function ProjectionView() {
                                                             <div className={`w-2 h-2 rounded-full ${isRev ? 'bg-emerald-400' : 'bg-rose-400'}`}></div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-slate-700">{r.description}</span>
-                                                                <span className={`text-[10px] font-black uppercase tracking-widest ${isRev ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                                <span className={`text-[10px] font-black uppercase tracking-widest ${isRev ? 'text-[#007aff]' : 'text-[#ff3b30]'}`}>
                                                                     {isRev ? 'Receita Recorrente (Projeção)' : 'Despesa Recorrente (Projeção)'}
                                                                 </span>
                                                             </div>

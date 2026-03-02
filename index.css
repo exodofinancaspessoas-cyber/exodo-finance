@@ -1,8 +1,39 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer base {
+  :root {
+    --ios-bg: #f2f2f7;
+    --ios-card-bg: rgba(255, 255, 255, 0.85);
+    --ios-blur: blur(20px) saturate(180%);
+    --ios-blue: #007aff;
+    --ios-green: #34c759;
+    --ios-red: #ff3b30;
+    --ios-orange: #ff9500;
+  }
+
+  body {
+    @apply bg-[#f2f2f7] text-slate-900 antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  }
+}
 
 @layer utilities {
+  .ios-glass {
+    background-color: var(--ios-card-bg);
+    backdrop-filter: var(--ios-blur);
+    -webkit-backdrop-filter: var(--ios-blur);
+  }
+
+  .ios-squircle {
+    border-radius: 24px;
+  }
+
+  .ios-squircle-lg {
+    border-radius: 32px;
+  }
+
+  .ios-squircle-sm {
+    border-radius: 16px;
+  }
+
   .animate-shimmer {
     background: linear-gradient(90deg,
         rgba(255, 255, 255, 0) 0%,
@@ -26,6 +57,44 @@
 
   .text-fluid-xl {
     font-size: clamp(1.5rem, 1.25rem + 1.25vw, 2.5rem);
+  }
+
+  .animate-overdue {
+    animation: overdue-shake 0.5s cubic-bezier(.36, .07, .19, .97) both infinite;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  @keyframes overdue-shake {
+
+    10%,
+    90% {
+      transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+      transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+      transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+      transform: translate3d(4px, 0, 0);
+    }
+  }
+
+  .bg-ios-overdue {
+    background-color: #ff3b30;
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 59, 48, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
   }
 }
 

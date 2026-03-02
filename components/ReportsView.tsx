@@ -65,7 +65,7 @@ export default function ReportsView() {
         }
     };
 
-    if (!reportStats) return <div className="p-8 text-center animate-pulse text-indigo-600 font-medium">Analisando suas finanças...</div>;
+    if (!reportStats) return <div className="p-8 text-center animate-pulse text-[#ff9500] font-black uppercase tracking-widest text-xs">Analisando sua vida financeira...</div>;
 
     return (
         <div className="space-y-8 animate-fade-in pb-20">
@@ -73,8 +73,8 @@ export default function ReportsView() {
             {/* Header & Controls */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <BarChart3 className="text-indigo-600" /> Relatórios de Inteligência
+                    <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        <BarChart3 className="text-[#ff9500]" /> Relatórios de Inteligência
                     </h2>
                     <p className="text-slate-500">Analise seu passado, entenda o presente e preveja o futuro.</p>
                 </div>
@@ -97,20 +97,20 @@ export default function ReportsView() {
             <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
                 <div className="relative z-10">
                     <h3 className="flex items-center gap-2 font-bold text-lg mb-6">
-                        <BrainCircuit className="text-cyan-400" /> Análise Preditiva e Tendências
+                        <BrainCircuit className="text-[#ff9500]" /> Análise Preditiva e Tendências
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {predictions.map((pred, i) => (
-                            <div key={i} className={`p-4 rounded-xl border ${pred.riskLevel === 'HIGH' ? 'bg-red-500/10 border-red-500/30' :
-                                pred.riskLevel === 'MEDIUM' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-slate-800 border-slate-700'
+                            <div key={i} className={`p-4 rounded-xl border ${pred.riskLevel === 'HIGH' ? 'bg-[#ff3b30]/10 border-[#ff3b30]/30' :
+                                pred.riskLevel === 'MEDIUM' ? 'bg-[#ff9500]/10 border-[#ff9500]/30' : 'bg-slate-800 border-slate-700'
                                 }`}>
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="font-bold text-slate-300 uppercase text-xs">{pred.month}</span>
-                                    {pred.riskLevel === 'HIGH' && <ShieldAlert size={16} className="text-red-400" />}
+                                    {pred.riskLevel === 'HIGH' && <ShieldAlert size={16} className="text-[#ff3b30]" />}
                                 </div>
                                 <div className="text-2xl font-bold mb-2">{formatCurrency(pred.predictedAmount)}</div>
-                                <div className={`text-xs ${pred.riskLevel === 'HIGH' ? 'text-red-300' : 'text-slate-400'
+                                <div className={`text-xs ${pred.riskLevel === 'HIGH' ? 'text-[#ff3b30]' : 'text-slate-400'
                                     }`}>
                                     {pred.notes}
                                 </div>
@@ -128,23 +128,23 @@ export default function ReportsView() {
             {suggestions.length > 0 && (
                 <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border border-emerald-100 rounded-2xl p-6 shadow-sm relative overflow-hidden">
                     <div className="relative z-10">
-                        <h3 className="text-emerald-800 font-bold text-lg flex items-center gap-2 mb-4">
-                            <Sparkles className="text-emerald-500" /> Sugestões Inteligentes de Economia
+                        <h3 className="text-[#34c759] font-black uppercase text-sm tracking-widest flex items-center gap-2 mb-4">
+                            <Sparkles className="text-[#34c759]" /> Sugestões de Economia
                         </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {suggestions.map((suggestion) => (
                                 <div key={suggestion.id} className="bg-white/80 backdrop-blur-sm border border-emerald-100 rounded-xl p-4 hover:shadow-md transition-all">
                                     <div className="flex justify-between items-start mb-2">
-                                        <div className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${suggestion.impact === 'HIGH' ? 'bg-red-100 text-red-600' :
-                                            suggestion.impact === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-600'
+                                        <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${suggestion.impact === 'HIGH' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' :
+                                            suggestion.impact === 'MEDIUM' ? 'bg-[#ff9500]/10 text-[#ff9500]' : 'bg-[#34c759]/10 text-[#34c759]'
                                             }`}>Impacto {suggestion.impact === 'HIGH' ? 'Alto' : suggestion.impact === 'MEDIUM' ? 'Médio' : 'Baixo'}</div>
                                         <button className="text-slate-400 hover:text-emerald-600"><CheckCircle size={16} /></button>
                                     </div>
                                     <h4 className="font-bold text-slate-800 text-sm mb-1">{suggestion.title}</h4>
                                     <p className="text-xs text-slate-500 mb-3">{suggestion.description}</p>
                                     <div className="flex justify-between items-center text-xs">
-                                        <span className="font-semibold text-emerald-600">Economie {formatCurrency(suggestion.potentialSavings)}/mês</span>
+                                        <span className="font-black text-[#34c759]">Economize {formatCurrency(suggestion.potentialSavings)}/mês</span>
                                         <ArrowRight size={14} className="text-slate-300" />
                                     </div>
                                 </div>
@@ -163,24 +163,24 @@ export default function ReportsView() {
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 md:col-span-2 relative overflow-hidden">
                     <div className="relative z-10 flex flex-col justify-between h-full">
                         <div>
-                            <h3 className="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">Gasto Médio Mensal</h3>
+                            <h3 className="text-slate-500 font-black text-xs uppercase tracking-wider mb-2">Gasto Médio Mensal</h3>
                             <div className="flex items-end gap-4 mb-6">
-                                <div className="text-4xl font-bold text-slate-800">{formatCurrency(reportStats.average)}</div>
-                                <div className="text-sm font-medium text-slate-400 mb-2">nos últimos {period} meses</div>
+                                <div className="text-4xl font-black text-slate-800">{formatCurrency(reportStats.average)}</div>
+                                <div className="text-sm font-black text-slate-400 mb-2">nos últimos {period} meses</div>
                             </div>
 
                             <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm">
                                 <div>
-                                    <span className="text-slate-400 block text-xs uppercase mb-1">Pico de Gastos</span>
-                                    <span className="font-bold text-indigo-600 text-lg">{formatCurrency(reportStats.max)}</span>
+                                    <span className="text-slate-400 block text-[10px] uppercase font-black tracking-widest mb-1">Pico de Gastos</span>
+                                    <span className="font-black text-[#ff3b30] text-lg">{formatCurrency(reportStats.max)}</span>
                                 </div>
                                 <div>
-                                    <span className="text-slate-400 block text-xs uppercase mb-1">Mínimo (Economia)</span>
-                                    <span className="font-bold text-green-600 text-lg">{formatCurrency(reportStats.min)}</span>
+                                    <span className="text-slate-400 block text-[10px] uppercase font-black tracking-widest mb-1">Mínimo (Econômico)</span>
+                                    <span className="font-black text-[#007aff] text-lg">{formatCurrency(reportStats.min)}</span>
                                 </div>
                                 <div>
-                                    <span className="text-slate-400 block text-xs uppercase mb-1">Volatilidade</span>
-                                    <span className="font-bold text-slate-700 text-lg">±{formatCurrency(reportStats.stdDev)}</span>
+                                    <span className="text-slate-400 block text-[10px] uppercase font-black tracking-widest mb-1">Volatilidade</span>
+                                    <span className="font-black text-slate-700 text-lg">±{formatCurrency(reportStats.stdDev)}</span>
                                 </div>
                             </div>
                         </div>
@@ -189,14 +189,14 @@ export default function ReportsView() {
 
                 {/* Chart Card */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
-                    <h3 className="text-slate-600 font-bold mb-4 text-sm uppercase">Evolução Histórica</h3>
+                    <h3 className="text-slate-600 font-black mb-4 text-xs uppercase tracking-widest">Evolução Histórica</h3>
                     <div className="h-40 w-full relative">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={reportStats.monthlyData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                                 <XAxis dataKey="month" hide />
-                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                                <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={3} dot={{ r: 3, fill: '#6366f1' }} activeDot={{ r: 6 }} />
+                                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: '12px' }} />
+                                <Line type="monotone" dataKey="total" stroke="#ff9500" strokeWidth={3} dot={{ r: 3, fill: '#ff9500' }} activeDot={{ r: 6 }} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
@@ -242,8 +242,8 @@ export default function ReportsView() {
                                         Range: {formatCurrency(cat.min)} - {formatCurrency(cat.max)}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className={`flex items-center justify-center gap-1 text-sm font-bold px-2 py-1 rounded-full w-fit mx-auto ${cat.trend === 'UP' ? 'bg-red-50 text-red-600' :
-                                            cat.trend === 'DOWN' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-500'
+                                        <div className={`flex items-center justify-center gap-1 text-[10px] font-black px-2 py-1 rounded-full w-fit mx-auto ${cat.trend === 'UP' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' :
+                                            cat.trend === 'DOWN' ? 'bg-[#34c759]/10 text-[#34c759]' : 'bg-slate-50 text-slate-500'
                                             }`}>
                                             {cat.trend === 'UP' ? <TrendingUp size={14} /> :
                                                 cat.trend === 'DOWN' ? <TrendingDown size={14} /> : <Minus size={14} />}
@@ -255,7 +255,7 @@ export default function ReportsView() {
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

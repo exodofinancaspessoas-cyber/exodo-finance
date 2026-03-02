@@ -110,16 +110,16 @@ export default function GoalsView() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <Target className="text-indigo-600" /> Metas Financeiras
+                    <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        <Target className="text-[#ff9500]" /> Metas Financeiras
                     </h2>
                     <p className="text-slate-500">Defina objetivos e acompanhe seu progresso.</p>
                 </div>
                 <button
                     onClick={() => { setEditingId(null); setIsModalOpen(true); }}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center shadow-md transition-colors"
+                    className="bg-[#ff9500] hover:bg-[#ff9500]/90 text-white px-5 py-3 ios-squircle flex items-center shadow-lg shadow-[#ff9500]/20 transition-all active:scale-95 text-xs font-black uppercase tracking-widest"
                 >
-                    <Plus size={20} className="mr-2" />
+                    <Plus size={20} className="mr-2" strokeWidth={3} />
                     Nova Meta
                 </button>
             </div>
@@ -130,36 +130,36 @@ export default function GoalsView() {
                     const isCompleted = goal.status === 'COMPLETED';
 
                     return (
-                        <div key={goal.id} className={`bg-white rounded-xl shadow-sm border p-6 relative group overflow-hidden ${isCompleted ? 'border-green-200 bg-green-50' : 'border-slate-100'}`}>
-                            {isCompleted && <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">CONCLUÍDA</div>}
+                        <div key={goal.id} className={`bg-white/80 backdrop-blur-xl ios-squircle shadow-sm border p-7 relative group overflow-hidden transition-all hover:shadow-xl hover:translate-y-[-4px] ${isCompleted ? 'border-[#34c759]/20 bg-[#34c759]/5' : 'border-slate-100'}`}>
+                            {isCompleted && <div className="absolute top-0 right-0 bg-[#34c759] text-white text-[10px] font-black px-4 py-1.5 rounded-bl-2xl uppercase tracking-widest">Concluída</div>}
 
                             <div className="flex justify-between items-start mb-4">
-                                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-2xl shadow-sm">
+                                <div className="w-14 h-14 ios-squircle bg-slate-50 flex items-center justify-center text-3xl shadow-inner border border-white">
                                     {goal.icon}
                                 </div>
                                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => handleEdit(goal)} className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600"><Edit2 size={16} /></button>
-                                    <button onClick={() => handleDelete(goal.id)} className="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+                                    <button onClick={() => handleEdit(goal)} className="w-9 h-9 bg-slate-100 ios-squircle flex items-center justify-center text-slate-400 hover:text-[#ff9500] transition-all"><Edit2 size={16} /></button>
+                                    <button onClick={() => handleDelete(goal.id)} className="w-9 h-9 bg-red-50 ios-squircle flex items-center justify-center text-red-400 hover:text-[#ff3b30] transition-all"><Trash2 size={16} /></button>
                                 </div>
                             </div>
 
-                            <h3 className="font-bold text-lg text-slate-800 mb-1">{goal.name}</h3>
-                            <p className="text-xs text-slate-500 mb-4">Prazo: {goal.deadline ? new Date(goal.deadline).toLocaleDateString('pt-BR') : 'Sem prazo'}</p>
+                            <h3 className="font-black text-xl text-slate-900 tracking-tight mb-1">{goal.name}</h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Prazo: {goal.deadline ? new Date(goal.deadline).toLocaleDateString('pt-BR') : 'Sem prazo'}</p>
 
                             <div className="mb-2 flex justify-between items-end">
-                                <span className="text-2xl font-bold text-indigo-900">{formatCurrency(goal.current_amount)}</span>
-                                <span className="text-xs text-slate-400 mb-1">de {formatCurrency(goal.target_amount)}</span>
+                                <span className="text-3xl font-black text-[#007aff] tracking-tighter">{formatCurrency(goal.current_amount)}</span>
+                                <span className="text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">de {formatCurrency(goal.target_amount)}</span>
                             </div>
 
-                            <div className="w-full bg-slate-100 rounded-full h-3 mb-4 overflow-hidden">
-                                <div className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-green-500' : 'bg-indigo-600'}`} style={{ width: `${progress}%` }}></div>
+                            <div className="w-full bg-slate-100 ios-squircle h-2.5 mb-6 overflow-hidden shadow-inner">
+                                <div className={`h-full ios-squircle transition-all duration-1000 ${isCompleted ? 'bg-[#34c759]' : 'bg-[#ff9500]'}`} style={{ width: `${progress}%` }}></div>
                             </div>
 
                             <button
                                 onClick={() => handleAddValue(goal)}
-                                className="w-full py-2 border border-dashed border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-4 border border-dashed border-[#ff9500]/30 text-[#ff9500] ios-squircle hover:bg-[#ff9500]/5 font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                             >
-                                <Plus size={16} /> Adicionar Valor
+                                <Plus size={16} strokeWidth={3} /> Adicionar Valor
                             </button>
                         </div>
                     );
@@ -217,8 +217,8 @@ export default function GoalsView() {
                             </div>
 
                             <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-slate-100">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium">Cancelar</button>
-                                <button type="submit" className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-lg shadow-indigo-600/20">{editingId ? 'Salvar' : 'Criar Meta'}</button>
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-3 text-slate-500 hover:bg-slate-50 ios-squircle font-black text-xs uppercase tracking-widest transition-all">Cancelar</button>
+                                <button type="submit" className="px-8 py-3 bg-[#ff9500] hover:bg-[#ff9500]/90 text-white ios-squircle font-black text-xs uppercase tracking-widest shadow-lg shadow-[#ff9500]/20 active:scale-95 transition-all">{editingId ? 'Salvar' : 'Criar Meta'}</button>
                             </div>
                         </form>
                     </div>

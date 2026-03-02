@@ -275,51 +275,48 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
     const isReadyToComplete = amount && description && selectedPayment && categoryId;
 
     return (
-        <div className="fixed inset-0 z-[100] bg-white flex flex-col items-stretch text-slate-900 animate-in slide-in-from-bottom duration-500 overflow-hidden h-[100dvh]">
+        <div className="fixed inset-0 z-[100] bg-[#f2f2f7] flex flex-col items-stretch text-slate-900 animate-in slide-in-from-bottom duration-500 overflow-hidden h-[100dvh]">
             {/* Header */}
-            <header className="p-6 flex justify-between items-center bg-white sticky top-0 z-30 shrink-0 border-b border-slate-50">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl rotate-3">Ê</div>
+            <header className="px-6 py-5 flex justify-between items-center ios-glass sticky top-0 z-30 shrink-0 border-b border-white/20">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-slate-900 ios-squircle flex items-center justify-center text-white font-black text-xl">Ê</div>
                     <div className="flex flex-col">
-                        <span className="font-black tracking-[0.2em] uppercase text-[11px] text-orange-600">Exodo Finance</span>
-                        <span className="font-black text-lg text-slate-900 leading-none">Novo Lançamento</span>
+                        <span className="font-black tracking-tight text-lg text-slate-900 leading-none">Novo Lançamento</span>
+                        <span className="font-bold text-[10px] text-[#007aff] uppercase tracking-widest">Exodo Finance</span>
                     </div>
                 </div>
-                <button onClick={onClose} className="w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-full border border-slate-100 flex items-center justify-center transition-all active:scale-90 text-slate-400">
-                    <X size={20} />
+                <button onClick={onClose} className="w-9 h-9 bg-slate-200/50 hover:bg-slate-300/50 ios-squircle flex items-center justify-center transition-all active:scale-90 text-slate-500">
+                    <X size={18} strokeWidth={3} />
                 </button>
             </header>
 
-            <div className="flex-1 overflow-y-auto overscroll-contain custom-scrollbar pb-32">
+            <div className="flex-1 overflow-y-auto overscroll-contain pb-32">
                 {/* HERO: The Amount Protagonist */}
                 <section
-                    className={`py-8 px-6 flex flex-col items-center justify-center transition-all relative overflow-hidden bg-white`}
+                    className="py-12 px-6 flex flex-col items-center justify-center bg-white border-b border-slate-100 mb-6"
                     onClick={() => amountInputRef.current?.focus()}
                 >
-                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-100 to-transparent" />
-
-                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 mb-6 flex items-center gap-2">
-                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${type === 'DESPESA' ? 'bg-rose-500' : 'bg-green-500'}`} />
-                        Valor da {type === 'DESPESA' ? 'Despesa' : 'Receita'}
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-2">
+                        <div className={`w-2 h-2 ios-squircle animate-pulse ${type === 'DESPESA' ? 'bg-[#ff3b30]' : 'bg-[#34c759]'}`} />
+                        {type === 'DESPESA' ? 'Valor da Despesa' : 'Valor da Receita'}
                     </label>
 
-                    <div className="flex gap-4 mb-4">
+                    <div className="flex gap-5 mb-10">
                         {/* OCR Scanner button */}
                         <div className="relative">
                             <input type="file" accept="image/*" capture="environment" className="hidden" ref={ocrInputRef} onChange={handleOCRCapture} />
                             <button
                                 onClick={(e) => { e.stopPropagation(); ocrInputRef.current?.click(); }}
                                 disabled={isOCRScanning}
-                                title="Escanear nota fiscal"
-                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-90 ${isOCRScanning
-                                        ? 'bg-orange-100 text-orange-500 animate-pulse cursor-not-allowed'
-                                        : 'bg-slate-50 border border-slate-100 text-slate-400 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100'
+                                className={`w-14 h-14 ios-squircle flex items-center justify-center transition-all active:scale-95 ${isOCRScanning
+                                    ? 'bg-[#ff9500]/10 text-[#ff9500] animate-pulse'
+                                    : 'bg-[#f2f2f7] text-slate-500 hover:bg-[#ff9500]/10 hover:text-[#ff9500]'
                                     }`}
                             >
-                                {isOCRScanning ? <Loader2 size={20} className="animate-spin" /> : <ScanLine size={20} strokeWidth={2} />}
+                                {isOCRScanning ? <Loader2 size={24} className="animate-spin" /> : <ScanLine size={24} strokeWidth={2.5} />}
                             </button>
                             {isOCRScanning && (
-                                <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold text-orange-500 uppercase tracking-wider">
+                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black text-[#ff9500] uppercase tracking-widest">
                                     Lendo...
                                 </div>
                             )}
@@ -327,312 +324,267 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                         <div className="relative">
                             <input type="file" accept="image/*" capture="environment" className="hidden" ref={photoInputRef} onChange={handlePhotoCapture} />
                             {photoPreview ? (
-                                <div className="relative group">
-                                    <div className={`w-12 h-12 rounded-full overflow-hidden border-2 shadow-lg ring-4 ring-white ${type === 'DESPESA' ? 'border-rose-500 shadow-rose-100' : 'border-green-500 shadow-green-100'}`}>
-                                        <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                                <div className="relative">
+                                    <div className={`w-14 h-14 ios-squircle overflow-hidden border-2 p-0.5 ${type === 'DESPESA' ? 'border-[#ff3b30]' : 'border-[#34c759]'}`}>
+                                        <img src={photoPreview} alt="Preview" className="w-full h-full object-cover ios-squircle" />
                                     </div>
-                                    <button onClick={(e) => { e.stopPropagation(); setCapturedPhoto(null); setPhotoPreview(null); }} className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all font-bold">
-                                        <X size={10} strokeWidth={4} />
+                                    <button onClick={(e) => { e.stopPropagation(); setCapturedPhoto(null); setPhotoPreview(null); }} className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-[#ff3b30] text-white ios-squircle flex items-center justify-center shadow-lg active:scale-90 transition-all">
+                                        <X size={12} strokeWidth={4} />
                                     </button>
                                 </div>
                             ) : (
-                                <button onClick={(e) => { e.stopPropagation(); photoInputRef.current?.click(); }} className="w-12 h-12 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-white hover:text-rose-600 hover:border-rose-200 hover:shadow-xl hover:shadow-rose-100 transition-all active:scale-90 group">
-                                    <Camera size={20} strokeWidth={2} />
+                                <button onClick={(e) => { e.stopPropagation(); photoInputRef.current?.click(); }} className="w-14 h-14 ios-squircle bg-[#f2f2f7] flex items-center justify-center text-slate-500 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] transition-all active:scale-95">
+                                    <Camera size={24} strokeWidth={2.5} />
                                 </button>
                             )}
                         </div>
 
                         <div className="relative">
                             {capturedAudio ? (
-                                <div className="relative group">
-                                    <button onClick={(e) => { e.stopPropagation(); const audio = new Audio(audioPreviewUrl!); audio.play(); }} className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100 ring-4 ring-white animate-pulse">
-                                        <Play size={16} fill="currentColor" />
+                                <div className="relative">
+                                    <button onClick={(e) => { e.stopPropagation(); const audio = new Audio(audioPreviewUrl!); audio.play(); }} className="w-14 h-14 ios-squircle bg-[#5856d6] flex items-center justify-center text-white shadow-lg animate-pulse">
+                                        <Play size={20} fill="currentColor" />
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); setCapturedAudio(null); setAudioPreviewUrl(null); }} className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all font-bold">
-                                        <X size={10} strokeWidth={4} />
+                                    <button onClick={(e) => { e.stopPropagation(); setCapturedAudio(null); setAudioPreviewUrl(null); }} className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-[#ff3b30] text-white ios-squircle flex items-center justify-center shadow-lg active:scale-90 transition-all">
+                                        <X size={12} strokeWidth={4} />
                                     </button>
                                 </div>
                             ) : (
-                                <button onClick={(e) => { e.stopPropagation(); recordingActive ? stopRecording() : startRecording(); }} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-90 ${recordingActive ? 'bg-red-600 text-white shadow-xl shadow-red-200 animate-bounce' : 'bg-slate-50 border border-slate-100 text-slate-400 hover:bg-white hover:text-indigo-600 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100'}`}>
-                                    {recordingActive ? <StopCircle size={20} /> : <Mic size={20} strokeWidth={2} />}
+                                <button onClick={(e) => { e.stopPropagation(); recordingActive ? stopRecording() : startRecording(); }} className={`w-14 h-14 ios-squircle flex items-center justify-center transition-all active:scale-95 ${recordingActive ? 'bg-[#ff3b30] text-white animate-bounce' : 'bg-[#f2f2f7] text-slate-500 hover:bg-[#5856d6]/10 hover:text-[#5856d6]'}`}>
+                                    {recordingActive ? <StopCircle size={24} strokeWidth={2.5} /> : <Mic size={24} strokeWidth={2.5} />}
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    <div className="relative group flex flex-col items-center">
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-200">R$</span>
-                            <div className={`relative border-b-2 transition-all px-4 py-2 ${type === 'DESPESA' ? 'border-slate-50 focus-within:border-rose-200' : 'border-slate-50 focus-within:border-green-200'}`}>
-                                <input
-                                    ref={amountInputRef}
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={amount === '0' ? '' : amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="0,00"
-                                    className="bg-transparent border-none outline-none text-7xl md:text-8xl font-black text-center w-full max-w-[320px] placeholder:text-slate-200 transition-colors text-slate-900"
-                                    onFocus={e => e.target.select()}
-                                />
-                            </div>
+                    <div className="relative flex flex-col items-center w-full max-w-sm px-4">
+                        <div className="flex items-baseline justify-center w-full gap-2">
+                            <span className="text-3xl font-black text-slate-300">R$</span>
+                            <input
+                                ref={amountInputRef}
+                                type="text"
+                                inputMode="decimal"
+                                value={amount === '0' ? '' : amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                placeholder="0,00"
+                                className="bg-transparent border-none outline-none text-7xl font-black text-center w-full placeholder:text-slate-100 transition-colors text-slate-900"
+                                onFocus={e => e.target.select()}
+                            />
                         </div>
                     </div>
                 </section>
 
-                <div className="px-6 space-y-6">
+                <div className="px-6 space-y-8">
                     {/* Primary Type Toggle */}
-                    <div className="grid grid-cols-2 p-1.5 bg-slate-100 rounded-2xl relative border border-slate-200">
+                    <div className="flex bg-slate-200/50 p-1 ios-squircle">
                         <button
                             onClick={() => { hapticFeedback(5); setType('DESPESA'); }}
-                            className={`py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-black text-xs uppercase tracking-widest z-10 btn-mobile-active ${type === 'DESPESA' ? 'bg-white text-rose-600 shadow-lg' : 'text-slate-500'}`}
+                            className={`flex-1 py-3 ios-squircle flex items-center justify-center gap-2 transition-all font-black text-xs uppercase tracking-widest ${type === 'DESPESA' ? 'bg-white text-[#ff3b30] shadow-md' : 'text-slate-500'}`}
                         >
-                            <div className={`w-2 h-2 rounded-full ${type === 'DESPESA' ? 'bg-rose-600' : 'bg-slate-400'}`} />
                             Despesa
                         </button>
                         <button
                             onClick={() => { hapticFeedback(5); setType('RECEITA'); }}
-                            className={`py-3 rounded-xl flex items-center justify-center gap-2 transition-all font-black text-xs uppercase tracking-widest z-10 btn-mobile-active ${type === 'RECEITA' ? 'bg-white text-green-600 shadow-lg' : 'text-slate-500'}`}
+                            className={`flex-1 py-3 ios-squircle flex items-center justify-center gap-2 transition-all font-black text-xs uppercase tracking-widest ${type === 'RECEITA' ? 'bg-white text-[#34c759] shadow-md' : 'text-slate-500'}`}
                         >
-                            <div className={`w-2 h-2 rounded-full ${type === 'RECEITA' ? 'bg-green-600' : 'bg-slate-400'}`} />
                             Receita
                         </button>
                     </div>
 
-                    {/* Recurring Section — MOVED TO TOP */}
-                    <div className={`p-1 rounded-[32px] border transition-all ${isRecurring ? (type === 'RECEITA' ? 'bg-green-50/50 border-green-200' : 'bg-rose-50/50 border-rose-200') : 'bg-slate-50 border-slate-100'}`}>
-                        <div className="bg-white rounded-[28px] p-4 flex items-center justify-between shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isRecurring ? (type === 'RECEITA' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600') : 'bg-slate-100 text-slate-400'}`}>
-                                    <RefreshCw size={20} className={isRecurring ? 'animate-spin-slow' : ''} />
+                    {/* Recurring Section */}
+                    <div className={`ios-squircle p-0.5 border border-white/50 shadow-sm overflow-hidden ${isRecurring ? (type === 'RECEITA' ? 'bg-[#34c759]/5' : 'bg-[#ff3b30]/5') : 'bg-slate-100'}`}>
+                        <div className="bg-white/60 backdrop-blur-md p-5 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 ios-squircle flex items-center justify-center ${isRecurring ? (type === 'RECEITA' ? 'bg-[#34c759]/10 text-[#34c759]' : 'bg-[#ff3b30]/10 text-[#ff3b30]') : 'bg-slate-100 text-slate-400'}`}>
+                                    <RefreshCw size={20} strokeWidth={2.5} className={isRecurring ? 'animate-spin-slow' : ''} />
                                 </div>
-                                <div>
-                                    <p className="text-xs font-black text-slate-800 uppercase tracking-tight">Repetir esta {type === 'RECEITA' ? 'receita' : 'despesa'}?</p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Fixos ou parcelados</p>
+                                <div className="flex flex-col">
+                                    <p className="text-xs font-black text-slate-900 uppercase tracking-tight leading-none mb-1">Repetir Lançamento</p>
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Fixo ou Parcelado</p>
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => { hapticFeedback(5); setIsRecurring(!isRecurring); }}
-                                className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isRecurring ? (type === 'RECEITA' ? 'bg-green-500' : 'bg-rose-500') : 'bg-slate-200'}`}
+                                className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isRecurring ? (type === 'RECEITA' ? 'bg-[#34c759]' : 'bg-[#ff3b30]') : 'bg-slate-300'}`}
                             >
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${isRecurring ? 'left-7' : 'left-1'}`} />
+                                <div className={`absolute top-1 w-4 h-4 bg-white ios-squircle shadow-sm transition-all duration-300 ${isRecurring ? 'left-7' : 'left-1'}`} />
                             </button>
                         </div>
 
                         {isRecurring && (
-                            <div className="p-4 space-y-6 animate-in slide-in-from-top-2 duration-300">
-                                <div className="flex bg-slate-100 p-1 rounded-2xl gap-1">
+                            <div className="p-6 space-y-8 animate-in slide-in-from-top-4 duration-500">
+                                <div className="flex bg-slate-200/40 p-1 ios-squircle gap-1">
                                     {[
-                                        { id: 'FIXO', label: 'Fixo', icon: Banknote },
-                                        { id: 'VARIAVEL', label: 'Variável', icon: RefreshCw }
+                                        { id: 'FIXO', label: 'Fixo' },
+                                        { id: 'VARIAVEL', label: 'Variável' }
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
                                             type="button"
                                             onClick={() => setRecurringType(opt.id as RecurrenceType)}
-                                            className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${recurringType === opt.id ? 'bg-white text-indigo-600 shadow-md scale-[1.02]' : 'text-slate-400'}`}
+                                            className={`flex-1 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all ${recurringType === opt.id ? 'bg-white text-[#007aff] shadow-sm' : 'text-slate-500'}`}
                                         >
-                                            <opt.icon size={12} />
                                             {opt.label}
                                         </button>
                                     ))}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Valor Programado</label>
-                                    <div className="relative">
-                                        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-sm font-black text-indigo-600">R$</div>
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            placeholder="0,00"
-                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl pl-12 pr-6 py-4 outline-none text-lg font-black text-indigo-900 focus:bg-white focus:border-indigo-100 transition-all placeholder:text-slate-200"
-                                            value={programmedAmount === '0' ? '' : programmedAmount}
-                                            onChange={e => setProgrammedAmount(e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Frequência</label>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {(['DIARIO', 'SEMANAL', 'MENSAL', 'ANUAL'] as RecurrenceFrequency[]).map(f => (
-                                            <button
-                                                key={f}
-                                                type="button"
-                                                onClick={() => setFrequency(f)}
-                                                className={`py-3 rounded-xl border-2 text-[8px] font-black uppercase tracking-tight transition-all duration-300 ${frequency === f ? 'border-indigo-500 bg-indigo-500 text-white shadow-lg' : 'border-slate-50 bg-slate-50 text-slate-400'}`}
-                                            >
-                                                {f}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    {frequency === 'MENSAL' && (
-                                        <div className="space-y-3">
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Vencimento</label>
-                                            <div className="relative">
-                                                <Calendar size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-600" />
-                                                <select
-                                                    className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl pl-10 pr-4 py-4 outline-none text-xs font-black text-slate-900 appearance-none focus:bg-white focus:border-indigo-100 transition-all"
-                                                    value={dayOfMonth}
-                                                    onChange={e => setDayOfMonth(Number(e.target.value))}
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Vencerá todo dia</label>
+                                        <div className="flex gap-2 pb-2 overflow-x-auto custom-scrollbar">
+                                            {[1, 5, 10, 15, 20, 25, 28].map((d) => (
+                                                <button
+                                                    key={d}
+                                                    type="button"
+                                                    onClick={() => setDayOfMonth(d)}
+                                                    className={`shrink-0 w-12 h-12 ios-squircle font-black text-sm flex items-center justify-center transition-all active:scale-90 ${dayOfMonth === d ? 'bg-slate-900 text-white shadow-lg scale-110' : 'bg-white text-slate-400 border border-white/50'}`}
                                                 >
-                                                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                                        <option key={d} value={d}>Dia {d}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300" />
-                                            </div>
+                                                    {d}
+                                                </button>
+                                            ))}
                                         </div>
-                                    )}
+                                    </div>
 
-                                    <div className={`${frequency === 'MENSAL' ? 'col-span-1' : 'col-span-2'} space-y-3`}>
-                                        <div className="flex justify-between items-center px-1">
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Repetições</label>
-                                            <span className="text-[8px] font-bold text-indigo-500 uppercase tracking-tighter bg-indigo-50 px-1.5 py-0.5 rounded-md">Opcional</span>
-                                        </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#007aff] pl-1">Valor Unitário Programado</label>
                                         <div className="relative">
-                                            <RefreshCw size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-600" />
                                             <input
-                                                type="number"
-                                                min="1"
-                                                placeholder="Indeterminado"
-                                                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl pl-10 pr-4 py-4 outline-none text-xs font-black text-slate-900 focus:bg-white focus:border-indigo-100 transition-all placeholder:text-slate-300"
-                                                value={recurringDuration}
-                                                onChange={e => setRecurringDuration(e.target.value)}
+                                                type="text"
+                                                inputMode="decimal"
+                                                value={programmedAmount}
+                                                onChange={(e) => setProgrammedAmount(e.target.value)}
+                                                placeholder="R$ 0,00"
+                                                className="w-full bg-[#007aff]/5 ios-squircle p-5 text-lg font-black outline-none focus:bg-white transition-all text-[#007aff] placeholder:text-[#007aff]/30"
                                             />
                                         </div>
-                                        {!recurringDuration && (
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight px-1">Até eu cancelar</p>
-                                        )}
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Frequência</label>
+                                        <div className="flex bg-slate-200/40 p-1 ios-squircle gap-1">
+                                            {['SEMANAL', 'MENSAL', 'ANUAL'].map((f) => (
+                                                <button
+                                                    key={f}
+                                                    type="button"
+                                                    onClick={() => setFrequency(f as any)}
+                                                    className={`flex-1 py-2.5 ios-squircle text-[9px] font-black uppercase tracking-widest transition-all ${frequency === f ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                                                >
+                                                    {f === 'SEMANAL' ? 'Semanal' : f === 'MENSAL' ? 'Mensal' : 'Anual'}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Section 1: Context */}
-                    <div className="bg-slate-50 rounded-[32px] p-1 border border-slate-100">
-                        <div className="bg-white rounded-[28px] p-6 space-y-6 shadow-sm">
-                            <div className="space-y-4">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">O que é isso? <span className="text-rose-600">*</span></label>
+                    {/* Context Section */}
+                    <div className="bg-white ios-squircle p-6 space-y-8 shadow-sm border border-slate-100">
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Descrição do Lançamento</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="O que você comprou?"
+                                    value={description}
+                                    onChange={(e) => { setDescription(e.target.value); if (aiSuggestedCategoryId) setAiSuggestedCategoryId(null); }}
+                                    onBlur={handleDescriptionBlur}
+                                    className="w-full bg-[#f2f2f7] ios-squircle p-5 text-lg outline-none focus:bg-white focus:ring-4 focus:ring-[#007aff]/5 transition-all font-black placeholder:text-slate-300"
+                                />
+                                {isAISuggesting && (
+                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                        <Loader2 size={16} className="animate-spin text-[#ff9500]" />
+                                        <span className="text-[10px] font-black text-[#ff9500] uppercase tracking-widest">IA</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Categoria Selecionada</label>
+                                {aiSuggestedCategoryId && categoryId === aiSuggestedCategoryId && (
+                                    <span className="flex items-center gap-1.5 text-[9px] font-black text-[#ff9500] bg-[#ff9500]/10 px-3 py-1 ios-squircle">
+                                        <Sparkles size={10} /> Sugestão IA ✨
+                                    </span>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => {
+                                    hapticFeedback(5);
+                                    setSelectorOpen('CATEGORY');
+                                    setCategorySearch('');
+                                }}
+                                className={`w-full p-5 ios-squircle flex items-center justify-between transition-all active:scale-95 ${categoryId ? 'bg-slate-900 text-white shadow-xl' : 'bg-[#f2f2f7] text-slate-400'}`}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <Tag size={20} strokeWidth={2.5} className={categoryId ? 'text-[#ff3b30]' : 'text-slate-300'} />
+                                    <span className="font-black text-xs uppercase tracking-widest">
+                                        {categoryId ? categories.find(c => c.id === categoryId)?.name : 'Selecionar'}
+                                    </span>
+                                </div>
+                                <ChevronDown size={20} className={categoryId ? 'text-white/40' : 'text-slate-300'} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Payment Section */}
+                    <div className="bg-white ios-squircle p-6 space-y-6 shadow-sm border border-slate-100">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Forma de Pagamento</label>
+                        <div className="grid grid-cols-2 gap-4">
+                            {[
+                                { method: 'DINHEIRO' as PaymentMethod, icon: Banknote, label: 'Dinheiro' },
+                                { method: 'PIX' as PaymentMethod, icon: ScanLine, label: 'Pix' },
+                                { method: 'CREDITO' as PaymentMethod, icon: CreditCard, label: 'Crédito', selector: 'CARD' },
+                                { method: 'DEBITO' as PaymentMethod, icon: Landmark, label: 'Conta', selector: 'ACCOUNT' }
+                            ].map((item) => (
+                                <button
+                                    key={item.method}
+                                    onClick={() => {
+                                        hapticFeedback(5);
+                                        if (item.selector) {
+                                            setSelectorOpen(item.selector as any);
+                                        } else {
+                                            setSelectedPayment({ method: item.method, label: item.label });
+                                        }
+                                    }}
+                                    className={`p-5 ios-squircle flex flex-col items-center gap-3 transition-all active:scale-95 ${selectedPayment?.method === item.method ? 'bg-[#007aff]/10 ring-2 ring-[#007aff] text-[#007aff]' : 'bg-[#f2f2f7] text-slate-500'}`}
+                                >
+                                    <item.icon size={24} strokeWidth={2.5} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest truncate w-full text-center">
+                                        {(selectedPayment?.method === item.method && selectedPayment.label) ? selectedPayment.label : item.label}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Meta Section */}
+                    <div className="bg-white ios-squircle p-6 space-y-6 shadow-sm border border-slate-100">
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Data</label>
+                                <input
+                                    type="date"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    className="w-full bg-[#f2f2f7] ios-squircle p-4 text-[11px] font-black outline-none focus:bg-white transition-all"
+                                />
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#007aff] pl-1">Taxas / Juros</label>
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        placeholder="Descreva este lançamento..."
-                                        value={description}
-                                        onChange={(e) => { setDescription(e.target.value); if (aiSuggestedCategoryId) setAiSuggestedCategoryId(null); }}
-                                        onBlur={handleDescriptionBlur}
-                                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-5 text-lg outline-none focus:bg-white focus:border-rose-500/10 transition-all font-black placeholder:text-slate-200"
+                                        inputMode="decimal"
+                                        value={interestAmount}
+                                        onChange={(e) => setInterestAmount(e.target.value)}
+                                        placeholder="0,00"
+                                        className="w-full bg-[#007aff]/5 ios-squircle p-4 text-[11px] font-black outline-none focus:bg-white transition-all text-[#007aff] placeholder:text-[#007aff]/30"
                                     />
-                                    {isAISuggesting && (
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                                            <Loader2 size={14} className="animate-spin text-orange-500" />
-                                            <span className="text-[9px] font-bold text-orange-500 uppercase tracking-wide">IA...</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Categoria <span className="text-rose-600">*</span></label>
-                                    {aiSuggestedCategoryId && categoryId === aiSuggestedCategoryId && (
-                                        <span className="flex items-center gap-1 text-[9px] font-black text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
-                                            <Sparkles size={9} /> Sugerido pela IA ✨
-                                        </span>
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        hapticFeedback(5);
-                                        setSelectorOpen('CATEGORY');
-                                        setCategorySearch('');
-                                    }}
-                                    className={`w-full p-5 rounded-2xl flex items-center justify-between border-2 transition-all btn-mobile-active ${categoryId ? 'border-slate-900 bg-slate-900 text-white shadow-xl' : 'border-slate-100 bg-slate-50 text-slate-400'}`}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <Tag size={18} className={categoryId ? 'text-rose-400' : 'text-slate-300'} />
-                                        <span className="font-black text-xs uppercase tracking-widest truncate">
-                                            {categoryId ? categories.find(c => c.id === categoryId)?.name : 'Escolher Categoria'}
-                                        </span>
-                                    </div>
-                                    <ChevronDown size={18} className={categoryId ? 'text-white/40' : 'text-slate-200'} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Section 2: Payment */}
-                    <div className="bg-slate-50 rounded-[32px] p-1 border border-slate-100">
-                        <div className="bg-white rounded-[28px] p-6 space-y-6 shadow-sm">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Forma de Pagamento <span className="text-rose-600">*</span></label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => { hapticFeedback(5); setSelectedPayment({ method: 'DINHEIRO', label: 'Dinheiro' }); }}
-                                    className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all btn-mobile-active ${selectedPayment?.method === 'DINHEIRO' ? 'border-rose-500 bg-rose-50 text-rose-900 shadow-md' : 'border-slate-50 bg-slate-50 text-slate-400'}`}
-                                >
-                                    <Banknote size={20} strokeWidth={1.5} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest">Dinheiro</span>
-                                </button>
-                                <button
-                                    onClick={() => { hapticFeedback(5); setSelectedPayment({ method: 'PIX', label: 'Pix' }); }}
-                                    className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all btn-mobile-active ${selectedPayment?.method === 'PIX' ? 'border-rose-500 bg-rose-50 text-rose-900 shadow-md' : 'border-slate-50 bg-slate-50 text-slate-400'}`}
-                                >
-                                    <div className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center text-[8px] font-black text-white">P</div>
-                                    <span className="text-[9px] font-black uppercase tracking-widest">Pix</span>
-                                </button>
-                                <button
-                                    onClick={() => { hapticFeedback(5); setSelectorOpen('CARD'); }}
-                                    className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all relative btn-mobile-active ${selectedPayment?.method === 'CREDITO' ? 'border-rose-500 bg-rose-50 text-rose-900 shadow-md' : 'border-slate-50 bg-slate-50 text-slate-400'}`}
-                                >
-                                    <CreditCard size={20} strokeWidth={1.5} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest truncate w-full px-1 text-center">
-                                        {selectedPayment?.method === 'CREDITO' ? (selectedPayment.label || 'Crédito') : 'Cartão'}
-                                    </span>
-                                </button>
-                                <button
-                                    onClick={() => { hapticFeedback(5); setSelectorOpen('ACCOUNT'); }}
-                                    className={`p-4 rounded-2xl flex flex-col items-center gap-2 border-2 transition-all relative btn-mobile-active ${selectedPayment?.method === 'DEBITO' ? 'border-rose-500 bg-rose-50 text-rose-900 shadow-md' : 'border-slate-50 bg-slate-50 text-slate-400'}`}
-                                >
-                                    <Landmark size={20} strokeWidth={1.5} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest truncate w-full px-1 text-center">
-                                        {selectedPayment?.method === 'DEBITO' ? (selectedPayment.label || 'Conta') : 'Conta/Débito'}
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Section 3: Details */}
-                    <div className="bg-slate-50 rounded-[32px] p-1 border border-slate-100">
-                        <div className="bg-white rounded-[28px] p-6 space-y-6 shadow-sm">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Data</label>
-                                    <input
-                                        type="date"
-                                        value={date}
-                                        onChange={(e) => setDate(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-xl p-4 text-xs font-black outline-none focus:border-rose-500/10 transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 pl-1">Juros / Multas (R$)</label>
-                                    <div className="relative">
-                                        <AlertCircle size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400" />
-                                        <input
-                                            type="text"
-                                            inputMode="decimal"
-                                            value={interestAmount}
-                                            onChange={(e) => setInterestAmount(e.target.value)}
-                                            placeholder="0,00"
-                                            className="w-full bg-indigo-50/30 border-2 border-indigo-50 rounded-xl pl-10 pr-4 py-4 text-xs font-black outline-none focus:border-indigo-200 transition-all text-indigo-900 placeholder:text-indigo-200"
-                                        />
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -641,19 +593,19 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
             </div>
 
             {/* ACTION FOOTER */}
-            <footer className="px-6 py-8 pb-12 bg-white/80 backdrop-blur-2xl border-t border-slate-50 sticky bottom-0 z-40 shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
+            <footer className="px-6 py-8 pb-10 ios-glass border-t border-white/20 sticky bottom-0 z-40 shrink-0 shadow-2xl">
                 <div className="max-w-xl mx-auto flex gap-4">
                     <button
                         onClick={() => { hapticFeedback(10); handleSave(false); }}
                         disabled={isSaving || (!amount && !capturedPhoto && !capturedAudio)}
-                        className={`flex-1 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all text-center leading-tight px-4 btn-mobile-active ${type === 'DESPESA' ? 'bg-rose-50 text-rose-600 border border-rose-100/50' : 'bg-green-50 text-green-600 border border-green-100/50'}`}
+                        className={`flex-1 py-4 ios-squircle font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all text-center px-4 ${type === 'DESPESA' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : 'bg-[#34c759]/10 text-[#34c759]'}`}
                     >
-                        Lançamento Parcial
+                        Parcial
                     </button>
                     <button
                         onClick={() => { hapticFeedback(20); handleSave(true); }}
                         disabled={isSaving || !isReadyToComplete}
-                        className={`flex-[1.5] py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 active:scale-95 shadow-2xl btn-mobile-active ${isReadyToComplete ? (type === 'DESPESA' ? 'bg-rose-600 text-white shadow-rose-500/30' : 'bg-green-600 text-white shadow-green-500/30') : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed'}`}
+                        className={`flex-[2] py-4 ios-squircle font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl ${isReadyToComplete ? (type === 'DESPESA' ? 'bg-[#ff3b30] text-white shadow-[#ff3b30]/20' : 'bg-[#34c759] text-white shadow-[#34c759]/20') : 'bg-slate-300 text-white cursor-not-allowed'}`}
                     >
                         {isSaving ? 'Salvando...' : 'Finalizar'}
                         <Check size={20} strokeWidth={4} />
@@ -665,15 +617,15 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
             {selectorOpen && (
                 <div className="fixed inset-0 z-[110] flex items-end justify-center px-4 pb-4 animate-in fade-in duration-300">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectorOpen(null)} />
-                    <div className={`relative w-full max-w-lg bg-white rounded-t-[40px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-500 ${selectorOpen === 'CATEGORY' ? 'h-[92dvh]' : 'rounded-b-[40px]'}`}>
-                        <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto my-4 shrink-0" />
+                    <div className={`relative w-full max-w-lg ios-glass rounded-t-[40px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-500 flex flex-col ${selectorOpen === 'CATEGORY' ? 'h-[85dvh]' : 'h-auto max-h-[70dvh]'}`}>
+                        <div className="w-12 h-1.5 bg-slate-300/50 ios-squircle mx-auto my-4 shrink-0" />
                         <div className="px-8 pt-2 pb-10 space-y-6 flex flex-col h-full overflow-hidden">
                             <div className="flex justify-between items-center shrink-0">
                                 <h3 className="font-black text-xl uppercase tracking-tight text-slate-900">
                                     {selectorOpen === 'CARD' ? 'Escolha o Cartão' : selectorOpen === 'ACCOUNT' ? 'Escolha a Conta' : 'Escolha a Categoria'}
                                 </h3>
-                                <button onClick={() => setSelectorOpen(null)} className="p-2 bg-slate-50 rounded-full text-slate-400">
-                                    <X size={20} />
+                                <button onClick={() => setSelectorOpen(null)} className="w-9 h-9 bg-slate-200/50 ios-squircle flex items-center justify-center text-slate-500 active:scale-90 transition-all">
+                                    <X size={18} strokeWidth={3} />
                                 </button>
                             </div>
 
@@ -686,12 +638,12 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                         placeholder="Pesquisar categoria..."
                                         value={categorySearch}
                                         onChange={(e) => setCategorySearch(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 pl-12 text-sm outline-none font-bold text-slate-900 focus:bg-white focus:border-indigo-100 transition-all"
+                                        className="w-full bg-white/50 ios-squircle p-5 pl-12 text-sm outline-none font-black text-slate-900 focus:bg-white transition-all border border-white/20"
                                     />
                                 </div>
                             )}
 
-                            <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-10">
                                 {selectorOpen === 'CATEGORY' ? (
                                     categories
                                         .filter(cat => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
@@ -702,31 +654,31 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                                     setCategoryId(cat.id);
                                                     setSelectorOpen(null);
                                                 }}
-                                                className={`w-full p-5 rounded-2xl transition-all flex items-center justify-between group ${categoryId === cat.id ? (type === 'DESPESA' ? 'bg-rose-600 text-white shadow-lg' : 'bg-green-600 text-white shadow-lg') : 'bg-slate-50 hover:bg-slate-100 text-slate-900'}`}
+                                                className={`w-full p-5 ios-squircle transition-all flex items-center justify-between group active:scale-[0.98] ${categoryId === cat.id ? 'bg-[#ff3b30] text-white shadow-lg' : 'bg-white/40 text-slate-900'}`}
                                             >
                                                 <div className="flex items-center gap-4">
-                                                    <Tag size={18} className={categoryId === cat.id ? 'text-white' : 'text-slate-400'} />
+                                                    <Tag size={18} strokeWidth={2.5} className={categoryId === cat.id ? 'text-white' : 'text-[#ff3b30]'} />
                                                     <span className="font-black text-xs uppercase tracking-widest">{cat.name}</span>
                                                 </div>
-                                                {categoryId === cat.id && <Check size={20} />}
+                                                {categoryId === cat.id && <Check size={20} strokeWidth={4} />}
                                             </button>
                                         ))
                                 ) : (
-                                    <div className="space-y-3">
+                                    <div className="space-y-4">
                                         <button
                                             onClick={() => {
                                                 setSelectedPayment({ method: selectorOpen === 'CARD' ? 'CREDITO' : 'DEBITO', label: selectorOpen === 'CARD' ? 'Crt. Geral' : 'Cta. Geral' });
                                                 setSelectorOpen(null);
                                             }}
-                                            className="w-full p-6 rounded-3xl bg-slate-50 hover:bg-orange-50 transition-all flex items-center justify-between group"
+                                            className="w-full p-6 ios-squircle bg-white/40 active:scale-[0.98] transition-all flex items-center justify-between group"
                                         >
                                             <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-orange-200 group-hover:text-orange-600 transition-colors">
+                                                <div className={`w-12 h-12 ios-squircle flex items-center justify-center ${selectorOpen === 'CARD' ? 'bg-[#ff9500]/10 text-[#ff9500]' : 'bg-[#34c759]/10 text-[#34c759]'}`}>
                                                     {selectorOpen === 'CARD' ? <CreditCard size={24} /> : <Landmark size={24} />}
                                                 </div>
                                                 <div className="flex flex-col items-start">
                                                     <span className="font-black text-sm text-slate-900 uppercase">Uso Geral</span>
-                                                    <span className="text-[10px] font-bold text-slate-400">Sem vínculo específico</span>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sem vínculo</span>
                                                 </div>
                                             </div>
                                             <ChevronRight size={20} className="text-slate-300" />
@@ -739,15 +691,15 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                                     setSelectedPayment({ method: 'CREDITO', cardId: item.id, label: item.name });
                                                     setSelectorOpen(null);
                                                 }}
-                                                className="w-full p-6 rounded-3xl bg-slate-50 hover:bg-indigo-50 transition-all flex items-center justify-between group"
+                                                className="w-full p-6 ios-squircle bg-white/40 active:scale-[0.98] transition-all flex items-center justify-between group"
                                             >
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600">
+                                                    <div className="w-12 h-12 bg-[#007aff]/10 ios-squircle flex items-center justify-center text-[#007aff]">
                                                         <CreditCard size={24} />
                                                     </div>
                                                     <div className="flex flex-col items-start">
                                                         <span className="font-black text-sm text-slate-900 uppercase">{item.name}</span>
-                                                        <span className="text-[10px] font-bold text-slate-400">Final {item.last_digits || '****'}</span>
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Final {item.last_digits || '****'}</span>
                                                     </div>
                                                 </div>
                                                 <ChevronRight size={20} className="text-slate-300" />
@@ -759,15 +711,15 @@ export default function QuickAddView({ onClose, onSuccess }: QuickAddViewProps) 
                                                     setSelectedPayment({ method: 'DEBITO', accountId: item.id, label: item.name });
                                                     setSelectorOpen(null);
                                                 }}
-                                                className="w-full p-6 rounded-3xl bg-slate-50 hover:bg-emerald-50 transition-all flex items-center justify-between group"
+                                                className="w-full p-6 ios-squircle bg-white/40 active:scale-[0.98] transition-all flex items-center justify-between group"
                                             >
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600">
+                                                    <div className="w-12 h-12 bg-[#34c759]/10 ios-squircle flex items-center justify-center text-[#34c759]">
                                                         <Landmark size={24} />
                                                     </div>
                                                     <div className="flex flex-col items-start">
                                                         <span className="font-black text-sm text-slate-900 uppercase">{item.name}</span>
-                                                        <span className="text-[10px] font-bold text-slate-400">{item.bank_name || 'Banco'}</span>
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.bank_name || 'Banco'}</span>
                                                     </div>
                                                 </div>
                                                 <ChevronRight size={20} className="text-slate-300" />

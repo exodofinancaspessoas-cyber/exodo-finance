@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 /* UX Audit bypass: placeholder aria-label label */
 import {
     Search, Filter, Plus, Edit, Trash2, CreditCard, X, ChevronDown,
@@ -456,88 +456,89 @@ export default function TransactionsView({
     // Status visual helper
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'PREVISTA': return 'bg-yellow-100 text-yellow-700';
-            case 'CONFIRMADA': return 'bg-cyan-100 text-cyan-700';
-            case 'PAGA': return 'bg-green-100 text-green-700';
-            case 'RECEBIDA': return 'bg-green-100 text-green-700';
-            case 'ATRASADA': return 'bg-red-100 text-red-700';
+            case 'PREVISTA': return 'bg-[#ff9500]/10 text-[#ff9500]';
+            case 'CONFIRMADA': return 'bg-[#007aff]/10 text-[#007aff]';
+            case 'PAGA': return 'bg-[#34c759]/10 text-[#34c759]';
+            case 'RECEBIDA': return 'bg-[#34c759]/10 text-[#34c759]';
+            case 'ATRASADA': return 'bg-ios-overdue animate-overdue';
             case 'INCOMPLETA': return 'bg-amber-100 text-amber-700 border border-amber-200';
             case 'EXCLUIDA': return 'bg-slate-200 text-slate-500 line-through';
             default: return 'bg-slate-100 text-slate-700';
         }
     };
 
+    // Placeholder for hapticFeedback, assuming it's defined elsewhere or will be added
+    const hapticFeedback = (intensity: number) => {
+        // console.log(`Haptic feedback with intensity: ${intensity}`);
+    };
+
     return (
-        <div className="animate-fade-in space-y-6 pb-20">
-            {/* Header with Search & Filter Toggle */}
-            {/* Header with Search & Tabs */}
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Transações</h2>
-                        <p className="text-slate-500 text-xs font-medium">Controle suas entradas e saídas</p>
+        <div className="animate-in fade-in duration-700 space-y-8 pb-32">
+            {/* iOS Large Title Header */}
+            <header className="flex flex-col gap-6">
+                <div className="flex justify-between items-end px-1">
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-black text-[#ff9500] uppercase tracking-widest leading-none">Visão Geral</span>
+                        <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Lançamentos</h1>
+                    </div>
+                    {/* Month Stats Widget */}
+                    <div className="hidden md:flex items-center gap-4 bg-white/60 backdrop-blur-md p-3 px-5 ios-squircle border border-white/50 shadow-sm transition-all hover:shadow-md">
+                        <div className="flex flex-col items-end">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pendente este mês</span>
+                            <span className="text-lg font-black text-slate-900 leading-none">{formatCurrency(monthStats.pendingTotal)}</span>
+                        </div>
+                        <div className="w-10 h-10 ios-squircle bg-[#007aff]/10 flex items-center justify-center text-[#007aff]">
+                            <TrendingDown size={20} strokeWidth={2.5} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Filter & Action Bar */}
+                <div className="ios-glass p-2 ios-squircle-md border border-white/30 shadow-lg flex flex-col md:flex-row gap-4 items-stretch md:items-center">
+                    <div className="flex-1 flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Buscar lançamento..."
+                                className="w-full pl-11 pr-4 py-4 bg-white/50 ios-squircle-sm border-none outline-none text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white transition-all shadow-inner"
+                                value={filters.search}
+                                onChange={e => setFilters({ ...filters, search: e.target.value })}
+                            />
+                        </div>
+                        <button
+                            onClick={() => { hapticFeedback(5); setShowFilters(!showFilters); }}
+                            className={`w-14 h-14 ios-squircle flex items-center justify-center transition-all active:scale-95 border-b-2 ${showFilters ? 'bg-[#007aff] text-white border-[#007aff]/30 shadow-lg' : 'bg-white text-slate-500 border-slate-100 hover:bg-slate-50'}`}
+                        >
+                            <Filter size={20} strokeWidth={2.5} />
+                        </button>
                     </div>
 
-                    <div className="flex bg-slate-100 p-1 rounded-2xl w-full md:w-fit shadow-inner">
+                    <div className="flex bg-slate-200/40 p-1 ios-squircle-md gap-1">
+                        {[
+                            { id: 'ALL', label: 'Todos', icon: LayoutDashboard },
+                            { id: 'RECEITA', label: 'Receitas', icon: ArrowUpCircle, color: '#007aff' },
+                            { id: 'DESPESA', label: 'Despesas', icon: ArrowDownCircle, color: '#ff3b30' }
+                        ].map((btn) => (
+                            <button
+                                key={btn.id}
+                                onClick={() => { hapticFeedback(5); setFilters({ ...filters, type: btn.id as any }); setShowRecurring(false); }}
+                                className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${filters.type === btn.id && !showRecurring ? 'bg-white text-slate-900 shadow-md scale-[1.02]' : 'text-slate-500 hover:bg-white/40'}`}
+                            >
+                                <btn.icon size={14} strokeWidth={3} className={filters.type === btn.id ? (btn.color ? `text-[${btn.color}]` : 'text-[#007aff]') : 'opacity-40'} />
+                                <span>{btn.label}</span>
+                            </button>
+                        ))}
                         <button
-                            onClick={() => { setFilters({ ...filters, type: 'ALL' }); setShowRecurring(false); }}
-                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'ALL' && !showRecurring ? 'bg-white text-slate-900 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
+                            onClick={() => { hapticFeedback(5); setShowRecurring(true); setFilters({ ...filters, type: 'ALL' }); }}
+                            className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${showRecurring ? 'bg-white text-[#ff9500] shadow-md scale-[1.02]' : 'text-slate-500 hover:bg-white/40'}`}
                         >
-                            <LayoutDashboard size={14} className={filters.type === 'ALL' ? 'text-indigo-500' : 'opacity-50'} />
-                            <span>Todos</span>
-                        </button>
-                        <button
-                            onClick={() => { setFilters({ ...filters, type: 'RECEITA' }); setShowRecurring(false); }}
-                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'RECEITA' && !showRecurring ? 'bg-white text-green-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            <ArrowUpCircle size={14} className={filters.type === 'RECEITA' ? 'text-green-500' : 'opacity-50'} />
-                            <span>Receitas</span>
-                        </button>
-                        <button
-                            onClick={() => { setFilters({ ...filters, type: 'DESPESA' }); setShowRecurring(false); }}
-                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'DESPESA' && !showRecurring ? 'bg-white text-red-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            <ArrowDownCircle size={14} className={filters.type === 'DESPESA' ? 'text-red-500' : 'opacity-50'} />
-                            <span>Despesas</span>
-                        </button>
-                        <button
-                            onClick={() => {
-                                setShowRecurring(true);
-                                setFilters({ ...filters, type: 'ALL' });
-                                // Scroll to recurring rules if needed
-                                setTimeout(() => {
-                                    document.getElementById('recurring-rules-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }, 100);
-                            }}
-                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${showRecurring ? 'bg-indigo-600 text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            <Repeat size={14} className={showRecurring ? 'text-white' : 'opacity-50'} />
+                            <Repeat size={14} strokeWidth={3} className={showRecurring ? 'text-[#ff9500]' : 'opacity-40'} />
                             <span>Recorrência</span>
                         </button>
                     </div>
                 </div>
-
-                <div className="flex items-center gap-2 w-full">
-                    {/* Search bar - always visible */}
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Buscar transação..."
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm"
-                            value={filters.search}
-                            onChange={e => setFilters({ ...filters, search: e.target.value })}
-                        />
-                    </div>
-                    <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`w-10 h-10 rounded-xl border transition-colors flex items-center justify-center shrink-0 ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-500'}`}
-                        aria-label="Filtros"
-                    >
-                        <Filter size={18} />
-                    </button>
-                </div>
-            </div>
+            </header>
 
             {/* Advanced Filters Panel */}
             {showFilters && (
@@ -546,7 +547,7 @@ export default function TransactionsView({
                         <div>
                             <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Tipo</label>
                             <select
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                                 value={filters.type}
                                 onChange={e => setFilters({ ...filters, type: e.target.value as any })}
                             >
@@ -558,7 +559,7 @@ export default function TransactionsView({
                         <div>
                             <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Status</label>
                             <select
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                                 value={filters.status}
                                 onChange={e => setFilters({ ...filters, status: e.target.value as any })}
                             >
@@ -569,13 +570,13 @@ export default function TransactionsView({
                                 <option value="INCOMPLETA">Incompletas</option>
                                 {filters.type !== 'DESPESA' && <option value="RECEBIDA">Recebida</option>}
                                 {filters.type !== 'RECEITA' && <option value="PAGA">Paga</option>}
-                                <option value="EXCLUIDA">Excluídas</option>
+                                <option value="EXCLUIDA">ExcluÃ­das</option>
                             </select>
                         </div>
                         <div>
                             <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Categoria</label>
                             <select
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                                 value={filters.category}
                                 onChange={e => setFilters({ ...filters, category: e.target.value })}
                             >
@@ -589,9 +590,9 @@ export default function TransactionsView({
                             </select>
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Conta/Cartão</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Conta/CartÃ£o</label>
                             <select
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                                 value={filters.account}
                                 onChange={e => setFilters({ ...filters, account: e.target.value })}
                             >
@@ -599,16 +600,16 @@ export default function TransactionsView({
                                 <optgroup label="Contas">
                                     {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
                                 </optgroup>
-                                <optgroup label="Cartões">
+                                <optgroup label="CartÃµes">
                                     {cards.map(card => <option key={card.id} value={card.id}>{card.name}</option>)}
                                 </optgroup>
                             </select>
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data Início</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data InÃ­cio</label>
                             <input
                                 type="date"
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                                 value={filters.startDate}
                                 onChange={e => setFilters({ ...filters, startDate: e.target.value })}
                             />
@@ -617,27 +618,27 @@ export default function TransactionsView({
                             <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data Fim</label>
                             <input
                                 type="date"
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                                 value={filters.endDate}
                                 onChange={e => setFilters({ ...filters, endDate: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor Mínimo</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor MÃ­nimo</label>
                             <input
                                 type="number"
                                 placeholder="R$ 0,00"
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                                 value={filters.minAmount}
                                 onChange={e => setFilters({ ...filters, minAmount: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor Máximo</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor MÃ¡ximo</label>
                             <input
                                 type="number"
                                 placeholder="R$ Infinito"
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
                                 value={filters.maxAmount}
                                 onChange={e => setFilters({ ...filters, maxAmount: e.target.value })}
                             />
@@ -652,7 +653,7 @@ export default function TransactionsView({
                             }}
                             className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold text-slate-600 transition-colors"
                         >
-                            Este Mês
+                            Este MÃªs
                         </button>
                         <button
                             onClick={() => {
@@ -661,7 +662,7 @@ export default function TransactionsView({
                             }}
                             className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold text-slate-600 transition-colors"
                         >
-                            Próximo Mês
+                            PrÃ³ximo MÃªs
                         </button>
                         <button
                             onClick={() => setFilters({ ...filters, startDate: '', endDate: '' })}
@@ -674,7 +675,7 @@ export default function TransactionsView({
                                 setExportData(filteredTransactions);
                                 setIsExportModalOpen(true);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-bold transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-bold transition-colors"
                         >
                             <Download size={16} /> Exportar Filtrados
                         </button>
@@ -684,7 +685,7 @@ export default function TransactionsView({
 
             {/* COMPACT STATS BAR */}
             <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-2.5 overflow-x-auto">
-                <div className={`flex items-center gap-2 shrink-0 pr-3 border-r border-slate-100 ${monthStats.type === 'RECEITA' ? 'text-green-700' : 'text-slate-700'}`}>
+                <div className={`flex items-center gap-2 shrink-0 pr-3 border-r border-slate-100 ${monthStats.type === 'RECEITA' ? 'text-[#007aff]' : 'text-slate-700'}`}>
                     <Clock size={14} className="shrink-0 text-slate-400" />
                     <div>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">
@@ -700,12 +701,12 @@ export default function TransactionsView({
                         <p className="text-sm font-black leading-tight">{monthStats.overdueCount}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 pl-3 text-emerald-600">
+                <div className={`flex items-center gap-2 shrink-0 pl-3 ${monthStats.overdueCount > 0 ? 'text-[#ff3b30] animate-overdue' : 'text-[#34c759]'}`}>
                     <CheckCircle size={14} className="shrink-0" />
                     <div>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">Status</p>
-                        <p className="text-sm font-black leading-tight text-slate-700">
-                            {monthStats.overdueCount > 0 ? 'Atenção!' : 'Em dia'}
+                        <p className="text-sm font-black leading-tight">
+                            {monthStats.overdueCount > 0 ? 'ATENÇÃO!' : 'EM DIA'}
                         </p>
                     </div>
                 </div>
@@ -725,9 +726,9 @@ export default function TransactionsView({
                                 className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
                             >
                                 <div className="flex items-center gap-2.5">
-                                    <Repeat size={16} className="text-indigo-500" />
+                                    <Repeat size={16} className="text-blue-500" />
                                     <span className="text-sm font-semibold text-slate-700">Regras Recorrentes</span>
-                                    <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
                                         {recurringRules.filter(r => r.active).length} ativas
                                     </span>
                                 </div>
@@ -738,7 +739,7 @@ export default function TransactionsView({
                                 <div className="border-t border-slate-100 divide-y divide-slate-50">
                                     {recurringRules.map(rule => {
                                         const cat = categories.find(c => c.id === rule.category_id);
-                                        const freqLabel: Record<string, string> = { DIARIO: 'Diário', SEMANAL: 'Semanal', MENSAL: 'Mensal', ANUAL: 'Anual' };
+                                        const freqLabel: Record<string, string> = { DIARIO: 'DiÃ¡rio', SEMANAL: 'Semanal', MENSAL: 'Mensal', ANUAL: 'Anual' };
                                         return (
                                             <div key={rule.id} className={`flex items-center justify-between px-5 py-3 ${!rule.active ? 'opacity-50' : ''}`}>
                                                 <div className="flex items-center gap-3">
@@ -747,8 +748,8 @@ export default function TransactionsView({
                                                         <p className="text-sm font-medium text-slate-800">{rule.description}</p>
                                                         <p className="text-xs text-slate-400">
                                                             {freqLabel[rule.frequency] || rule.frequency}
-                                                            {rule.day_of_month ? ` · Dia ${rule.day_of_month}` : ''}
-                                                            {cat ? ` · ${cat.name}` : ''}
+                                                            {rule.day_of_month ? ` Â· Dia ${rule.day_of_month}` : ''}
+                                                            {cat ? ` Â· ${cat.name}` : ''}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -793,7 +794,7 @@ export default function TransactionsView({
                             <div className="bg-slate-50 border border-slate-100 rounded-xl p-8 text-center">
                                 <Repeat size={32} className="mx-auto text-slate-300 mb-2 opacity-20" />
                                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Nenhuma regra recorrente</p>
-                                <p className="text-xs text-slate-400 mt-1">Crie um novo lançamento e marque "Repetir" para começar.</p>
+                                <p className="text-xs text-slate-400 mt-1">Crie um novo lanÃ§amento e marque "Repetir" para comeÃ§ar.</p>
                             </div>
                         )
                     )
@@ -812,7 +813,7 @@ export default function TransactionsView({
                                     setExportData(selected);
                                     setIsExportModalOpen(true);
                                 }}
-                                className="p-2 hover:bg-slate-700 rounded-lg text-indigo-300 hover:text-indigo-200 flex items-center gap-2 text-sm"
+                                className="p-2 hover:bg-slate-700 rounded-lg text-blue-300 hover:text-blue-200 flex items-center gap-2 text-sm"
                                 title="Exportar Selecionados"
                             >
                                 <Download size={16} /> Exportar
@@ -851,7 +852,7 @@ export default function TransactionsView({
                                     </button>
                                 </th>
                                 <th className="px-6 py-4">Data</th>
-                                <th className="px-6 py-4">Descrição</th>
+                                <th className="px-6 py-4">DescriÃ§Ã£o</th>
                                 <th className="px-6 py-4">Categoria</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4 text-right">Valor</th>
@@ -861,13 +862,13 @@ export default function TransactionsView({
                         <tbody className="divide-y divide-slate-100 text-sm">
                             {filteredTransactions.map(t => {
                                 const isTransfer = t.payment_method === 'TRANSFERENCIA';
-                                const category = isTransfer ? { name: 'Transferência', color: '#6366f1', icon: 'ArrowRightLeft' } : categories.find(c => c.id === t.category_id);
+                                const category = isTransfer ? { name: 'TransferÃªncia', color: '#6366f1', icon: 'ArrowRightLeft' } : categories.find(c => c.id === t.category_id);
                                 const isSelected = selectedTransactions.has(t.id);
 
                                 return (
-                                    <tr key={t.id} className={`hover:bg-slate-50 transition-colors group ${isSelected ? 'bg-indigo-50/30' : ''} ${t.status === 'EXCLUIDA' ? 'opacity-60 grayscale-[0.5]' : ''}`}>
+                                    <tr key={t.id} className={`hover:bg-slate-50 transition-colors group ${isSelected ? 'bg-blue-50/30' : ''} ${t.status === 'EXCLUIDA' ? 'opacity-60 grayscale-[0.5]' : ''}`}>
                                         <td className="px-4 py-4">
-                                            <button onClick={() => toggleSelection(t.id)} className={`${isSelected ? 'text-indigo-600' : 'text-slate-300 hover:text-slate-400'}`}>
+                                            <button onClick={() => toggleSelection(t.id)} className={`${isSelected ? 'text-blue-600' : 'text-slate-300 hover:text-slate-400'}`}>
                                                 {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
                                             </button>
                                         </td>
@@ -884,10 +885,10 @@ export default function TransactionsView({
                                         <td className="px-6 py-4 font-medium text-slate-800">
                                             <div className="flex flex-col">
                                                 <span className="flex items-center gap-1.5">
-                                                    {isTransfer && <ArrowRightLeft size={14} className="text-indigo-500" />}
+                                                    {isTransfer && <ArrowRightLeft size={14} className="text-blue-500" />}
                                                     {t.description}
                                                     {t.payment_method === 'CREDITO' && <CreditCard size={12} className="text-slate-400" />}
-                                                    {t.recurrence_id && <RefreshCw size={10} className="text-indigo-400" title="Recorrente" />}
+                                                    {t.recurrence_id && <RefreshCw size={10} className="text-blue-400" title="Recorrente" />}
                                                 </span>
                                                 {t.installments && (
                                                     <span className="text-[10px] text-slate-400 bg-slate-100 w-fit px-1 rounded flex items-center gap-1">
@@ -908,11 +909,11 @@ export default function TransactionsView({
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${isTransfer ? 'bg-indigo-50 text-indigo-600' : getStatusColor(t.status)}`}>
+                                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${isTransfer ? 'bg-blue-50 text-blue-600' : getStatusColor(t.status)}`}>
                                                 {isTransfer ? 'TRANSFERIDO' : t.status}
                                             </span>
                                         </td>
-                                        <td className={`px-6 py-4 text-right font-bold ${isTransfer ? 'text-indigo-600' : (t.type === 'RECEITA' ? 'text-green-600' : 'text-red-700')} ${t.status === 'PREVISTA' && t.recurrence_id ? 'italic opacity-80' : ''}`}>
+                                        <td className={`px-6 py-4 text-right font-black ${isTransfer ? 'text-[#007aff]' : (t.type === 'RECEITA' ? 'text-[#007aff]' : 'text-[#ff3b30]')} ${t.status === 'PREVISTA' && t.recurrence_id ? 'italic opacity-80' : ''}`}>
                                             {t.status === 'PREVISTA' && t.recurrence_id ? '~ ' : ''}
                                             {isTransfer ? '' : (t.type === 'RECEITA' ? '+' : '-')}{formatCurrency(t.amount)}
                                         </td>
@@ -921,7 +922,7 @@ export default function TransactionsView({
                                                 {t.status === 'EXCLUIDA' ? (
                                                     <button
                                                         onClick={() => handleRestore(t.id)}
-                                                        className="p-1 px-2 bg-indigo-50 text-indigo-600 rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-indigo-100 transition-colors"
+                                                        className="p-1 px-2 bg-blue-50 text-blue-600 rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-blue-100 transition-colors"
                                                         title="Restaurar"
                                                     >
                                                         <RotateCcw size={14} /> RESTAURAR
@@ -937,8 +938,8 @@ export default function TransactionsView({
                                                             </button>
                                                         )}
                                                         <button
-                                                            onClick={() => isTransfer ? alert('Edição de transferências em breve.') : handleOpenModal(t)}
-                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-indigo-600 transition-colors disabled:opacity-50"
+                                                            onClick={() => isTransfer ? alert('EdiÃ§Ã£o de transferÃªncias em breve.') : handleOpenModal(t)}
+                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-blue-600 transition-colors disabled:opacity-50"
                                                             disabled={isSaving || isTransfer}
                                                         >
                                                             <Edit size={16} />
@@ -946,10 +947,10 @@ export default function TransactionsView({
                                                         <button
                                                             onClick={async () => {
                                                                 if (isTransfer) {
-                                                                    if (confirm('Excluir esta transferência?')) {
+                                                                    if (confirm('Excluir esta transferÃªncia?')) {
                                                                         setIsSaving(true);
                                                                         try {
-                                                                            alert('Para excluir uma transferência, utilize a aba de Contas nesta versão.');
+                                                                            alert('Para excluir uma transferÃªncia, utilize a aba de Contas nesta versÃ£o.');
                                                                         } finally { setIsSaving(false); }
                                                                     }
                                                                 } else {
@@ -976,7 +977,7 @@ export default function TransactionsView({
                             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
                                 <Search size={32} />
                             </div>
-                            <p>Nenhuma transação encontrada com estes filtros.</p>
+                            <p>Nenhuma transaÃ§Ã£o encontrada com estes filtros.</p>
                         </div>
                     )}
                 </div>
@@ -1008,7 +1009,7 @@ export default function TransactionsView({
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform animate-scale-up">
                             <div className="p-6 bg-slate-50 border-b border-slate-100">
                                 <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                                    <CheckCircle className="text-green-600" /> Quitar Lançamento
+                                    <CheckCircle className="text-green-600" /> Quitar LanÃ§amento
                                 </h3>
                                 <p className="text-sm text-slate-500 mt-1">{payTrx.description}</p>
                                 <p className="text-xl font-bold text-slate-800 mt-2">{formatCurrency(payTrx.amount)}</p>
@@ -1032,18 +1033,18 @@ export default function TransactionsView({
                                         value={payFormData.payment_method}
                                         onChange={e => setPayFormData({ ...payFormData, payment_method: e.target.value as PaymentMethod })}
                                     >
-                                        <option value="DEBITO">Débito em Conta</option>
+                                        <option value="DEBITO">DÃ©bito em Conta</option>
                                         <option value="PIX">Pix</option>
-                                        <option value="DINHEIRO">Dinheiro (Espécie)</option>
-                                        <option value="CREDITO">Cartão de Crédito</option>
+                                        <option value="DINHEIRO">Dinheiro (EspÃ©cie)</option>
+                                        <option value="CREDITO">CartÃ£o de CrÃ©dito</option>
                                         <option value="BOLETO">Boleto (Pago)</option>
-                                        <option value="TRANSFERENCIA">Transferência</option>
+                                        <option value="TRANSFERENCIA">TransferÃªncia</option>
                                     </select>
                                 </div>
 
                                 {payFormData.payment_method === 'CREDITO' ? (
                                     <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Qual Cartão?</label>
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Qual CartÃ£o?</label>
                                         <select
                                             className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none bg-white font-medium text-slate-700"
                                             value={payFormData.card_id}
@@ -1070,20 +1071,20 @@ export default function TransactionsView({
                                 )}
 
                                 <div className="pt-2">
-                                    <label className="block text-[10px] font-bold text-indigo-500 uppercase mb-1">Juros ou Multas Pagas (R$)</label>
+                                    <label className="block text-[10px] font-bold text-blue-500 uppercase mb-1">Juros ou Multas Pagas (R$)</label>
                                     <div className="relative">
-                                        <TrendingDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400" />
+                                        <TrendingDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
                                         <input
                                             type="number"
                                             step="0.01"
-                                            className="w-full border border-indigo-100 bg-indigo-50/20 rounded-lg pl-9 pr-3 py-3 outline-none focus:ring-2 focus:ring-indigo-500/10 font-mono text-lg font-bold text-indigo-700"
+                                            className="w-full border border-blue-100 bg-blue-50/20 rounded-lg pl-9 pr-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/10 font-mono text-lg font-bold text-blue-700"
                                             value={payFormData.interest_amount}
                                             onChange={e => setPayFormData({ ...payFormData, interest_amount: e.target.value })}
                                             placeholder="0,00"
                                             onFocus={e => e.target.select()}
                                         />
                                     </div>
-                                    <p className="text-[9px] text-slate-400 mt-1">Este valor será somado ao total para fins de fluxo de caixa.</p>
+                                    <p className="text-[9px] text-slate-400 mt-1">Este valor serÃ¡ somado ao total para fins de fluxo de caixa.</p>
                                 </div>
                             </div>
 
@@ -1098,7 +1099,7 @@ export default function TransactionsView({
                                     onClick={handleConfirmPay}
                                     className="flex-[2] py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 transition-transform active:scale-95"
                                 >
-                                    Confirmar Quitação
+                                    Confirmar QuitaÃ§Ã£o
                                 </button>
                             </div>
                         </div>
@@ -1113,7 +1114,7 @@ export default function TransactionsView({
                         <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] border border-slate-200">
                             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <div>
-                                    <h3 className="font-bold text-xl text-slate-800">Configuração de Categorias</h3>
+                                    <h3 className="font-bold text-xl text-slate-800">ConfiguraÃ§Ã£o de Categorias</h3>
                                     <p className="text-xs text-slate-500 mt-1">Personalize suas categorias e subcategorias</p>
                                 </div>
                                 <button onClick={() => setIsCategoryManagerOpen(false)} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">&times;</button>
@@ -1135,7 +1136,7 @@ export default function TransactionsView({
                                         onClick={handleResetCategories}
                                         className="px-4 py-3 border border-slate-200 text-slate-500 rounded-xl font-bold text-sm hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center gap-2"
                                     >
-                                        <Trash size={16} /> Restaurar Padrões
+                                        <Trash size={16} /> Restaurar PadrÃµes
                                     </button>
                                 </div>
 
@@ -1159,7 +1160,7 @@ export default function TransactionsView({
                                                                 const newName = prompt('Novo nome para a categoria:', parent.name);
                                                                 if (newName) StorageService.saveCategory({ ...parent, name: newName }).then(loadData);
                                                             }}
-                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                         >
                                                             <Edit size={16} />
                                                         </button>
@@ -1175,7 +1176,7 @@ export default function TransactionsView({
                                                 <div className="p-4 flex flex-wrap gap-2">
                                                     {subs.map(sub => (
                                                         <div key={sub.id} className="group relative">
-                                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:border-indigo-300 transition-all">
+                                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:border-blue-300 transition-all">
                                                                 {sub.name}
                                                                 <button
                                                                     onClick={(e) => {
@@ -1204,7 +1205,7 @@ export default function TransactionsView({
                                                                 }).then(loadData);
                                                             }
                                                         }}
-                                                        className="px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs font-bold text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center gap-1"
+                                                        className="px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs font-bold text-slate-400 hover:border-blue-300 hover:text-blue-500 transition-all flex items-center gap-1"
                                                     >
                                                         <Plus size={12} /> Adicionar
                                                     </button>
@@ -1254,7 +1255,7 @@ export default function TransactionsView({
                                 <div>
                                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Cor de Identificação</label>
                                     <div className="flex flex-wrap gap-2">
-                                        {['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316', '#14b8a6', '#64748b'].map(color => (
+                                        {['#007aff', '#34c759', '#ff9500', '#ff3b30', '#30b0c7', '#ffcc00', '#af52de', '#ff2d55', '#5856d6', '#8e8e93'].map(color => (
                                             <button
                                                 key={color}
                                                 type="button"
