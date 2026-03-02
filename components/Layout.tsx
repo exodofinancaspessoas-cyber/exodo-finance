@@ -166,7 +166,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 </header>
 
                 {/* Scrollable Content */}
-                <main className="flex-1 overflow-y-auto p-4 pb-28 md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
+                <main className="flex-1 overflow-y-auto p-4 pb-[130px] md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
                     {children}
                 </main>
             </div>
