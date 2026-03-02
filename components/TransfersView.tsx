@@ -3,7 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     ArrowRightLeft, Plus, Landmark, Wallet, Briefcase,
     AlertCircle, CheckCircle2, ChevronRight, X, Loader2,
-    Banknote, CalendarDays, FileText, TrendingDown, TrendingUp
+    Banknote, CalendarDays, FileText, TrendingDown, TrendingUp,
+    Edit2, Trash2
 } from 'lucide-react';
 import { Transfer, Account } from '../types';
 import { StorageService } from '../services/storage';
@@ -77,6 +78,7 @@ export default function TransfersView() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [editingTransfer, setEditingTransfer] = useState<Transfer | null>(null);
 
     const [form, setForm] = useState({
         from: '',
@@ -134,19 +136,22 @@ export default function TransfersView() {
 
         setIsSaving(true);
         try {
-            const newTransfer: Transfer = {
-                id: StorageService.generateId(),
+            const transferData: Transfer = {
+                id: editingTransfer ? editingTransfer.id : StorageService.generateId(),
                 from_account_id: form.from,
                 to_account_id: form.to,
                 amount: transferAmount,
                 date: form.date,
                 description: form.description.trim() || undefined,
-                created_at: new Date().toISOString()
+                created_at: editingTransfer ? editingTransfer.created_at : new Date().toISOString()
             };
-            console.log('[Transfer] Salvando:', newTransfer);
-            await StorageService.saveTransfer(newTransfer);
+
+            console.log('[Transfer] Salvando:', transferData);
+            await StorageService.saveTransfer(transferData);
             console.log('[Transfer] Salvo com sucesso!');
+
             setForm({ from: '', to: '', amount: '', date: new Date().toISOString().split('T')[0], description: '' });
+            setEditingTransfer(null);
             setIsModalOpen(false);
             await loadData();
         } catch (error: any) {
@@ -157,8 +162,32 @@ export default function TransfersView() {
         }
     };
 
-    const openModal = () => {
-        setForm({ from: '', to: '', amount: '', date: new Date().toISOString().split('T')[0], description: '' });
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Tem certeza que deseja excluir esta transferência?')) return;
+
+        try {
+            await StorageService.deleteTransfer(id);
+            await loadData();
+        } catch (error) {
+            console.error('Erro ao excluir transferência:', error);
+            alert('Erro ao excluir transferência.');
+        }
+    };
+
+    const openModal = (transfer?: Transfer) => {
+        if (transfer) {
+            setEditingTransfer(transfer);
+            setForm({
+                from: transfer.from_account_id,
+                to: transfer.to_account_id,
+                amount: transfer.amount.toString(),
+                date: transfer.date,
+                description: transfer.description || ''
+            });
+        } else {
+            setEditingTransfer(null);
+            setForm({ from: '', to: '', amount: '', date: new Date().toISOString().split('T')[0], description: '' });
+        }
         setIsModalOpen(true);
     };
 
@@ -172,7 +201,7 @@ export default function TransfersView() {
                 </div>
                 <button
                     id="btn-nova-transferencia"
-                    onClick={openModal}
+                    onClick={() => openModal()}
                     className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all hover:shadow-lg active:scale-95 font-semibold text-sm"
                 >
                     <Plus size={18} />
@@ -213,7 +242,7 @@ export default function TransfersView() {
                     <p className="text-lg font-bold text-slate-600">Nenhuma transferência</p>
                     <p className="text-sm text-slate-400 mt-1">Clique em "Nova Transferência" para começar</p>
                     <button
-                        onClick={openModal}
+                        onClick={() => openModal()}
                         className="mt-5 inline-flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors"
                     >
                         <Plus size={16} />
@@ -268,11 +297,31 @@ export default function TransfersView() {
                                                 </div>
 
                                                 {/* Amount */}
-                                                <div className="shrink-0 text-right">
-                                                    <p className="text-base font-black text-slate-800">{formatCurrency(t.amount)}</p>
-                                                    <div className="flex items-center gap-1 justify-end mt-0.5">
-                                                        <TrendingDown size={10} className="text-red-400" />
-                                                        <TrendingUp size={10} className="text-emerald-400" />
+                                                <div className="shrink-0 text-right flex items-center gap-4">
+                                                    <div>
+                                                        <p className="text-base font-black text-slate-800">{formatCurrency(t.amount)}</p>
+                                                        <div className="flex items-center gap-1 justify-end mt-0.5">
+                                                            <TrendingDown size={10} className="text-red-400" />
+                                                            <TrendingUp size={10} className="text-emerald-400" />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); openModal(t); }}
+                                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Editar"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(t.id); }}
+                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Excluir"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -296,7 +345,9 @@ export default function TransfersView() {
                                     <ArrowRightLeft size={16} className="text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800 text-base leading-tight">Nova Transferência</h3>
+                                    <h3 className="font-bold text-slate-800 text-base leading-tight">
+                                        {editingTransfer ? 'Editar Transferência' : 'Nova Transferência'}
+                                    </h3>
                                     <p className="text-xs text-slate-400">Mover saldo entre contas</p>
                                 </div>
                             </div>

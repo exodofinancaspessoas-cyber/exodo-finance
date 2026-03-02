@@ -661,6 +661,11 @@ export const StorageService = {
         StorageService.clearCache();
     },
 
+    async deleteTransfer(id: string) {
+        await DatabaseService.deleteTransfer(id);
+        StorageService.clearCache();
+    },
+
     // GOALS
     async getGoals(): Promise<Goal[]> { return await DatabaseService.getGoals(); },
     async saveGoal(goal: Goal) { await DatabaseService.saveGoal(goal); },

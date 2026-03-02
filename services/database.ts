@@ -460,6 +460,17 @@ export const DatabaseService = {
         localStorage.setItem('exodo_transfers', JSON.stringify(transfers));
     },
 
+    async deleteTransfer(id: string): Promise<void> {
+        if (isSupabaseConfigured()) {
+            const { error } = await supabase.from('transfers').delete().eq('id', id);
+            if (!error) return;
+            console.error('Error deleting transfer from Supabase:', error);
+        }
+        const transfers = await this.getTransfers();
+        const filtered = transfers.filter(t => t.id !== id);
+        localStorage.setItem('exodo_transfers', JSON.stringify(filtered));
+    },
+
     // CATEGORIES
     async getCategories(): Promise<Category[]> {
         if (isSupabaseConfigured()) {
