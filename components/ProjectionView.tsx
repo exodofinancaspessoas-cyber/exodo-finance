@@ -5,9 +5,9 @@ import {
     TrendingUp, Calendar, ArrowRight, AlertTriangle, CheckCircle,
     ChevronDown, ChevronUp, DollarSign
 } from 'lucide-react';
-import { Transaction, RecurringExpense, Account, Card, ProjectionMonth } from '../types';
+import { Transaction, RecurringExpense, Account, Card, ProjectionMonth, Category } from '../types';
 import { StorageService } from '../services/storage';
-import { formatCurrency } from '../utils';
+import { formatCurrency, parseSafeDate } from '../utils';
 
 export default function ProjectionView() {
     const [months, setMonths] = useState<ProjectionMonth[]>([]);
@@ -15,6 +15,15 @@ export default function ProjectionView() {
     const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
+    const [categories, setCategories] = useState<Category[]>([]);
+
+    // Helper: Identificar se lançamento já afetou o saldo bancário
+    const isRealized = (t: Transaction) => {
+        if (t.status === 'EXCLUIDA') return false;
+        if (t.type === 'RECEITA') return t.status === 'RECEBIDA' || t.status === 'CONFIRMADA';
+        if (t.type === 'DESPESA') return t.status === 'PAGA';
+        return false;
+    };
 
     useEffect(() => {
         calculateProjection();
@@ -23,28 +32,41 @@ export default function ProjectionView() {
     const calculateProjection = async () => {
         setLoading(true);
         try {
-            const [transactions, recurring, accounts] = await Promise.all([
+            const [transactions, recurring, accounts, categories] = await Promise.all([
                 StorageService.getTransactions(),
                 StorageService.getRecurringExpenses(),
-                StorageService.getAccounts()
+                StorageService.getAccounts(),
+                StorageService.getCategories()
             ]);
 
-            // Initial Balance (Sum of all accounts)
-            let currentBalance = accounts.reduce((sum, acc) => sum + (acc.current_balance || 0), 0);
+            setCategories(categories);
+
+
+
+            // Saldo Atual Real (Soma de todas as contas)
+            const absoluteCurrentBalance = accounts.reduce((sum, acc) => sum + (acc.current_balance || 0), 0);
+            let runningBalance = absoluteCurrentBalance;
 
             const projectedMonths: ProjectionMonth[] = [];
             const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonthIndex = today.getMonth();
 
-            // Generate for N months
+            // Gerar para N meses
             for (let i = 0; i < period; i++) {
-                const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const date = new Date(currentYear, currentMonthIndex + i, 1);
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
                 const monthLabel = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-                // Filter transactions for this month
+                const isCurrentMonth = i === 0;
+
+                // Filtrar transações do mês e remover excluídas
                 const monthTrx = transactions.filter(t => {
-                    const tDate = new Date(t.date);
-                    return tDate.getMonth() === date.getMonth() && tDate.getFullYear() === date.getFullYear();
+                    const p = parseSafeDate(t.date);
+                    if (!p || t.status === 'EXCLUIDA') return false;
+                    return p.y === year && (p.m - 1) === month;
                 });
 
                 let monthIncome = 0;
@@ -53,30 +75,50 @@ export default function ProjectionView() {
                 const detailExpenses: Transaction[] = [];
 
                 monthTrx.forEach(t => {
-                    const total = t.amount + (t.interest_amount || 0);
-                    if (t.type === 'RECEITA') {
-                        monthIncome += total;
-                        detailIncomes.push(t);
-                    } else {
-                        monthExpense += total;
-                        detailExpenses.push(t);
+                    // CRITICAL: No mês atual, só somamos o que AINDA NÃO foi realizado
+                    // (pois o que já foi realizado já está no absoluteCurrentBalance)
+                    const shouldIncludeInSum = isCurrentMonth ? !isRealized(t) : true;
+
+                    if (shouldIncludeInSum) {
+                        const total = t.amount + (t.interest_amount || 0);
+                        if (t.type === 'RECEITA') {
+                            monthIncome += total;
+                        } else {
+                            monthExpense += total;
+                        }
+                    }
+
+                    // No detalhamento, mostramos apenas o que é futuro se for o mês atual,
+                    // ou tudo se for mês futuro.
+                    if (isCurrentMonth ? !isRealized(t) : true) {
+                        if (t.type === 'RECEITA') detailIncomes.push(t);
+                        else detailExpenses.push(t);
                     }
                 });
 
+                // Lógica de Recorrência (Projetar o que ainda não virou transação)
                 const activeRecurring = recurring.filter(r => r.active);
-                const projectedRecurring: RecurringExpense[] = [];
+                const projectedRecurringIncomes: RecurringExpense[] = [];
+                const projectedRecurringExpenses: RecurringExpense[] = [];
 
                 activeRecurring.forEach(rec => {
                     const alreadyExists = monthTrx.some(t => t.recurrence_id === rec.id);
                     if (!alreadyExists) {
-                        monthExpense += rec.amount;
-                        projectedRecurring.push(rec);
+                        const cat = categories.find(c => c.id === rec.category_id);
+                        const isRev = cat?.type === 'RECEITA';
+
+                        if (isRev) {
+                            monthIncome += rec.amount;
+                            projectedRecurringIncomes.push(rec);
+                        } else {
+                            monthExpense += rec.amount;
+                            projectedRecurringExpenses.push(rec);
+                        }
                     }
                 });
 
-                const startBal = currentBalance;
+                const startBal = runningBalance;
                 const endBal = startBal + monthIncome - monthExpense;
-                currentBalance = endBal;
 
                 projectedMonths.push({
                     month: monthKey,
@@ -89,10 +131,12 @@ export default function ProjectionView() {
                     details: {
                         incomes: detailIncomes,
                         expenses: detailExpenses,
-                        recurring: projectedRecurring,
+                        recurring: [...projectedRecurringIncomes, ...projectedRecurringExpenses],
                         card_invoices: []
                     }
                 });
+
+                runningBalance = endBal;
             }
 
             setMonths(projectedMonths);
@@ -194,7 +238,10 @@ export default function ProjectionView() {
                                                     <div key={t.id} className="flex justify-between items-center text-sm bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
                                                         <div className="flex items-center gap-2">
                                                             <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                                                            <span className="text-slate-700">{t.description}</span>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-slate-700">{t.description}</span>
+                                                                {isRealized(t) && <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-tighter">Confirmado</span>}
+                                                            </div>
                                                         </div>
                                                         <span className="font-medium text-slate-900">{formatCurrency(t.amount + (t.interest_amount || 0))}</span>
                                                     </div>
@@ -227,18 +274,25 @@ export default function ProjectionView() {
                                             ))}
 
                                             {/* Projected Recurring */}
-                                            {m.details.recurring.map(r => (
-                                                <div key={'rec_' + r.id} className="flex justify-between items-center text-sm bg-white p-3 rounded-lg border border-slate-100 shadow-sm opacity-80 border-dashed">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-2 h-2 rounded-full bg-teal-400"></div>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-slate-700">{r.description}</span>
-                                                            <span className="text-xs text-teal-500 font-medium">Recorrente (Previsto)</span>
+                                            {m.details.recurring.map(r => {
+                                                const cat = categories.find(c => c.id === r.category_id);
+                                                const isRev = cat?.type === 'RECEITA';
+
+                                                return (
+                                                    <div key={'rec_' + r.id} className="flex justify-between items-center text-sm bg-white p-3 rounded-lg border border-slate-100 shadow-sm opacity-80 border-dashed">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-2 h-2 rounded-full ${isRev ? 'bg-emerald-400' : 'bg-rose-400'}`}></div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-slate-700">{r.description}</span>
+                                                                <span className={`text-[10px] font-black uppercase tracking-widest ${isRev ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                                    {isRev ? 'Receita Recorrente (Projeção)' : 'Despesa Recorrente (Projeção)'}
+                                                                </span>
+                                                            </div>
                                                         </div>
+                                                        <span className="font-medium text-slate-900">{formatCurrency(r.amount)}</span>
                                                     </div>
-                                                    <span className="font-medium text-slate-900">{formatCurrency(r.amount)}</span>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
