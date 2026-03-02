@@ -245,6 +245,18 @@ export default function App() {
 
       {/* ── AI CHAT DRAWER ── */}
       <FinanceChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+
+      {/* ── QUICK ADD MODAL ── */}
+      {isQuickAddOpen && (
+        <QuickAddView
+          onClose={() => setIsQuickAddOpen(false)}
+          onSuccess={() => {
+            setIsQuickAddOpen(false);
+            // Re-render dashboard or data if needed
+            window.location.reload(); // Simple way to ensure data consistency after quick add
+          }}
+        />
+      )}
     </>
   );
 }
