@@ -512,8 +512,14 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
               </div>
 
               <div className="hidden md:flex gap-2">
-                <button onClick={() => onChangeView('movements')} className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-orange-900/20 active:scale-95">
-                  <Plus size={13} /> Novo Lançamento
+                <button
+                  onClick={() => onChangeView('movements')}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-sm font-black rounded-xl transition-all shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 active:scale-95 hover:-translate-y-0.5 group"
+                >
+                  <div className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
+                    <Plus size={16} strokeWidth={3} />
+                  </div>
+                  <span>Novo Lançamento</span>
                 </button>
               </div>
             </div>
