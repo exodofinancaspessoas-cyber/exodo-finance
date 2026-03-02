@@ -7,6 +7,7 @@ import { DatabaseService } from './database';
 import { supabase } from './supabase';
 import { toISODate } from '../utils';
 import { INITIAL_CATEGORIES_DATA } from './initialCategories';
+import { APP_VERSION, DEPLOY_DATE } from '../version';
 
 const STORAGE_KEYS = {
     USER: 'exodo_user',
@@ -21,8 +22,7 @@ const STORAGE_KEYS = {
     BUDGETS: 'exodo_budgets'
 };
 
-const APP_VERSION = '1.4.1';
-const DEPLOY_DATE = '2026-02-25 08:46';
+
 
 // --- HELPER FUNCTIONS ---
 const getStorage = <T>(key: string, defaultValue: T): T => {
