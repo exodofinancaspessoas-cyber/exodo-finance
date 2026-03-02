@@ -366,7 +366,7 @@ export default function OnboardingFlow({ onStageChange, onComplete }: Onboarding
 
             {stage === 'DECISION' && (
               <div className="space-y-3">
-                <h4 className="font-bold text-slate-800 text-xs">4. Movimentações</h4>
+                <h4 className="font-bold text-slate-800 text-xs">4. Receitas e Despesas</h4>
                 <p className="text-[11px] text-slate-600 leading-relaxed">
                   Quase lá! Agora vamos testar seu primeiro lançamento real.
                 </p>

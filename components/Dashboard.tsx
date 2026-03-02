@@ -639,7 +639,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
               <p className="text-xs text-slate-400 font-medium mb-0.5">Receitas</p>
               <p className="text-lg font-black text-emerald-600 leading-tight">+{formatCurrency(monthlyStats.income)}</p>
               <div className="flex items-center gap-1 mt-2 text-emerald-500 text-xs font-semibold">
-                <span>Movimentações</span>
+                <span>Receitas/Despesas</span>
                 <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>
@@ -658,7 +658,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
               <p className="text-xs text-slate-400 font-medium mb-0.5">Despesas</p>
               <p className="text-lg font-black text-red-500 leading-tight">-{formatCurrency(monthlyStats.expense)}</p>
               <div className="flex items-center gap-1 mt-2 text-red-400 text-xs font-semibold">
-                <span>Movimentações</span>
+                <span>Receitas/Despesas</span>
                 <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>
@@ -708,7 +708,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
               <p className="text-xs text-slate-400 font-medium mb-0.5">Transferências</p>
               <p className="text-lg font-black text-slate-800 leading-tight">{formatCurrency(transferBalance)}</p>
               <div className="flex items-center gap-1 mt-2 text-amber-500 text-xs font-semibold">
-                <span>Movimentações</span>
+                <span>Receitas/Despesas</span>
                 <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>

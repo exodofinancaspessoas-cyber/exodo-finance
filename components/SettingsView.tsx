@@ -13,7 +13,7 @@ type ResetOption = {
 const RESET_OPTIONS: ResetOption[] = [
     { id: 'transactions', label: 'Transações', description: 'Todas as receitas e despesas registradas.', table: 'transactions' },
     { id: 'recurring', label: 'Regras de Recorrência', description: 'Configurações de contas fixas e variáveis.', table: 'recurring_expenses' },
-    { id: 'transfers', label: 'Transferências', description: 'Histórico de movimentações entre contas.', table: 'transfers' },
+    { id: 'transfers', label: 'Transferências', description: 'Histórico de fluxos entre contas.', table: 'transfers' },
     { id: 'goals', label: 'Metas', description: 'Objetivos de economia e sonhos.', table: 'goals' },
     { id: 'budgets', label: 'Orçamentos', description: 'Limites de gastos por categoria.', table: 'budgets' },
     { id: 'accounts', label: 'Contas Bancárias', description: 'Bancos e saldos iniciais.', table: 'accounts' },

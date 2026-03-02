@@ -712,7 +712,7 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                     {/* Desktop-only title */}
                     <div className="hidden md:block mr-2">
                         <h2 className="text-2xl font-bold text-slate-800">Transações</h2>
-                        <p className="text-slate-500 text-sm">Gerencie suas movimentações financeiras</p>
+                        <p className="text-slate-500 text-sm">Gerencie suas receitas e despesas</p>
                     </div>
 
                     {/* Search bar - always visible */}
