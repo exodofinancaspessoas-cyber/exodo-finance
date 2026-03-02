@@ -3,7 +3,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
     Search, Filter, Plus, Edit, Trash2, CreditCard, X, ChevronDown,
     Download, Trash, Copy, CheckSquare, Square, Calendar, Check, CheckCircle,
-    TrendingDown, AlertTriangle, Clock, Settings, Settings2, RotateCcw, RefreshCw, ArrowRightLeft, Repeat, ChevronRight
+    TrendingDown, AlertTriangle, Clock, Settings, Settings2, RotateCcw, RefreshCw, ArrowRightLeft, Repeat, ChevronRight,
+    LayoutDashboard, ArrowUpCircle, ArrowDownCircle
 } from 'lucide-react';
 import { Transaction, TransactionType, TransactionStatus, PaymentMethod, Account, Card, Category, RecurringExpense, RecurrenceFrequency, Transfer } from '../types';
 import { StorageService } from '../services/storage';
@@ -719,14 +720,40 @@ export default function TransactionsView({
     return (
         <div className="animate-fade-in space-y-6 pb-20">
             {/* Header with Search & Filter Toggle */}
-            <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 w-full">
-                    {/* Desktop-only title */}
-                    <div className="hidden md:block mr-2">
-                        <h2 className="text-2xl font-bold text-slate-800">Transações</h2>
-                        <p className="text-slate-500 text-sm">Gerencie suas receitas e despesas</p>
+            {/* Header with Search & Tabs */}
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Transações</h2>
+                        <p className="text-slate-500 text-xs font-medium">Controle suas entradas e saídas</p>
                     </div>
 
+                    <div className="flex bg-slate-100 p-1 rounded-2xl w-full md:w-fit shadow-inner">
+                        <button
+                            onClick={() => setFilters({ ...filters, type: 'ALL' })}
+                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'ALL' ? 'bg-white text-slate-900 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            <LayoutDashboard size={14} className={filters.type === 'ALL' ? 'text-indigo-500' : 'opacity-50'} />
+                            <span>Todos</span>
+                        </button>
+                        <button
+                            onClick={() => setFilters({ ...filters, type: 'RECEITA' })}
+                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'RECEITA' ? 'bg-white text-green-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            <ArrowUpCircle size={14} className={filters.type === 'RECEITA' ? 'text-green-500' : 'opacity-50'} />
+                            <span>Receitas</span>
+                        </button>
+                        <button
+                            onClick={() => setFilters({ ...filters, type: 'DESPESA' })}
+                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'DESPESA' ? 'bg-white text-red-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            <ArrowDownCircle size={14} className={filters.type === 'DESPESA' ? 'text-red-500' : 'opacity-50'} />
+                            <span>Despesas</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full">
                     {/* Search bar - always visible */}
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -746,158 +773,150 @@ export default function TransactionsView({
                         <Filter size={18} />
                     </button>
                 </div>
+            </div>
 
-                {/* Advanced Filters Panel */}
-                {showFilters && (
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4 animate-slide-down">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Tipo</label>
-                                <select
-                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-                                    value={filters.type}
-                                    onChange={e => setFilters({ ...filters, type: e.target.value as any })}
-                                >
-                                    <option value="ALL">Todos os Tipos</option>
-                                    <option value="RECEITA">Receitas</option>
-                                    <option value="DESPESA">Despesas</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Status</label>
-                                <select
-                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-                                    value={filters.status}
-                                    onChange={e => setFilters({ ...filters, status: e.target.value as any })}
-                                >
-                                    <option value="ALL">Todos os Status</option>
-                                    <option value="PREVISTA">Prevista</option>
-                                    <option value="CONFIRMADA">Confirmada</option>
-                                    <option value="ATRASADA">Atrasada</option>
-                                    <option value="INCOMPLETA">Incompletas</option>
-                                    {filters.type !== 'DESPESA' && <option value="RECEBIDA">Recebida</option>}
-                                    {filters.type !== 'RECEITA' && <option value="PAGA">Paga</option>}
-                                    <option value="EXCLUIDA">Excluídas</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Categoria</label>
-                                <select
-                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-                                    value={filters.category}
-                                    onChange={e => setFilters({ ...filters, category: e.target.value })}
-                                >
-                                    <option value="ALL">Todas as Categorias</option>
-                                    {categories
-                                        .filter(c => filters.type === 'ALL' || c.type === filters.type)
-                                        .map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                        ))
-                                    }
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Conta/Cartão</label>
-                                <select
-                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-                                    value={filters.account}
-                                    onChange={e => setFilters({ ...filters, account: e.target.value })}
-                                >
-                                    <option value="ALL">Todas as Contas</option>
-                                    <optgroup label="Contas">
-                                        {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
-                                    </optgroup>
-                                    <optgroup label="Cartões">
-                                        {cards.map(card => <option key={card.id} value={card.id}>{card.name}</option>)}
-                                    </optgroup>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data Início</label>
-                                <input
-                                    type="date"
-                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-                                    value={filters.startDate}
-                                    onChange={e => setFilters({ ...filters, startDate: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data Fim</label>
-                                <input
-                                    type="date"
-                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-                                    value={filters.endDate}
-                                    onChange={e => setFilters({ ...filters, endDate: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor Mínimo</label>
-                                <input
-                                    type="number"
-                                    placeholder="R$ 0,00"
-                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-                                    value={filters.minAmount}
-                                    onChange={e => setFilters({ ...filters, minAmount: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor Máximo</label>
-                                <input
-                                    type="number"
-                                    placeholder="R$ Infinito"
-                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-                                    value={filters.maxAmount}
-                                    onChange={e => setFilters({ ...filters, maxAmount: e.target.value })}
-                                />
-                            </div>
+            {/* Advanced Filters Panel */}
+            {showFilters && (
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4 animate-slide-down">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Tipo</label>
+                            <select
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                value={filters.type}
+                                onChange={e => setFilters({ ...filters, type: e.target.value as any })}
+                            >
+                                <option value="ALL">Todos os Tipos</option>
+                                <option value="RECEITA">Receitas</option>
+                                <option value="DESPESA">Despesas</option>
+                            </select>
                         </div>
-
-                        <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50">
-                            <button
-                                onClick={() => {
-                                    const b = getMonthBounds(0);
-                                    setFilters({ ...filters, startDate: b.start, endDate: b.end });
-                                }}
-                                className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold text-slate-600 transition-colors"
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Status</label>
+                            <select
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                value={filters.status}
+                                onChange={e => setFilters({ ...filters, status: e.target.value as any })}
                             >
-                                Este Mês
-                            </button>
-                            <button
-                                onClick={() => {
-                                    const b = getMonthBounds(1);
-                                    setFilters({ ...filters, startDate: b.start, endDate: b.end });
-                                }}
-                                className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold text-slate-600 transition-colors"
+                                <option value="ALL">Todos os Status</option>
+                                <option value="PREVISTA">Prevista</option>
+                                <option value="CONFIRMADA">Confirmada</option>
+                                <option value="ATRASADA">Atrasada</option>
+                                <option value="INCOMPLETA">Incompletas</option>
+                                {filters.type !== 'DESPESA' && <option value="RECEBIDA">Recebida</option>}
+                                {filters.type !== 'RECEITA' && <option value="PAGA">Paga</option>}
+                                <option value="EXCLUIDA">Excluídas</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Categoria</label>
+                            <select
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                value={filters.category}
+                                onChange={e => setFilters({ ...filters, category: e.target.value })}
                             >
-                                Próximo Mês
-                            </button>
-                            <button
-                                onClick={() => setFilters({ ...filters, startDate: '', endDate: '' })}
-                                className="px-3 py-1 bg-slate-100 hover:bg-red-50 hover:text-red-600 rounded-full text-xs font-bold text-slate-600 transition-colors"
+                                <option value="ALL">Todas as Categorias</option>
+                                {categories
+                                    .filter(c => filters.type === 'ALL' || c.type === filters.type)
+                                    .map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Conta/Cartão</label>
+                            <select
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                value={filters.account}
+                                onChange={e => setFilters({ ...filters, account: e.target.value })}
                             >
-                                Ver Tudo (Sem data)
-                            </button>
-                            <div className="ml-auto flex gap-2">
-                                <button
-                                    onClick={() => setFilters(getInitialFilters(initialType))}
-                                    className="px-4 py-2 text-sm text-slate-500 hover:bg-slate-50 rounded-lg"
-                                >
-                                    Limpar Filtros
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setExportData(filteredTransactions);
-                                        setIsExportModalOpen(true);
-                                    }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-bold transition-colors"
-                                >
-                                    <Download size={16} /> Exportar Filtrados
-                                </button>
-                            </div>
+                                <option value="ALL">Todas as Contas</option>
+                                <optgroup label="Contas">
+                                    {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                                </optgroup>
+                                <optgroup label="Cartões">
+                                    {cards.map(card => <option key={card.id} value={card.id}>{card.name}</option>)}
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data Início</label>
+                            <input
+                                type="date"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                value={filters.startDate}
+                                onChange={e => setFilters({ ...filters, startDate: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data Fim</label>
+                            <input
+                                type="date"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                value={filters.endDate}
+                                onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor Mínimo</label>
+                            <input
+                                type="number"
+                                placeholder="R$ 0,00"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                value={filters.minAmount}
+                                onChange={e => setFilters({ ...filters, minAmount: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor Máximo</label>
+                            <input
+                                type="number"
+                                placeholder="R$ Infinito"
+                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                                value={filters.maxAmount}
+                                onChange={e => setFilters({ ...filters, maxAmount: e.target.value })}
+                            />
                         </div>
                     </div>
-                )}
-            </div>
+
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50">
+                        <button
+                            onClick={() => {
+                                const b = getMonthBounds(0);
+                                setFilters({ ...filters, startDate: b.start, endDate: b.end });
+                            }}
+                            className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold text-slate-600 transition-colors"
+                        >
+                            Este Mês
+                        </button>
+                        <button
+                            onClick={() => {
+                                const b = getMonthBounds(1);
+                                setFilters({ ...filters, startDate: b.start, endDate: b.end });
+                            }}
+                            className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold text-slate-600 transition-colors"
+                        >
+                            Próximo Mês
+                        </button>
+                        <button
+                            onClick={() => setFilters({ ...filters, startDate: '', endDate: '' })}
+                            className="px-3 py-1 bg-slate-100 hover:bg-red-50 hover:text-red-600 rounded-full text-xs font-bold text-slate-600 transition-colors"
+                        >
+                            Ver Tudo (Sem data)
+                        </button>
+                        <button
+                            onClick={() => {
+                                setExportData(filteredTransactions);
+                                setIsExportModalOpen(true);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-bold transition-colors"
+                        >
+                            <Download size={16} /> Exportar Filtrados
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* COMPACT STATS BAR */}
             <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-2.5 overflow-x-auto">
@@ -910,15 +929,13 @@ export default function TransactionsView({
                         <p className="text-sm font-black leading-tight">{formatCurrency(monthStats.pendingTotal)}</p>
                     </div>
                 </div>
-                {monthStats.overdueCount > 0 && (
-                    <div className="flex items-center gap-2 shrink-0 px-3 border-r border-slate-100 text-red-600">
-                        <AlertTriangle size={14} className="shrink-0" />
-                        <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">Atrasadas</p>
-                            <p className="text-sm font-black leading-tight">{monthStats.overdueCount}</p>
-                        </div>
+                <div className="flex items-center gap-2 shrink-0 px-3 border-r border-slate-100 text-red-600">
+                    <AlertTriangle size={14} className="shrink-0" />
+                    <div>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">Atrasadas</p>
+                        <p className="text-sm font-black leading-tight">{monthStats.overdueCount}</p>
                     </div>
-                )}
+                </div>
                 <div className="flex items-center gap-2 shrink-0 pl-3 text-emerald-600">
                     <CheckCircle size={14} className="shrink-0" />
                     <div>
@@ -935,77 +952,79 @@ export default function TransactionsView({
             </div>
 
             {/* RECURRING RULES ACCORDION */}
-            {recurringRules.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                    <button
-                        onClick={() => setShowRecurring(!showRecurring)}
-                        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <Repeat size={16} className="text-indigo-500" />
-                            <span className="text-sm font-semibold text-slate-700">Regras Recorrentes</span>
-                            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                {recurringRules.filter(r => r.active).length} ativas
-                            </span>
-                        </div>
-                        <ChevronRight size={16} className={`text-slate-400 transition-transform duration-200 ${showRecurring ? 'rotate-90' : ''}`} />
-                    </button>
+            {
+                recurringRules.length > 0 && (
+                    <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                        <button
+                            onClick={() => setShowRecurring(!showRecurring)}
+                            className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <Repeat size={16} className="text-indigo-500" />
+                                <span className="text-sm font-semibold text-slate-700">Regras Recorrentes</span>
+                                <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    {recurringRules.filter(r => r.active).length} ativas
+                                </span>
+                            </div>
+                            <ChevronRight size={16} className={`text-slate-400 transition-transform duration-200 ${showRecurring ? 'rotate-90' : ''}`} />
+                        </button>
 
-                    {showRecurring && (
-                        <div className="border-t border-slate-100 divide-y divide-slate-50">
-                            {recurringRules.map(rule => {
-                                const cat = categories.find(c => c.id === rule.category_id);
-                                const freqLabel: Record<string, string> = { DIARIO: 'Diário', SEMANAL: 'Semanal', MENSAL: 'Mensal', ANUAL: 'Anual' };
-                                return (
-                                    <div key={rule.id} className={`flex items-center justify-between px-5 py-3 ${!rule.active ? 'opacity-50' : ''}`}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color || '#94a3b8' }} />
-                                            <div>
-                                                <p className="text-sm font-medium text-slate-800">{rule.description}</p>
-                                                <p className="text-xs text-slate-400">
-                                                    {freqLabel[rule.frequency] || rule.frequency}
-                                                    {rule.day_of_month ? ` · Dia ${rule.day_of_month}` : ''}
-                                                    {cat ? ` · ${cat.name}` : ''}
-                                                </p>
+                        {showRecurring && (
+                            <div className="border-t border-slate-100 divide-y divide-slate-50">
+                                {recurringRules.map(rule => {
+                                    const cat = categories.find(c => c.id === rule.category_id);
+                                    const freqLabel: Record<string, string> = { DIARIO: 'Diário', SEMANAL: 'Semanal', MENSAL: 'Mensal', ANUAL: 'Anual' };
+                                    return (
+                                        <div key={rule.id} className={`flex items-center justify-between px-5 py-3 ${!rule.active ? 'opacity-50' : ''}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color || '#94a3b8' }} />
+                                                <div>
+                                                    <p className="text-sm font-medium text-slate-800">{rule.description}</p>
+                                                    <p className="text-xs text-slate-400">
+                                                        {freqLabel[rule.frequency] || rule.frequency}
+                                                        {rule.day_of_month ? ` · Dia ${rule.day_of_month}` : ''}
+                                                        {cat ? ` · ${cat.name}` : ''}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-sm font-bold ${rule.type === 'FIXO' ? 'text-slate-700' : 'text-orange-600'}`}>
+                                                    {formatCurrency(rule.amount)}
+                                                </span>
+                                                <button
+                                                    onClick={async () => {
+                                                        await StorageService.saveRecurringExpense({ ...rule, active: !rule.active });
+                                                        await loadData();
+                                                    }}
+                                                    className={`text-xs px-2.5 py-1 rounded-full font-bold transition-colors ${rule.active
+                                                        ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700'
+                                                        : 'bg-slate-100 text-slate-500 hover:bg-green-100 hover:text-green-700'
+                                                        }`}
+                                                    title={rule.active ? 'Pausar' : 'Reativar'}
+                                                >
+                                                    {rule.active ? 'Ativa' : 'Pausada'}
+                                                </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (confirm(`Excluir regra recorrente "${rule.description}"?`)) {
+                                                            await StorageService.deleteRecurringExpense(rule.id);
+                                                            await loadData();
+                                                        }
+                                                    }}
+                                                    className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                                                    title="Excluir regra"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className={`text-sm font-bold ${rule.type === 'FIXO' ? 'text-slate-700' : 'text-orange-600'}`}>
-                                                {formatCurrency(rule.amount)}
-                                            </span>
-                                            <button
-                                                onClick={async () => {
-                                                    await StorageService.saveRecurringExpense({ ...rule, active: !rule.active });
-                                                    await loadData();
-                                                }}
-                                                className={`text-xs px-2.5 py-1 rounded-full font-bold transition-colors ${rule.active
-                                                    ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700'
-                                                    : 'bg-slate-100 text-slate-500 hover:bg-green-100 hover:text-green-700'
-                                                    }`}
-                                                title={rule.active ? 'Pausar' : 'Reativar'}
-                                            >
-                                                {rule.active ? 'Ativa' : 'Pausada'}
-                                            </button>
-                                            <button
-                                                onClick={async () => {
-                                                    if (confirm(`Excluir regra recorrente "${rule.description}"?`)) {
-                                                        await StorageService.deleteRecurringExpense(rule.id);
-                                                        await loadData();
-                                                    }
-                                                }}
-                                                className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                                                title="Excluir regra"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            )}
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )
+            }
 
             {/* Batch Actions Bar */}
             {
@@ -1981,39 +2000,41 @@ export default function TransactionsView({
                 )
             }
 
-            {/* NEW CATEGORY MODAL */}
+            {/* CATEGORY FORM MODAL (New Category) */}
             {
                 isCategoryModalOpen && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 animate-fade-in backdrop-blur-sm">
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-slate-200">
-                            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <h3 className="font-bold text-slate-800">Nova Categoria</h3>
-                                <button onClick={() => setIsCategoryModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 text-2xl leading-none">&times;</button>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-up border border-slate-200">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <div>
+                                    <h3 className="font-bold text-lg text-slate-800">Nova Categoria</h3>
+                                    <p className="text-xs text-slate-400">Criar uma nova categoria principal</p>
+                                </div>
+                                <button onClick={() => setIsCategoryModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">&times;</button>
                             </div>
-
                             <form onSubmit={handleSaveCategory} className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome da Categoria</label>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Nome da Categoria</label>
                                     <input
                                         type="text"
-                                        autoFocus
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                                        placeholder="Ex: Alimentação, Lazer..."
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900/10 font-medium"
                                         value={categoryFormData.name}
                                         onChange={e => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                                        autoFocus
                                         required
-                                        placeholder="Ex: Assinaturas, Mercado..."
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Cor</label>
-                                    <div className="grid grid-cols-6 gap-2">
-                                        {['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#2dd4bf', '#d946ef', '#ec4899', '#64748b', '#000000'].map(color => (
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Cor de Identificação</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316', '#14b8a6', '#64748b'].map(color => (
                                             <button
                                                 key={color}
                                                 type="button"
                                                 onClick={() => setCategoryFormData({ ...categoryFormData, color })}
-                                                className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${categoryFormData.color === color ? 'border-slate-800 ring-2 ring-slate-200' : 'border-transparent'}`}
+                                                className={`w-8 h-8 rounded-full transition-all ${categoryFormData.color === color ? 'ring-2 ring-offset-2 ring-slate-900 scale-110 shadow-lg' : 'hover:scale-105'}`}
                                                 style={{ backgroundColor: color }}
                                             />
                                         ))}
@@ -2021,24 +2042,25 @@ export default function TransactionsView({
                                 </div>
 
                                 <div className="flex justify-end gap-3 pt-4">
-                                    <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="flex-1 py-2.5 text-sm text-slate-600 hover:bg-slate-50 rounded-xl font-medium transition-colors">Cancelar</button>
-                                    <button type="submit" className="flex-[2] py-2.5 text-sm bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20 transition-transform active:scale-95">Criar Categoria</button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCategoryModalOpen(false)}
+                                        className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg shadow-slate-900/20 transition-transform active:scale-95"
+                                    >
+                                        Criar Categoria
+                                    </button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 )
             }
-
-            <div className="hidden md:block fixed md:bottom-6 right-6 z-40">
-                <button
-                    id="trigger-new-transaction"
-                    onClick={() => handleOpenModal()}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-lg shadow-indigo-600/30 transition-transform hover:scale-105 active:scale-95"
-                >
-                    <Plus size={24} />
-                </button>
-            </div>
         </div >
     );
 }

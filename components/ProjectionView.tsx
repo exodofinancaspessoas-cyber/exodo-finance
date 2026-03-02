@@ -198,8 +198,8 @@ export default function ProjectionView() {
 
                             <div className="flex items-center space-x-6 text-right">
                                 <div className="text-right">
-                                    <p className="hidden md:block text-xs text-slate-400 font-medium uppercase tracking-tighter">Resultado Previsto</p>
-                                    <p className={`text-sm md:text-lg font-black ${m.end_balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">Resultado</p>
+                                    <p className={`text-base md:text-lg font-black leading-none ${m.end_balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                         {formatCurrency(m.end_balance)}
                                     </p>
                                 </div>

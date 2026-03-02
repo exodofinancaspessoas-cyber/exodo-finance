@@ -512,15 +512,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
               </div>
 
               <div className="hidden md:flex gap-2">
-                <button
-                  onClick={() => onChangeView('movements')}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-sm font-black rounded-xl transition-all shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 active:scale-95 hover:-translate-y-0.5 group"
-                >
-                  <div className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
-                    <Plus size={16} strokeWidth={3} />
-                  </div>
-                  <span>Novo Lançamento</span>
-                </button>
+                {/* Botão consolidado no botão flutuante principal no App.tsx */}
               </div>
             </div>
           </div>
@@ -613,13 +605,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => onChangeView('movements')}
-              className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-black rounded-xl uppercase tracking-tighter shadow-lg shadow-slate-900/10 active:scale-95 transition-all outline-none"
-            >
-              <Plus size={14} strokeWidth={3} className="text-orange-400" />
-              Novo Lançamento
-            </button>
+            {/* Botão removido daqui - Centralizado no botão flutuante */}
           </div>
         </div>
 
@@ -749,7 +735,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
                   : <TrendingDown size={17} className="text-red-600" />}
               </div>
               <p className={`text-xs font-medium mb-0.5 ${monthBalance >= 0 ? 'text-emerald-700' : 'text-red-600'
-                }`}>Resultado do mês</p>
+                }`}>Resultado Previsto</p>
               <p className={`text-lg font-black leading-tight ${monthBalance >= 0 ? 'text-emerald-700' : 'text-red-600'
                 }`}>
                 {monthBalance >= 0 ? '+' : ''}{formatCurrency(monthBalance)}
@@ -785,22 +771,22 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
             </div>
           </div>
 
-          {/* Card: Drenos Financeiros (Juros/Multas) */}
+          {/* Card: Saldo Previsto Final */}
           <div
-            onClick={() => onChangeView('movements')}
-            className={`group bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden ${monthlyStats.interest > 0 ? 'border-indigo-100 ring-1 ring-indigo-50' : ''}`}
+            onClick={() => onChangeView('projection')}
+            className="group bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden"
           >
-            <div className="absolute -right-3 -top-3 w-16 h-16 bg-indigo-50 rounded-full opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute -right-3 -top-3 w-16 h-16 bg-white/5 rounded-full opacity-60 group-hover:opacity-100 transition-opacity" />
             <div className="relative z-10">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${monthlyStats.interest > 0 ? 'bg-indigo-100' : 'bg-slate-100'}`}>
-                <AlertCircle size={17} className={monthlyStats.interest > 0 ? 'text-indigo-600' : 'text-slate-400'} />
+              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
+                <TrendingUp size={17} className="text-orange-400" />
               </div>
-              <p className="text-xs text-slate-400 font-medium mb-0.5">Drenos (Juros/Multas)</p>
-              <p className={`text-lg font-black leading-tight ${monthlyStats.interest > 0 ? 'text-indigo-600' : 'text-slate-800'}`}>
-                {formatCurrency(monthlyStats.interest)}
+              <p className="text-xs text-slate-400 font-medium mb-0.5">Saldo Previsto Final</p>
+              <p className={`text-lg font-black leading-tight ${monthProjectedBalance >= 0 ? 'text-white' : 'text-red-400'}`}>
+                {formatCurrency(monthProjectedBalance)}
               </p>
-              <div className="flex items-center gap-1 mt-2 text-indigo-500 text-xs font-semibold">
-                <span>Analisar perdas</span>
+              <div className="flex items-center gap-1 mt-2 text-orange-400 text-xs font-semibold">
+                <span>Ver projeção</span>
                 <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>

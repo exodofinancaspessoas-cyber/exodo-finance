@@ -1,5 +1,5 @@
-export const APP_VERSION = '1.8.6'; // Increment this on every deploy
-export const DEPLOY_DATE = '2026-03-02 14:32';
+export const APP_VERSION = '1.9.2'; // Increment this on every deploy
+export const DEPLOY_DATE = '2026-03-02 15:13';
 
 export const VersionInfo = {
     version: APP_VERSION,

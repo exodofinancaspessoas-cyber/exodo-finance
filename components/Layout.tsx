@@ -4,13 +4,13 @@ import {
     Menu, LogOut, LayoutDashboard, Landmark,
     User as UserIcon, TrendingUp, Target, PieChart, Calculator,
     BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles, Plus, Smartphone, X, CalendarDays,
-    ArrowRightLeft
+    ArrowRightLeft, Cloud, CloudOff
 } from 'lucide-react';
 import { User } from '../types';
+import FinanceChat from './FinanceChat';
 import { VersionInfo } from '../version';
 import { hapticFeedback } from './ui/Skeleton';
 import { isSupabaseConfigured } from '../services/supabase';
-import { Cloud, CloudOff } from 'lucide-react';
 
 interface SidebarProps {
     currentView: string;
@@ -65,7 +65,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
         { id: 'agenda', icon: CalendarDays, label: 'Agenda' },
     ];
     const bottomNavRight = [
-        { id: 'movements', icon: Wallet, label: 'Lançar' },
+        { id: 'movements', icon: Wallet, label: 'Lançamentos' },
         { id: 'finance', icon: Landmark, label: 'Contas' },
     ];
 
@@ -83,19 +83,6 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 </div>
 
                 <nav className="flex-1 overflow-y-auto pt-4 pb-6 space-y-1 px-3">
-                    {/* Botão Global de Novo Lançamento (Desktop) */}
-                    <div className="px-3 mb-6">
-                        <button
-                            onClick={() => { hapticFeedback(15); onQuickAdd?.(); }}
-                            className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black py-4 px-4 rounded-2xl shadow-xl shadow-orange-900/40 hover:shadow-orange-900/60 active:scale-95 transition-all flex items-center justify-center gap-3 group"
-                        >
-                            <div className="bg-white/20 p-1.5 rounded-xl group-hover:bg-white/30 transition-colors">
-                                <Plus size={20} strokeWidth={3} />
-                            </div>
-                            <span className="text-sm tracking-tight">Novo Lançamento</span>
-                        </button>
-                    </div>
-
                     <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 mb-2 opacity-50">Menu Principal</div>
 
                     {detailedMenuItems.map(item => (
@@ -182,12 +169,6 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                     {/* ── VISÃO GERAL — Grid de Cards ───────────────────────────────────── */}
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-xl font-black text-slate-800 tracking-tight">Visão Geral</h3>
-                        <button
-                            onClick={() => onChangeView('movements')}
-                            className="md:hidden flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white text-[10px] font-black rounded-lg uppercase tracking-wider shadow-md active:scale-90"
-                        >
-                            <Plus size={12} strokeWidth={3} /> Novo
-                        </button>
                     </div>
 
                     {children}
@@ -223,21 +204,8 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                             </button>
                         ))}
 
-                        {/* Central FAB */}
-                        <div className="relative -top-5 h-5 w-[60px]"> {/* Contêiner para o FAB flutuante */}
-                            <div className="absolute left-0 right-0 flex justify-center">
-                                <button
-                                    onClick={() => { hapticFeedback(15); onQuickAdd?.(); }}
-                                    className="w-[60px] h-[60px] bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 border-[3px] border-white active:scale-90 transition-all group btn-mobile-active tap-highlight-none"
-                                    aria-label="Novo Lançamento"
-                                >
-                                    <Plus size={26} className="group-active:rotate-90 transition-transform duration-200" strokeWidth={2.5} />
-                                </button>
-                                <div className="absolute -top-1 -right-0 w-4 h-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
-                                    <Plus size={8} strokeWidth={3.5} className="text-white" />
-                                </div>
-                            </div>
-                        </div>
+                        {/* Botão Central removido para consolidar no botão flutuante flutuante do App.tsx */}
+
 
                         {bottomNavRight.map(item => (
                             <button
