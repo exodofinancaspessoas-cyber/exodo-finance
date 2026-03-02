@@ -36,7 +36,8 @@ export const DatabaseService = {
                 supabaseAccounts = (data as any[]).map(acc => ({
                     ...acc,
                     initial_balance: Number(acc.initial_balance || 0),
-                    current_balance: Number(acc.balance || 0)
+                    current_balance: Number(acc.balance || 0),
+                    balance: Number(acc.balance || 0)
                 }));
             }
         }
@@ -412,12 +413,20 @@ export const DatabaseService = {
     async getTransfers(): Promise<Transfer[]> {
         if (isSupabaseConfigured()) {
             const { data, error } = await supabase.from('transfers').select('*').order('date', { ascending: false });
-            if (!error && data) return ensureArray<Transfer>(data);
+            if (!error && data) {
+                return ensureArray<Transfer>(data).map(t => ({
+                    ...t,
+                    amount: Number(t.amount || 0)
+                }));
+            }
         }
         const stored = localStorage.getItem('exodo_transfers');
         try {
             const parsed = stored ? JSON.parse(stored) : [];
-            return ensureArray<Transfer>(parsed);
+            return ensureArray<Transfer>(parsed).map(t => ({
+                ...t,
+                amount: Number(t.amount || 0)
+            }));
         } catch {
             return [];
         }
