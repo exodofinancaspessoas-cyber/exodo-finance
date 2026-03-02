@@ -108,8 +108,9 @@ export default function TransfersView() {
     const fromAccount = accounts.find(a => a.id === form.from);
     const toAccount = accounts.find(a => a.id === form.to);
     const transferAmount = parseFloat(form.amount) || 0;
+    // Warning only — does NOT block the transfer (accounts can have negative balances)
     const isInsufficient = fromAccount && transferAmount > 0 && transferAmount > fromAccount.current_balance;
-    const isReady = form.from && form.to && transferAmount > 0 && form.date && !isInsufficient;
+    const isReady = form.from && form.to && transferAmount > 0 && form.date;
 
     // Group transfers by month
     const groupedTransfers = useMemo(() => {
