@@ -430,7 +430,7 @@ export const DatabaseService = {
                 const { error } = await supabase.from('transfers').upsert({
                     id: transfer.id,
                     user_id: user.id,
-                    description: transfer.description,
+                    description: transfer.description ?? '',
                     amount: transfer.amount,
                     from_account_id: transfer.from_account_id,
                     to_account_id: transfer.to_account_id,

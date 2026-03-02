@@ -120,6 +120,18 @@ create table public.budgets (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Transfers
+create table public.transfers (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) not null,
+  from_account_id uuid references public.accounts(id) on delete cascade not null,
+  to_account_id uuid references public.accounts(id) on delete cascade not null,
+  amount numeric(15,2) not null,
+  description text, -- nullable
+  date date not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- RLS Policies (Row Level Security)
 alter table public.profiles enable row level security;
 alter table public.accounts enable row level security;
