@@ -11,6 +11,8 @@ import { StorageService } from '../services/storage';
 import { formatCurrency, formatDate, toISODate, parseSafeDate } from '../utils';
 import ExportModal from './ExportModal';
 
+import TransactionFormModal from './TransactionFormModal';
+
 interface TransactionsViewProps {
     initialType?: TransactionType | 'ALL';
     initialStatus?: TransactionStatus | 'ALL';
@@ -82,44 +84,9 @@ export default function TransactionsView({
     const [filters, setFilters] = useState<FilterState>(() => getInitialFilters(initialType, initialStatus, initialStartDate, initialEndDate));
     const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
-
-    // Transfer Mode State
-    const [isTransferMode, setIsTransferMode] = useState(false);
-    const [transferData, setTransferData] = useState({
-        from: '',
-        to: '',
-        amount: '',
-        date: new Date().toISOString().split('T')[0],
-        description: ''
-    });
-
-    // Recurring Panel State
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [showRecurring, setShowRecurring] = useState(false);
     const [recurringRules, setRecurringRules] = useState<RecurringExpense[]>([]);
-
-    // Form State
-    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-    const [formData, setFormData] = useState({
-        description: '',
-        amount: '',
-        type: 'DESPESA' as TransactionType,
-        category_id: '',
-        date: new Date().toISOString().split('T')[0],
-        status: 'PREVISTA' as TransactionStatus,
-        payment_method: 'DEBITO' as PaymentMethod,
-        account_id: '',
-        card_id: '',
-        observation: '',
-        is_installment: false,
-        installments_count: 1,
-        is_recurring: false,
-        recurring_type: 'FIXO' as 'FIXO' | 'VARIAVEL',
-        frequency: 'MENSAL' as RecurrenceFrequency,
-        day_of_month: new Date().getDate(),
-        recurring_duration: '', // Number of repetitions
-        programmed_amount: '', // Optional override for future instances
-        interest_amount: ''
-    });
 
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
     const [payTrx, setPayTrx] = useState<Transaction | null>(null);
@@ -336,62 +303,8 @@ export default function TransactionsView({
     };
 
     // --- Form Logic ---
-    const handleOpenModal = (trx?: Transaction, typeOverride?: TransactionType) => {
-        setSelectedParentId(null);
-        setCategorySearch('');
-        setIsCategoryListExpanded(false);
-        if (trx) {
-            setEditingTransaction(trx);
-            setFormData({
-                description: trx.description,
-                amount: trx.amount.toString(),
-                type: trx.type,
-                category_id: trx.category_id || '',
-                date: trx.date,
-                status: trx.status,
-                payment_method: trx.payment_method || 'DEBITO',
-                account_id: trx.account_id || '',
-                card_id: trx.card_id || '',
-                observation: trx.observation || '',
-                is_installment: false,
-                installments_count: 1,
-                is_recurring: !!trx.recurrence_id,
-                recurring_type: 'FIXO',
-                day_of_month: new Date(trx.date).getDate(),
-                interest_amount: trx.interest_amount?.toString() || ''
-            });
-        } else {
-            setEditingTransaction(null);
-            setFormData({
-                description: '',
-                amount: '',
-                type: typeOverride || (filters.type === 'ALL' ? 'DESPESA' : filters.type),
-                category_id: '',
-                date: new Date().toISOString().split('T')[0],
-                status: 'PREVISTA',
-                payment_method: 'DEBITO',
-                account_id: '',
-                card_id: '',
-                observation: '',
-                is_installment: false,
-                installments_count: 1,
-                is_recurring: false,
-                recurring_type: 'FIXO',
-                frequency: 'MENSAL',
-                day_of_month: new Date().getDate(),
-                recurring_duration: '12',
-                programmed_amount: '',
-                interest_amount: ''
-            });
-        }
-        setIsTransferMode(false);
-        setTransferData({
-            from: '',
-            to: '',
-            amount: '',
-            date: new Date().toISOString().split('T')[0],
-            description: ''
-        });
+    const handleOpenModal = (trx?: Transaction) => {
+        setEditingTransaction(trx || null);
         setIsModalOpen(true);
     };
 
@@ -425,164 +338,6 @@ export default function TransactionsView({
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (isSaving) return;
-
-        setIsSaving(true);
-        try {
-            const totalAmount = Number(formData.amount);
-            const installmentsCount = formData.is_installment ? Math.max(1, formData.installments_count) : 1;
-            const amountPerInstallment = totalAmount / installmentsCount;
-            const baseDate = new Date(formData.date + 'T12:00:00'); // Use noon to avoid timezone shifts
-
-            const transactionsToSave: Transaction[] = [];
-            const installmentGroupId = formData.is_installment ? StorageService.generateId() : undefined;
-
-            for (let i = 0; i < installmentsCount; i++) {
-                const currentDate = new Date(baseDate);
-                currentDate.setMonth(baseDate.getMonth() + i);
-
-                const installmentTrx: Transaction = {
-                    id: (i === 0 && editingTransaction) ? editingTransaction.id : StorageService.generateId(),
-                    description: installmentsCount > 1
-                        ? `${formData.description} (${i + 1}/${installmentsCount})`
-                        : formData.description,
-                    amount: amountPerInstallment,
-                    type: formData.type,
-                    category_id: formData.category_id || undefined,
-                    date: currentDate.toISOString().split('T')[0],
-                    status: (i === 0) ? formData.status : 'PREVISTA',
-                    payment_method: formData.payment_method,
-                    account_id: formData.account_id || undefined,
-                    card_id: formData.card_id || undefined,
-                    observation: formData.observation,
-                    installments: installmentsCount > 1 ? {
-                        current: i + 1,
-                        total: installmentsCount
-                    } : undefined,
-                    interest_amount: formData.interest_amount ? parseFloat(formData.interest_amount.replace(',', '.')) : 0,
-                    created_at: new Date().toISOString()
-                };
-
-                // Add recurring ID if applicable (only for the group/first one logic)
-                if (formData.is_recurring && !editingTransaction && i === 0) {
-                    const recurringId = StorageService.generateId();
-                    installmentTrx.recurrence_id = recurringId;
-
-                    // Calculate next start date (repetitions start from next period)
-                    const nextDate = new Date(baseDate);
-                    const durationTotal = formData.recurring_duration ? Number(formData.recurring_duration) : 12;
-
-                    switch (formData.frequency) {
-                        case 'DIARIO': nextDate.setDate(nextDate.getDate() + 1); break;
-                        case 'SEMANAL': nextDate.setDate(nextDate.getDate() + 7); break;
-                        case 'ANUAL': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
-                        case 'MENSAL':
-                        default:
-                            nextDate.setMonth(nextDate.getMonth() + 1);
-                            break;
-                    }
-
-                    let endDate = undefined;
-                    if (durationTotal > 1) {
-                        const end = new Date(nextDate);
-                        switch (formData.frequency) {
-                            case 'DIARIO': end.setDate(end.getDate() + (durationTotal - 2)); break;
-                            case 'SEMANAL': end.setDate(end.getDate() + (durationTotal - 2) * 7); break;
-                            case 'ANUAL': end.setFullYear(end.getFullYear() + (durationTotal - 2)); break;
-                            case 'MENSAL':
-                            default:
-                                end.setMonth(end.getMonth() + (durationTotal - 2));
-                                break;
-                        }
-                        endDate = end.toISOString().split('T')[0];
-                    }
-
-                    const recurringExpense: RecurringExpense = {
-                        id: recurringId,
-                        description: formData.description,
-                        amount: amountPerInstallment,
-                        programmed_amount: formData.programmed_amount ? Number(formData.programmed_amount) : amountPerInstallment,
-                        category_id: formData.category_id,
-                        type: formData.recurring_type,
-                        frequency: formData.frequency,
-                        day_of_month: Number(formData.day_of_month),
-                        active: true,
-                        auto_create: true,
-                        account_id: formData.account_id || undefined,
-                        payment_method: formData.payment_method,
-                        last_generated: new Date().toISOString(),
-                        start_date: nextDate.toISOString().split('T')[0], // Start from NEXT cycle
-                        end_date: endDate,
-                        duration_count: durationTotal > 1 ? durationTotal - 1 : 1 // Remaining repetitions
-                    };
-                    await StorageService.saveRecurringExpense(recurringExpense);
-                }
-
-                transactionsToSave.push(installmentTrx);
-            }
-
-            // Save all generated transactions
-            if (transactionsToSave.length > 1) {
-                await StorageService.saveTransactions(transactionsToSave);
-            } else {
-                await StorageService.saveTransaction(transactionsToSave[0]);
-            }
-
-
-            // Warning if type mismatch
-            if (filters.type !== 'ALL' && formData.type !== filters.type) {
-                const typeText = formData.type === 'RECEITA' ? 'Receita' : 'Despesa';
-                const viewText = filters.type === 'RECEITA' ? 'Receitas' : 'Despesas';
-                if (!confirm(`Você está salvando uma ${typeText} enquanto visualiza a aba de ${viewText}. A transação não aparecerá nesta lista atual. Continuar?`)) {
-                    setIsSaving(false);
-                    return;
-                }
-            }
-
-            // Process all recurring rules (will create future ones)
-            await StorageService.processRecurringExpenses();
-
-            setIsModalOpen(false);
-            await loadData();
-        } catch (error) {
-            console.error('Erro ao salvar transação:', error);
-            alert('Erro ao salvar transação. Tente novamente.');
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleTransferSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (isSaving) return;
-        if (transferData.from === transferData.to) {
-            alert('Contas de origem e destino devem ser diferentes');
-            return;
-        }
-        setIsSaving(true);
-        try {
-            const newTransfer: Transfer = {
-                id: StorageService.generateId(),
-                from_account_id: transferData.from,
-                to_account_id: transferData.to,
-                amount: Number(transferData.amount),
-                date: transferData.date,
-                description: transferData.description,
-                created_at: new Date().toISOString()
-            };
-            await StorageService.saveTransfer(newTransfer);
-            setIsModalOpen(false);
-            await loadData();
-        } catch (error) {
-            console.error('Erro ao salvar transferência:', error);
-            alert('Erro ao salvar transferência.');
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
     const handleDeleteCategory = async (id: string) => {
         if (!confirm('Excluir esta categoria? Isso pode afetar transações existentes.')) return;
         await StorageService.deleteCategory(id);
@@ -598,7 +353,7 @@ export default function TransactionsView({
             const newCat: Category = {
                 id: StorageService.generateId(),
                 name: categoryFormData.name,
-                type: formData.type,
+                type: (filters.type === 'ALL' ? 'DESPESA' : filters.type) as TransactionType,
                 color: categoryFormData.color,
                 icon: categoryFormData.icon,
                 is_default: false
@@ -608,7 +363,6 @@ export default function TransactionsView({
             setCategoryFormData({ name: '', color: '#6366f1', icon: 'Tag' });
             setIsCategoryModalOpen(false);
             await loadData();
-            setFormData(prev => ({ ...prev, category_id: newCat.id }));
         } catch (error) {
             console.error('Erro ao salvar categoria:', error);
             alert('Erro ao salvar categoria.');
@@ -670,9 +424,10 @@ export default function TransactionsView({
         }
     };
 
-    // Dynamic Options
+    // Dynamic Options for Category Manager
     const { parentCategories, subCategories, filteredDirect } = useMemo(() => {
-        const filtered = categories.filter(c => c.type === formData.type);
+        const activeType = filters.type === 'ALL' ? 'DESPESA' : filters.type as TransactionType;
+        const filtered = categories.filter(c => filters.type === 'ALL' || c.type === activeType);
 
         const parents = filtered.filter(c => !c.parent_id);
         const children = filtered.filter(c => c.parent_id);
@@ -691,17 +446,12 @@ export default function TransactionsView({
             subCategories: children,
             filteredDirect: []
         };
-    }, [categories, formData.type, categorySearch]);
+    }, [categories, filters.type, categorySearch]);
 
     const activeSubcategories = useMemo(() => {
         if (!selectedParentId) return [];
         return subCategories.filter(c => c.parent_id === selectedParentId);
     }, [selectedParentId, subCategories]);
-
-    const showPaymentMethod = formData.type === 'DESPESA';
-    const showAccount = (formData.status === 'PAGA' || formData.status === 'RECEBIDA');
-
-    const selectedCategory = useMemo(() => categories.find(c => c.id === formData.category_id), [categories, formData.category_id]);
 
     // Status visual helper
     const getStatusColor = (status: string) => {
@@ -730,25 +480,39 @@ export default function TransactionsView({
 
                     <div className="flex bg-slate-100 p-1 rounded-2xl w-full md:w-fit shadow-inner">
                         <button
-                            onClick={() => setFilters({ ...filters, type: 'ALL' })}
-                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'ALL' ? 'bg-white text-slate-900 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
+                            onClick={() => { setFilters({ ...filters, type: 'ALL' }); setShowRecurring(false); }}
+                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'ALL' && !showRecurring ? 'bg-white text-slate-900 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             <LayoutDashboard size={14} className={filters.type === 'ALL' ? 'text-indigo-500' : 'opacity-50'} />
                             <span>Todos</span>
                         </button>
                         <button
-                            onClick={() => setFilters({ ...filters, type: 'RECEITA' })}
-                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'RECEITA' ? 'bg-white text-green-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
+                            onClick={() => { setFilters({ ...filters, type: 'RECEITA' }); setShowRecurring(false); }}
+                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'RECEITA' && !showRecurring ? 'bg-white text-green-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             <ArrowUpCircle size={14} className={filters.type === 'RECEITA' ? 'text-green-500' : 'opacity-50'} />
                             <span>Receitas</span>
                         </button>
                         <button
-                            onClick={() => setFilters({ ...filters, type: 'DESPESA' })}
-                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'DESPESA' ? 'bg-white text-red-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
+                            onClick={() => { setFilters({ ...filters, type: 'DESPESA' }); setShowRecurring(false); }}
+                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${filters.type === 'DESPESA' && !showRecurring ? 'bg-white text-red-700 shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             <ArrowDownCircle size={14} className={filters.type === 'DESPESA' ? 'text-red-500' : 'opacity-50'} />
                             <span>Despesas</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowRecurring(true);
+                                setFilters({ ...filters, type: 'ALL' });
+                                // Scroll to recurring rules if needed
+                                setTimeout(() => {
+                                    document.getElementById('recurring-rules-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }, 100);
+                            }}
+                            className={`flex-1 md:px-6 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${showRecurring ? 'bg-indigo-600 text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            <Repeat size={14} className={showRecurring ? 'text-white' : 'opacity-50'} />
+                            <span>Recorrência</span>
                         </button>
                     </div>
                 </div>
@@ -952,79 +716,89 @@ export default function TransactionsView({
             </div>
 
             {/* RECURRING RULES ACCORDION */}
-            {
-                recurringRules.length > 0 && (
-                    <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-                        <button
-                            onClick={() => setShowRecurring(!showRecurring)}
-                            className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-2.5">
-                                <Repeat size={16} className="text-indigo-500" />
-                                <span className="text-sm font-semibold text-slate-700">Regras Recorrentes</span>
-                                <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                    {recurringRules.filter(r => r.active).length} ativas
-                                </span>
-                            </div>
-                            <ChevronRight size={16} className={`text-slate-400 transition-transform duration-200 ${showRecurring ? 'rotate-90' : ''}`} />
-                        </button>
+            <div id="recurring-rules-section">
+                {
+                    recurringRules.length > 0 ? (
+                        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                            <button
+                                onClick={() => setShowRecurring(!showRecurring)}
+                                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <Repeat size={16} className="text-indigo-500" />
+                                    <span className="text-sm font-semibold text-slate-700">Regras Recorrentes</span>
+                                    <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                        {recurringRules.filter(r => r.active).length} ativas
+                                    </span>
+                                </div>
+                                <ChevronRight size={16} className={`text-slate-400 transition-transform duration-200 ${showRecurring ? 'rotate-90' : ''}`} />
+                            </button>
 
-                        {showRecurring && (
-                            <div className="border-t border-slate-100 divide-y divide-slate-50">
-                                {recurringRules.map(rule => {
-                                    const cat = categories.find(c => c.id === rule.category_id);
-                                    const freqLabel: Record<string, string> = { DIARIO: 'Diário', SEMANAL: 'Semanal', MENSAL: 'Mensal', ANUAL: 'Anual' };
-                                    return (
-                                        <div key={rule.id} className={`flex items-center justify-between px-5 py-3 ${!rule.active ? 'opacity-50' : ''}`}>
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color || '#94a3b8' }} />
-                                                <div>
-                                                    <p className="text-sm font-medium text-slate-800">{rule.description}</p>
-                                                    <p className="text-xs text-slate-400">
-                                                        {freqLabel[rule.frequency] || rule.frequency}
-                                                        {rule.day_of_month ? ` · Dia ${rule.day_of_month}` : ''}
-                                                        {cat ? ` · ${cat.name}` : ''}
-                                                    </p>
+                            {showRecurring && (
+                                <div className="border-t border-slate-100 divide-y divide-slate-50">
+                                    {recurringRules.map(rule => {
+                                        const cat = categories.find(c => c.id === rule.category_id);
+                                        const freqLabel: Record<string, string> = { DIARIO: 'Diário', SEMANAL: 'Semanal', MENSAL: 'Mensal', ANUAL: 'Anual' };
+                                        return (
+                                            <div key={rule.id} className={`flex items-center justify-between px-5 py-3 ${!rule.active ? 'opacity-50' : ''}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color || '#94a3b8' }} />
+                                                    <div>
+                                                        <p className="text-sm font-medium text-slate-800">{rule.description}</p>
+                                                        <p className="text-xs text-slate-400">
+                                                            {freqLabel[rule.frequency] || rule.frequency}
+                                                            {rule.day_of_month ? ` · Dia ${rule.day_of_month}` : ''}
+                                                            {cat ? ` · ${cat.name}` : ''}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`text-sm font-bold ${rule.type === 'FIXO' ? 'text-slate-700' : 'text-orange-600'}`}>
+                                                        {formatCurrency(rule.amount)}
+                                                    </span>
+                                                    <button
+                                                        onClick={async () => {
+                                                            await StorageService.saveRecurringExpense({ ...rule, active: !rule.active });
+                                                            await loadData();
+                                                        }}
+                                                        className={`text-xs px-2.5 py-1 rounded-full font-bold transition-colors ${rule.active
+                                                            ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700'
+                                                            : 'bg-slate-100 text-slate-500 hover:bg-green-100 hover:text-green-700'
+                                                            }`}
+                                                        title={rule.active ? 'Pausar' : 'Reativar'}
+                                                    >
+                                                        {rule.active ? 'Ativa' : 'Pausada'}
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (confirm(`Excluir regra recorrente "${rule.description}"?`)) {
+                                                                await StorageService.deleteRecurringExpense(rule.id);
+                                                                await loadData();
+                                                            }
+                                                        }}
+                                                        className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                                                        title="Excluir regra"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <span className={`text-sm font-bold ${rule.type === 'FIXO' ? 'text-slate-700' : 'text-orange-600'}`}>
-                                                    {formatCurrency(rule.amount)}
-                                                </span>
-                                                <button
-                                                    onClick={async () => {
-                                                        await StorageService.saveRecurringExpense({ ...rule, active: !rule.active });
-                                                        await loadData();
-                                                    }}
-                                                    className={`text-xs px-2.5 py-1 rounded-full font-bold transition-colors ${rule.active
-                                                        ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700'
-                                                        : 'bg-slate-100 text-slate-500 hover:bg-green-100 hover:text-green-700'
-                                                        }`}
-                                                    title={rule.active ? 'Pausar' : 'Reativar'}
-                                                >
-                                                    {rule.active ? 'Ativa' : 'Pausada'}
-                                                </button>
-                                                <button
-                                                    onClick={async () => {
-                                                        if (confirm(`Excluir regra recorrente "${rule.description}"?`)) {
-                                                            await StorageService.deleteRecurringExpense(rule.id);
-                                                            await loadData();
-                                                        }
-                                                    }}
-                                                    className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                                                    title="Excluir regra"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        showRecurring && (
+                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-8 text-center">
+                                <Repeat size={32} className="mx-auto text-slate-300 mb-2 opacity-20" />
+                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Nenhuma regra recorrente</p>
+                                <p className="text-xs text-slate-400 mt-1">Crie um novo lançamento e marque "Repetir" para começar.</p>
                             </div>
-                        )}
-                    </div>
-                )
-            }
+                        )
+                    )
+                }
+            </div>
 
             {/* Batch Actions Bar */}
             {
@@ -1208,566 +982,17 @@ export default function TransactionsView({
                 </div>
             </div>
 
-            {/* MODAL */}
-            {
-                isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in backdrop-blur-sm">
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
-                            <div className="p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                                <h3 className="font-bold text-lg text-slate-800">{editingTransaction ? 'Editar' : 'Nova'} Transação</h3>
-                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">&times;</button>
-                            </div>
-
-                            <form onSubmit={isTransferMode ? handleTransferSubmit : handleSubmit} className="p-6 space-y-5">
-                                {/* Type Toggle — 3 options */}
-                                {!editingTransaction && (
-                                    <div className="flex p-1 bg-slate-100 rounded-xl gap-1">
-                                        <button
-                                            type="button"
-                                            onClick={() => { setIsTransferMode(false); setFormData({ ...formData, type: 'RECEITA' }); setSelectedParentId(null); }}
-                                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!isTransferMode && formData.type === 'RECEITA' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-400'
-                                                }`}
-                                        >
-                                            Receita
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => { setIsTransferMode(false); setFormData({ ...formData, type: 'DESPESA' }); setSelectedParentId(null); }}
-                                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!isTransferMode && formData.type === 'DESPESA' ? 'bg-white text-red-700 shadow-sm' : 'text-slate-400'
-                                                }`}
-                                        >
-                                            Despesa
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => { setIsTransferMode(true); setSelectedParentId(null); }}
-                                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${isTransferMode ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-400'
-                                                }`}
-                                        >
-                                            <ArrowRightLeft size={13} />
-                                            Transferência
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Recurring Section — MOVED TO TOP */}
-                                {!editingTransaction && !isTransferMode && (
-                                    <div className="space-y-4">
-                                        <label className={`flex items-center space-x-3 p-4 border rounded-2xl cursor-pointer transition-all ${formData.is_recurring ? (formData.type === 'RECEITA' ? 'bg-green-50/50 border-green-200' : 'bg-rose-50/50 border-rose-200') : 'border-slate-200 hover:bg-slate-50'}`}>
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.is_recurring}
-                                                onChange={e => {
-                                                    setFormData({ ...formData, is_recurring: e.target.checked });
-                                                }}
-                                                className={`w-5 h-5 rounded focus:ring-offset-0 ${formData.type === 'RECEITA' ? 'text-green-600 focus:ring-green-500' : 'text-rose-600 focus:ring-rose-500'}`}
-                                            />
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="block font-bold text-slate-800">Repetir esta {formData.type === 'RECEITA' ? 'receita' : 'despesa'}?</span>
-                                                    <div className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${formData.type === 'RECEITA' ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700'}`}>RECORRENTE</div>
-                                                </div>
-                                                <span className="block text-[10px] text-slate-500 font-medium leading-tight">Mantenha seus lançamentos fixos e variáveis organizados</span>
-                                            </div>
-                                        </label>
-
-                                        {formData.is_recurring && (
-                                            <div className={`p-4 rounded-xl border space-y-4 animate-slide-down ${formData.type === 'RECEITA' ? 'bg-green-50/30 border-green-100' : 'bg-rose-50/30 border-rose-100'}`}>
-                                                <div className="flex bg-white p-1 rounded-lg border border-slate-100">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setFormData({ ...formData, recurring_type: 'FIXO' })}
-                                                        className={`flex-1 py-1.5 text-[10px] font-bold rounded uppercase transition-all ${formData.recurring_type === 'FIXO' ? (formData.type === 'RECEITA' ? 'bg-green-600 text-white' : 'bg-rose-600 text-white') : 'text-slate-400'}`}
-                                                    >
-                                                        Valor Fixo
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setFormData({ ...formData, recurring_type: 'VARIAVEL' })}
-                                                        className={`flex-1 py-1.5 text-[10px] font-bold rounded uppercase transition-all ${formData.recurring_type === 'VARIAVEL' ? (formData.type === 'RECEITA' ? 'bg-green-600 text-white' : 'bg-rose-600 text-white') : 'text-slate-400'}`}
-                                                    >
-                                                        Valor Variável
-                                                    </button>
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor Programado para futuras</label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs text-[10px] font-bold">R$</span>
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            placeholder="0,00"
-                                                            className={`w-full bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-2 outline-none text-sm font-bold ${formData.type === 'RECEITA' ? 'text-green-600 focus:border-green-300' : 'text-rose-600 focus:border-rose-300'}`}
-                                                            value={formData.programmed_amount === '0' ? '' : formData.programmed_amount}
-                                                            onChange={e => setFormData({ ...formData, programmed_amount: e.target.value })}
-                                                        />
-                                                    </div>
-                                                    <p className="text-[9px] text-slate-400 mt-1">Este valor será usado para as projeções dos próximos meses.</p>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="col-span-2">
-                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Frequência</label>
-                                                        <select
-                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
-                                                            value={formData.frequency}
-                                                            onChange={e => setFormData({ ...formData, frequency: e.target.value as RecurrenceFrequency })}
-                                                        >
-                                                            <option value="DIARIO">Diário</option>
-                                                            <option value="SEMANAL">Semanal</option>
-                                                            <option value="MENSAL">Mensal</option>
-                                                            <option value="ANUAL">Anual</option>
-                                                        </select>
-                                                    </div>
-                                                    {formData.frequency === 'MENSAL' && (
-                                                        <div>
-                                                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Vencimento</label>
-                                                            <select
-                                                                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
-                                                                value={formData.day_of_month}
-                                                                onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
-                                                            >
-                                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                                                    <option key={d} value={d}>Dia {d}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    )}
-                                                    <div className={formData.frequency !== 'MENSAL' ? 'col-span-2' : ''}>
-                                                        <div className="flex justify-between items-center mb-1">
-                                                            <label className="block text-[10px] font-bold text-slate-500 uppercase">Repetições</label>
-                                                            <span className="text-[8px] font-black text-indigo-500 uppercase bg-indigo-50 px-1 py-0.5 rounded">Opcional</span>
-                                                        </div>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            max="120"
-                                                            placeholder="Indeterminado"
-                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
-                                                            value={formData.recurring_duration}
-                                                            onChange={e => setFormData({ ...formData, recurring_duration: e.target.value })}
-                                                        />
-                                                        {!formData.recurring_duration && (
-                                                            <p className="text-[9px] text-slate-400 mt-1">Lançamento sem prazo (Até cancelar)</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Basic Info */}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Descrição</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 text-lg font-medium"
-                                        value={formData.description}
-                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                        required
-                                        placeholder="Ex: Mercado, Salário"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Valor Total</label>
-                                        <input
-                                            type="number" step="0.01"
-                                            className={`w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 font-mono text-lg font-bold ${formData.amount === '0' || formData.amount === '' || Number(formData.amount) === 0 ? 'text-slate-400' : formData.type === 'RECEITA' ? 'text-green-600' : 'text-red-600'}`}
-                                            value={formData.amount === '0' ? '' : formData.amount}
-                                            onChange={e => setFormData({ ...formData, amount: e.target.value })}
-                                            onFocus={e => e.target.select()}
-                                            required
-                                            placeholder="0,00"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-indigo-500 uppercase mb-1">Juros / Multas</label>
-                                        <input
-                                            type="number" step="0.01"
-                                            className="w-full border border-indigo-100 bg-indigo-50/20 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono text-lg font-bold text-indigo-700"
-                                            value={formData.interest_amount === '0' ? '' : formData.interest_amount}
-                                            onChange={e => setFormData({ ...formData, interest_amount: e.target.value })}
-                                            onFocus={e => e.target.select()}
-                                            placeholder="0,00"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Data</label>
-                                        <input
-                                            type="date"
-                                            className="w-full border border-slate-200 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-orange-500/20 text-sm"
-                                            value={formData.date}
-                                            onChange={e => setFormData({ ...formData, date: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Categories Section */}
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase font-mono tracking-tight">Categoria</label>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsCategoryManagerOpen(true)}
-                                            className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all flex items-center space-x-1 px-2 py-1 hover:bg-indigo-50 rounded-lg"
-                                        >
-                                            <Settings size={12} />
-                                            <span>Configurações</span>
-                                        </button>
-                                    </div>
-
-                                    {/* SELECT TRIGGER */}
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsCategoryListExpanded(!isCategoryListExpanded)}
-                                        className={`w-full flex items-center justify-between px-4 py-3 bg-white border rounded-2xl transition-all duration-300 ${isCategoryListExpanded ? 'border-slate-900 ring-4 ring-slate-900/5 shadow-lg shadow-slate-900/5' : 'border-slate-200 hover:border-slate-300'}`}
-                                    >
-                                        <div className="flex items-center space-x-3 overflow-hidden">
-                                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor: selectedCategory?.color || '#cbd5e1' }} />
-                                            <span className={`text-sm font-bold truncate ${selectedCategory ? 'text-slate-800' : 'text-slate-400'}`}>
-                                                {selectedCategory ? selectedCategory.name.toUpperCase() : 'SELECIONAR CATEGORIA'}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center space-x-2 flex-shrink-0">
-                                            {selectedCategory && (
-                                                <X
-                                                    size={14}
-                                                    className="text-slate-300 hover:text-red-500 transition-colors"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setFormData({ ...formData, category_id: '' });
-                                                    }}
-                                                />
-                                            )}
-                                            <ChevronDown size={16} className={`text-slate-400 transition-transform duration-500 ${isCategoryListExpanded ? 'rotate-180' : ''}`} />
-                                        </div>
-                                    </button>
-
-                                    {/* EXPANDABLE LIST */}
-                                    {isCategoryListExpanded && (
-                                        <div className="border border-slate-100 rounded-3xl bg-slate-50 p-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                                            <div className="relative group">
-                                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Buscar por nome..."
-                                                    autoFocus
-                                                    className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400/50 transition-all font-medium"
-                                                    value={categorySearch}
-                                                    onChange={e => setCategorySearch(e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="max-h-64 overflow-y-auto space-y-1.5 p-1 custom-scrollbar">
-                                                {categorySearch ? (
-                                                    filteredDirect.map(c => (
-                                                        <button
-                                                            key={c.id}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setFormData({ ...formData, category_id: c.id });
-                                                                setIsCategoryListExpanded(false);
-                                                            }}
-                                                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left ${formData.category_id === c.id ? 'bg-slate-900 text-white shadow-md' : 'hover:bg-white text-slate-600 border border-transparent hover:border-slate-100'}`}
-                                                        >
-                                                            <div className="flex items-center space-x-2">
-                                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.color }} />
-                                                                <span className="text-xs font-bold leading-none">{c.name}</span>
-                                                            </div>
-                                                            {formData.category_id === c.id && <Check size={12} />}
-                                                        </button>
-                                                    ))
-                                                ) : selectedParentId ? (
-                                                    <div className="space-y-3">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelectedParentId(null)}
-                                                            className="flex items-center w-fit px-3 py-1.5 text-[10px] font-black text-indigo-500 hover:text-indigo-700 uppercase tracking-[0.2em] bg-indigo-50 rounded-lg transition-all"
-                                                        >
-                                                            <ChevronDown size={14} className="rotate-90 mr-1" />
-                                                            VOLTAR
-                                                        </button>
-
-                                                        <div className="animate-in fade-in slide-in-from-left-2 duration-300 space-y-1.5">
-                                                            {/* General / Parent Picker */}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setFormData({ ...formData, category_id: selectedParentId });
-                                                                    setIsCategoryListExpanded(false);
-                                                                }}
-                                                                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-xs transition-all ${formData.category_id === selectedParentId ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-white hover:text-slate-600 border border-dashed border-slate-200'}`}
-                                                            >
-                                                                <span className="font-black uppercase tracking-widest text-[10px]">Utilizar Categoria Principal</span>
-                                                                {formData.category_id === selectedParentId && <Check size={12} />}
-                                                            </button>
-
-                                                            {activeSubcategories.map(c => (
-                                                                <button
-                                                                    key={c.id}
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setFormData({ ...formData, category_id: c.id });
-                                                                        setIsCategoryListExpanded(false);
-                                                                    }}
-                                                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-left ${formData.category_id === c.id ? 'bg-slate-900 text-white shadow-xl scale-[1.02]' : 'hover:bg-white text-slate-600 border border-transparent hover:border-slate-100'}`}
-                                                                >
-                                                                    <span className="text-xs font-bold">{c.name}</span>
-                                                                    {formData.category_id === c.id && <Check size={12} />}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="space-y-2">
-                                                        {parentCategories.map(p => {
-                                                            const hasSubs = subCategories.some(s => s.parent_id === p.id);
-                                                            return (
-                                                                <button
-                                                                    key={p.id}
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        if (hasSubs) {
-                                                                            setSelectedParentId(p.id);
-                                                                        } else {
-                                                                            setFormData({ ...formData, category_id: p.id });
-                                                                            setIsCategoryListExpanded(false);
-                                                                        }
-                                                                    }}
-                                                                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 text-left group ${formData.category_id === p.id ? 'bg-slate-900 text-white shadow-lg' : 'hover:bg-white bg-transparent border border-transparent hover:border-slate-100 hover:shadow-sm'}`}
-                                                                >
-                                                                    <div className="flex items-center space-x-3">
-                                                                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
-                                                                        <span className="text-xs font-black uppercase tracking-tight">{p.name}</span>
-                                                                    </div>
-                                                                    {hasSubs ? (
-                                                                        <ChevronDown size={14} className="-rotate-90 text-slate-300 group-hover:text-indigo-500 transition-all duration-300 group-hover:translate-x-1" />
-                                                                    ) : (
-                                                                        formData.category_id === p.id && <Check size={12} />
-                                                                    )}
-                                                                </button>
-                                                            );
-                                                        })}
-
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setIsCategoryModalOpen(true);
-                                                                setIsCategoryListExpanded(false);
-                                                            }}
-                                                            className="w-full mt-3 px-4 py-3.5 rounded-2xl text-[10px] font-black border-2 border-dashed border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-white transition-all flex items-center justify-center space-x-2 uppercase tracking-widest"
-                                                        >
-                                                            <Plus size={14} />
-                                                            <span>Criar Categoria</span>
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-
-                                {/* Payment Details Section */}
-                                <div className="bg-slate-50 p-4 rounded-xl space-y-4 border border-slate-100">
-                                    {showPaymentMethod && (
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Método</label>
-                                            <select
-                                                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm"
-                                                value={formData.payment_method}
-                                                onChange={e => setFormData({ ...formData, payment_method: e.target.value as PaymentMethod })}
-                                            >
-                                                <option value="DEBITO">Débito</option>
-                                                <option value="CREDITO">Crédito</option>
-                                                <option value="PIX">Pix</option>
-                                                <option value="DINHEIRO">Dinheiro</option>
-                                                <option value="BOLETO">Boleto</option>
-                                                <option value="TRANSFERENCIA">Transferência</option>
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    {/* Credit Card Specific */}
-                                    {formData.type === 'DESPESA' && formData.payment_method === 'CREDITO' && (
-                                        <div className="space-y-4 animate-fade-in">
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Cartão</label>
-                                                <select className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm" value={formData.card_id} onChange={e => setFormData({ ...formData, card_id: e.target.value })} required >
-                                                    <option value="">Selecione...</option>
-                                                    {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                                </select>
-                                            </div>
-
-                                            {!editingTransaction && (
-                                                <div className="flex items-center space-x-3 pt-2">
-                                                    <input type="checkbox" id="installments" checked={formData.is_installment} onChange={e => setFormData({ ...formData, is_installment: e.target.checked })} className="w-4 h-4 text-orange-600 rounded" />
-                                                    <label htmlFor="installments" className="text-sm font-medium text-slate-700">Parcelar compra?</label>
-                                                </div>
-                                            )}
-
-                                            {formData.is_installment && (
-                                                <div className="bg-white p-3 rounded-lg border border-slate-200">
-                                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Número de Parcelas</label>
-                                                    <div className="flex items-center gap-3">
-                                                        <input
-                                                            type="number" min="2" max="48"
-                                                            className="w-20 border border-slate-200 rounded-lg px-2 py-1 outline-none font-bold text-center"
-                                                            value={formData.installments_count}
-                                                            onChange={e => setFormData({ ...formData, installments_count: Number(e.target.value) })}
-                                                        />
-                                                        <div className="text-xs text-slate-500">
-                                                            x {formatCurrency(Number(formData.amount) / Math.max(1, formData.installments_count))} / mês
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Account Selection (Deb/Pix/Transf) */}
-                                    {showAccount && (
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1 font-xs">Conta</label>
-                                            <select className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none text-sm" value={formData.account_id} onChange={e => setFormData({ ...formData, account_id: e.target.value })} required={showAccount} >
-                                                <option value="">Selecione...</option>
-                                                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                                            </select>
-                                        </div>
-                                    )}
-                                </div>
-
-
-                                {/* Status Final */}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Status da Transação</label>
-                                    <div className="flex bg-slate-100 p-1 rounded-lg">
-                                        {(formData.type === 'RECEITA' ?
-                                            ['PREVISTA', 'CONFIRMADA', 'RECEBIDA', 'ATRASADA'] :
-                                            ['PREVISTA', 'CONFIRMADA', 'PAGA', 'ATRASADA']
-                                        ).map(s => (
-                                            <button
-                                                key={s}
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, status: s as TransactionStatus })}
-                                                className={`flex-1 py-1 text-[10px] font-bold rounded uppercase transition-all ${formData.status === s ? 'bg-white shadow text-slate-800' : 'text-slate-400'}`}
-                                            >
-                                                {s}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* ── TRANSFER FORM ── */}
-                                {isTransferMode ? (
-                                    <div className="space-y-4 animate-fade-in">
-                                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700 font-medium">
-                                            Mova dinheiro entre suas contas sem afetar receitas ou despesas.
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">De (Origem)</label>
-                                                <select
-                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-blue-500/20"
-                                                    value={transferData.from}
-                                                    onChange={e => setTransferData({ ...transferData, from: e.target.value })}
-                                                    required
-                                                >
-                                                    <option value="">Selecione...</option>
-                                                    {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Para (Destino)</label>
-                                                <select
-                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-blue-500/20"
-                                                    value={transferData.to}
-                                                    onChange={e => setTransferData({ ...transferData, to: e.target.value })}
-                                                    required
-                                                >
-                                                    <option value="">Selecione...</option>
-                                                    {accounts.filter(a => a.id !== transferData.from).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Valor</label>
-                                                <input
-                                                    type="number" step="0.01" min="0.01"
-                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none font-mono text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500/20"
-                                                    value={transferData.amount === '0' ? '' : transferData.amount}
-                                                    onChange={e => setTransferData({ ...transferData, amount: e.target.value })}
-                                                    placeholder="0,00"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Data</label>
-                                                <input
-                                                    type="date"
-                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-blue-500/20"
-                                                    value={transferData.date}
-                                                    onChange={e => setTransferData({ ...transferData, date: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Descrição (Opcional)</label>
-                                            <input
-                                                type="text"
-                                                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 outline-none text-sm focus:ring-2 focus:ring-blue-500/20"
-                                                value={transferData.description}
-                                                onChange={e => setTransferData({ ...transferData, description: e.target.value })}
-                                                placeholder="Ex: Reserva de emergência"
-                                            />
-                                        </div>
-                                        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
-                                            <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium" disabled={isSaving}>Cancelar</button>
-                                            <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-lg shadow-blue-600/20 disabled:opacity-50 flex items-center gap-2" disabled={isSaving}>
-                                                {isSaving ? <><div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />Salvando...</> : <><ArrowRightLeft size={16} />Transferir</>}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsModalOpen(false)}
-                                            className="px-5 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium disabled:opacity-50"
-                                            disabled={isSaving}
-                                        >
-                                            Cancelar
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium shadow-lg shadow-slate-900/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                            disabled={isSaving}
-                                        >
-                                            {isSaving ? (
-                                                <>
-                                                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                                                    Salvando...
-                                                </>
-                                            ) : (
-                                                editingTransaction ? 'Salvar Alterações' : 'Criar Transação'
-                                            )}
-                                        </button>
-                                    </div>
-                                )}
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
-
+            {/* UNIFIED MODAL */}
+            <TransactionFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={async () => {
+                    await loadData();
+                    setIsModalOpen(false);
+                }}
+                initialTransaction={editingTransaction}
+                initialType={filters.type}
+            />
             {/* Export Modal */}
             <ExportModal
                 isOpen={isExportModalOpen}

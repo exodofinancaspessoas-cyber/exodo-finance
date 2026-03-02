@@ -23,7 +23,7 @@ import AnalyticsView from './components/AnalyticsView';
 import PlanningView from './components/PlanningView';
 import OnboardingFlow from './components/Onboarding';
 import ActionManual from './components/ActionManual';
-import QuickAddView from './components/QuickAddView';
+import TransactionFormModal from './components/TransactionFormModal';
 import AgendaView from './components/AgendaView';
 import FluxoCaixaView from './components/FluxoCaixaView';
 import { Sparkles, Plus } from 'lucide-react';
@@ -247,16 +247,15 @@ export default function App() {
       <FinanceChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
 
       {/* ── QUICK ADD MODAL ── */}
-      {isQuickAddOpen && (
-        <QuickAddView
-          onClose={() => setIsQuickAddOpen(false)}
-          onSuccess={() => {
-            setIsQuickAddOpen(false);
-            // Re-render dashboard or data if needed
-            window.location.reload(); // Simple way to ensure data consistency after quick add
-          }}
-        />
-      )}
+      <TransactionFormModal
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
+        onSuccess={() => {
+          setIsQuickAddOpen(false);
+          // Re-render dashboard or data if needed
+          window.location.reload();
+        }}
+      />
     </>
   );
 }
