@@ -606,9 +606,21 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-slate-800">Visão Geral</h3>
-          <span className="text-xs text-slate-400 capitalize">{monthLabel}</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col">
+            <h3 className="text-xl font-black text-slate-800 tracking-tight leading-none mb-1">Visão Geral</h3>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{monthLabel}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onChangeView('movements')}
+              className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-black rounded-xl uppercase tracking-tighter shadow-lg shadow-slate-900/10 active:scale-95 transition-all outline-none"
+            >
+              <Plus size={14} strokeWidth={3} className="text-orange-400" />
+              Novo Lançamento
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

@@ -82,7 +82,22 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                     <h1 className="text-xl font-bold tracking-tight">Êxodo Finance</h1>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto py-6 space-y-1 px-3">
+                <nav className="flex-1 overflow-y-auto pt-4 pb-6 space-y-1 px-3">
+                    {/* Botão Global de Novo Lançamento (Desktop) */}
+                    <div className="px-3 mb-6">
+                        <button
+                            onClick={() => { hapticFeedback(15); onQuickAdd?.(); }}
+                            className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black py-4 px-4 rounded-2xl shadow-xl shadow-orange-900/40 hover:shadow-orange-900/60 active:scale-95 transition-all flex items-center justify-center gap-3 group"
+                        >
+                            <div className="bg-white/20 p-1.5 rounded-xl group-hover:bg-white/30 transition-colors">
+                                <Plus size={20} strokeWidth={3} />
+                            </div>
+                            <span className="text-sm tracking-tight">Novo Lançamento</span>
+                        </button>
+                    </div>
+
+                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-4 mb-2 opacity-50">Menu Principal</div>
+
                     {detailedMenuItems.map(item => (
                         <button
                             key={item.id}
@@ -145,16 +160,13 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
 
                 {/* Mobile Header */}
                 <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 shadow-sm z-20 min-h-[56px]">
-                    <div className="flex items-center space-x-2.5">
-                        <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold shrink-0">Ê</div>
-                        <div className="flex flex-col">
-                            <span className="font-black text-slate-900 text-sm leading-tight">{activeMobileLabel}</span>
-                            {!isSupabaseConfigured() && (
-                                <span className="text-amber-600 text-[9px] font-bold uppercase flex items-center gap-0.5">
-                                    <CloudOff size={8} /> modo local
-                                </span>
-                            )}
-                        </div>
+                    <div className="flex flex-col">
+                        <span className="font-black text-slate-900 text-sm leading-tight">{activeMobileLabel}</span>
+                        {!isSupabaseConfigured() && (
+                            <span className="text-amber-600 text-[9px] font-bold uppercase flex items-center gap-0.5">
+                                <CloudOff size={8} /> modo local
+                            </span>
+                        )}
                     </div>
                     <button
                         onClick={openMenu}
@@ -167,6 +179,17 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
 
                 {/* Scrollable Content */}
                 <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
+                    {/* ── VISÃO GERAL — Grid de Cards ───────────────────────────────────── */}
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-black text-slate-800 tracking-tight">Visão Geral</h3>
+                        <button
+                            onClick={() => onChangeView('movements')}
+                            className="md:hidden flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white text-[10px] font-black rounded-lg uppercase tracking-wider shadow-md active:scale-90"
+                        >
+                            <Plus size={12} strokeWidth={3} /> Novo
+                        </button>
+                    </div>
+
                     {children}
                     {/* Espaçador físico para mobile evitar sobreposição do menu inferior */}
                     <div className="h-32 md:hidden pointer-events-none" aria-hidden="true" />
