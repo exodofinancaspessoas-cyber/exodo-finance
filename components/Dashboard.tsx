@@ -140,12 +140,12 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
     const m = currentMonth.getMonth();
     const firstDayOfMonth = new Date(y, m, 1);
 
-    // Transações antes do mês
+    // Transações antes do mês (apenas as que afetam conta bancária)
     const beforeTrx = transactions.filter(t => {
       const p = parseSafeDate(t.date);
       if (!p) return false;
       const tDate = new Date(p.y, p.m - 1, p.d);
-      return tDate < firstDayOfMonth && isRealized(t);
+      return tDate < firstDayOfMonth && isRealized(t) && t.account_id;
     });
 
     const income = beforeTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
@@ -165,7 +165,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
 
     const withinTrx = transactions.filter(t => {
       const p = parseSafeDate(t.date);
-      return p && p.y === y && (p.m - 1) === m && isRealized(t);
+      return p && p.y === y && (p.m - 1) === m && isRealized(t) && t.account_id;
     });
 
     const income = withinTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
@@ -182,7 +182,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
     const pendingTrx = transactions.filter(t => {
       const p = parseSafeDate(t.date);
       const isPending = t.status === 'PREVISTA' || t.status === 'ATRASADA';
-      return p && p.y === y && (p.m - 1) === m && isPending && t.status !== 'EXCLUIDA';
+      return p && p.y === y && (p.m - 1) === m && isPending && t.status !== 'EXCLUIDA' && t.account_id;
     });
 
     const pendingIncome = pendingTrx.filter(t => t.type === 'RECEITA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
@@ -197,7 +197,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
     const m = currentMonth.getMonth();
     const filtered = transactions.filter(t => {
       const p = parseSafeDate(t.date);
-      return p && p.y === y && (p.m - 1) === m && t.status !== 'EXCLUIDA';
+      return p && p.y === y && (p.m - 1) === m && t.status !== 'EXCLUIDA' && t.account_id;
     });
     const income = filtered.filter(t => t.type === 'RECEITA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
     const expense = filtered.filter(t => t.type === 'DESPESA').reduce((s, t) => s + (t.amount + (t.interest_amount || 0)), 0);
@@ -237,7 +237,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       const label = `${i}/${m + 1}`;
 
-      const dayTrxs = transactions.filter(t => t.date === dateStr && t.status !== 'EXCLUIDA');
+      const dayTrxs = transactions.filter(t => t.date === dateStr && t.status !== 'EXCLUIDA' && t.account_id);
       const despesas = dayTrxs.filter(t => t.type === 'DESPESA').reduce((s, t) => s + t.amount, 0);
       const receitas = dayTrxs.filter(t => t.type === 'RECEITA').reduce((s, t) => s + t.amount, 0);
 
