@@ -87,7 +87,7 @@ export function generateInsights(input: InsightInput): Insight[] {
             message: `⚠️ Atenção: com as despesas previstas, seu saldo pode ficar ${formatBRL(Math.abs(projectedBalance))} negativo antes do fim do mês.`,
             severity: 'CRITICAL',
             icon: '⚠️',
-            targetView: 'movements'
+            targetView: 'projection'
         });
     }
 
