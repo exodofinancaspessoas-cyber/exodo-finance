@@ -54,7 +54,6 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
         { id: 'agenda', icon: CalendarDays, label: 'Agenda Mensal' },
         { id: 'fluxo-caixa', icon: Calculator, label: 'Fluxo de Caixa' },
         { id: 'finance', icon: Landmark, label: 'Contas & Cartões' },
-        { id: 'transfers', icon: ArrowRightLeft, label: 'Transferências' },
         { id: 'movements', icon: Wallet, label: 'Receitas/Despesas' },
         { id: 'analytics', icon: LineChart, label: 'Análises' },
         { id: 'planning', icon: BookOpen, label: 'Planejamento' },
