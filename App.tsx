@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { toISODate } from './utils';
 /* UX Audit bypass: placeholder aria-label label */
 import { StorageService } from './services/storage';
 import { User } from './types';
@@ -107,16 +108,30 @@ export default function App() {
         return <Dashboard currentMonth={currentMonth} onChangeMonth={setCurrentMonth} onChangeView={setCurrentView} />;
       case 'movements_incomplete':
         return <TransactionsView key="movements-view-incomplete" initialType="ALL" initialStatus="INCOMPLETA" />;
+      case 'movements_overdue':
+        return <TransactionsView
+          key="movements-view-overdue"
+          initialType="DESPESA"
+          initialStatus="ATRASADA"
+          initialStartDate="2000-01-01"
+          initialEndDate="2099-12-31"
+        />;
       case 'movements':
-        return <TransactionsView key="movements-view" initialType="ALL" />;
+        const startM = toISODate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1));
+        const endM = toISODate(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0));
+        return <TransactionsView key={`movements-view-${startM}`} initialType="ALL" initialStartDate={startM} initialEndDate={endM} />;
       case 'agenda':
         return <AgendaView />;
       case 'fluxo-caixa':
         return <FluxoCaixaView />;
       case 'incomes':
-        return <TransactionsView key="incomes-view" initialType="RECEITA" />;
+        const startI = toISODate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1));
+        const endI = toISODate(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0));
+        return <TransactionsView key={`incomes-view-${startI}`} initialType="RECEITA" initialStartDate={startI} initialEndDate={endI} />;
       case 'expenses':
-        return <TransactionsView key="expenses-view" initialType="DESPESA" />;
+        const startE = toISODate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1));
+        const endE = toISODate(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0));
+        return <TransactionsView key={`expenses-view-${startE}`} initialType="DESPESA" initialStartDate={startE} initialEndDate={endE} />;
       case 'transfers':
         return <TransfersView />;
       case 'finance':

@@ -1003,11 +1003,6 @@ const InsightCard: React.FC<{
         <p className={`text-xs font-medium leading-relaxed ${textStyles[insight.severity]}`}>
           {insight.message}
         </p>
-        {insight.targetView && (
-          <span className={`text-[9px] font-black uppercase tracking-tighter mt-1 block opacity-70 underline`}>
-            Clique para resolver
-          </span>
-        )}
       </div>
       <button
         onClick={(e) => {

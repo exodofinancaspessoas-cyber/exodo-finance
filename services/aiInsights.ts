@@ -87,7 +87,7 @@ export function generateInsights(input: InsightInput): Insight[] {
             message: `⚠️ Atenção: com as despesas previstas, seu saldo pode ficar ${formatBRL(Math.abs(projectedBalance))} negativo antes do fim do mês.`,
             severity: 'CRITICAL',
             icon: '⚠️',
-            targetView: 'projection'
+            targetView: 'movements'
         });
     }
 
@@ -117,7 +117,7 @@ export function generateInsights(input: InsightInput): Insight[] {
             message: `🔴 Você tem ${overdue.length} conta(s) atrasada(s) totalizando ${formatBRL(total)}. Regularize para evitar juros.`,
             severity: 'CRITICAL',
             icon: '🔴',
-            targetView: 'movements'
+            targetView: 'movements_overdue'
         });
     }
 

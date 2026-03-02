@@ -13,6 +13,8 @@ import ExportModal from './ExportModal';
 interface TransactionsViewProps {
     initialType?: TransactionType | 'ALL';
     initialStatus?: TransactionStatus | 'ALL';
+    initialStartDate?: string;
+    initialEndDate?: string;
     key?: string;
 }
 
@@ -38,7 +40,12 @@ const getMonthBounds = (offset = 0) => {
     };
 };
 
-const getInitialFilters = (type: TransactionType | 'ALL' = 'ALL', status: TransactionStatus | 'ALL' = 'ALL'): FilterState => {
+const getInitialFilters = (
+    type: TransactionType | 'ALL' = 'ALL',
+    status: TransactionStatus | 'ALL' = 'ALL',
+    initialStart?: string,
+    initialEnd?: string
+): FilterState => {
     const bounds = getMonthBounds();
     return {
         search: '',
@@ -46,14 +53,19 @@ const getInitialFilters = (type: TransactionType | 'ALL' = 'ALL', status: Transa
         status,
         category: 'ALL',
         account: 'ALL',
-        startDate: bounds.start,
-        endDate: bounds.end,
+        startDate: initialStart || bounds.start,
+        endDate: initialEnd || bounds.end,
         minAmount: '',
         maxAmount: ''
     };
 };
 
-export default function TransactionsView({ initialType = 'ALL', initialStatus = 'ALL' }: TransactionsViewProps) {
+export default function TransactionsView({
+    initialType = 'ALL',
+    initialStatus = 'ALL',
+    initialStartDate,
+    initialEndDate
+}: TransactionsViewProps) {
     // Data State
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
@@ -66,7 +78,7 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
     const [showFilters, setShowFilters] = useState(false);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportData, setExportData] = useState<Transaction[]>([]);
-    const [filters, setFilters] = useState<FilterState>(() => getInitialFilters(initialType, initialStatus));
+    const [filters, setFilters] = useState<FilterState>(() => getInitialFilters(initialType, initialStatus, initialStartDate, initialEndDate));
     const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
 
