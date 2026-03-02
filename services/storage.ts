@@ -439,10 +439,11 @@ export const StorageService = {
         transactions.forEach(t => {
             if (t.account_id) {
                 const current = balanceMap.get(t.account_id) || 0;
+                const totalAmount = t.amount + (t.interest_amount || 0);
                 if (t.type === 'RECEITA' && (t.status === 'RECEBIDA' || t.status === 'CONFIRMADA')) {
-                    balanceMap.set(t.account_id, current + t.amount);
+                    balanceMap.set(t.account_id, current + totalAmount);
                 } else if (t.type === 'DESPESA' && t.status === 'PAGA') {
-                    balanceMap.set(t.account_id, current - t.amount);
+                    balanceMap.set(t.account_id, current - totalAmount);
                 }
             }
         });
