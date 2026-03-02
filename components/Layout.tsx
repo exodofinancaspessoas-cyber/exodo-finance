@@ -44,7 +44,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
     const isActive = (id: string) => {
         if (id === 'finance') return ['finance', 'accounts', 'cards'].includes(currentView);
         if (id === 'movements') return ['movements', 'incomes', 'expenses', 'recurring', 'movements_incomplete'].includes(currentView);
-        if (id === 'analytics') return ['analytics', 'projection', 'reports'].includes(currentView);
+        if (id === 'analytics') return ['analytics', 'projection', 'reports', 'fluxo-caixa'].includes(currentView);
         if (id === 'planning') return ['planning', 'goals', 'budgets'].includes(currentView);
         return currentView === id;
     };
@@ -52,10 +52,9 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
     const detailedMenuItems = [
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'agenda', icon: CalendarDays, label: 'Agenda Mensal' },
-        { id: 'fluxo-caixa', icon: Calculator, label: 'Fluxo de Caixa' },
+        { id: 'analytics', icon: LineChart, label: 'Análise/Fluxo de caixa' },
         { id: 'finance', icon: Landmark, label: 'Contas & Cartões' },
         { id: 'movements', icon: Wallet, label: 'Receitas/Despesas' },
-        { id: 'analytics', icon: LineChart, label: 'Análises' },
         { id: 'planning', icon: BookOpen, label: 'Planejamento' },
         { id: 'settings', icon: Settings, label: 'Configurações' },
     ];
