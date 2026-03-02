@@ -104,15 +104,7 @@ export default function TransfersView() {
         }
     };
 
-    // ── Balance preview computation ────────────────────────────────────────
-    const fromAccount = accounts.find(a => a.id === form.from);
-    const toAccount = accounts.find(a => a.id === form.to);
-    const transferAmount = parseFloat(form.amount) || 0;
-    // Warning only — does NOT block the transfer (accounts can have negative balances)
-    const isInsufficient = fromAccount && transferAmount > 0 && transferAmount > fromAccount.current_balance;
-    const isReady = form.from && form.to && transferAmount > 0 && form.date;
 
-    // Group transfers by month
     const groupedTransfers = useMemo(() => {
         const groups: Record<string, Transfer[]> = {};
         transfers.forEach(t => {
@@ -122,6 +114,14 @@ export default function TransfersView() {
         });
         return groups;
     }, [transfers]);
+
+    // ── Balance preview computation ────────────────────────────────────────
+    const fromAccount = accounts.find(a => a.id === form.from);
+    const toAccount = accounts.find(a => a.id === form.to);
+    const transferAmount = parseFloat(form.amount) || 0;
+    // Warning only — does NOT block the transfer (accounts can have negative balances)
+    const isInsufficient = !!(fromAccount && transferAmount > 0 && transferAmount > fromAccount.current_balance);
+    const isReady = !!(form.from && form.to && form.from !== form.to && transferAmount > 0 && form.date);
 
     const formatMonthLabel = (key: string) => {
         const [y, m] = key.split('-').map(Number);
@@ -143,12 +143,15 @@ export default function TransfersView() {
                 description: form.description.trim() || undefined,
                 created_at: new Date().toISOString()
             };
+            console.log('[Transfer] Salvando:', newTransfer);
             await StorageService.saveTransfer(newTransfer);
+            console.log('[Transfer] Salvo com sucesso!');
             setForm({ from: '', to: '', amount: '', date: new Date().toISOString().split('T')[0], description: '' });
             setIsModalOpen(false);
             await loadData();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro ao salvar transferência:', error);
+            alert(`Erro ao salvar transferência: ${error?.message || 'Tente novamente.'}`);
         } finally {
             setIsSaving(false);
         }
