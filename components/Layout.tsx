@@ -52,7 +52,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
     const detailedMenuItems = [
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'agenda', icon: CalendarDays, label: 'Agenda Mensal' },
-        { id: 'analytics', icon: LineChart, label: 'Análise/Fluxo de caixa' },
+        { id: 'analytics', icon: LineChart, label: 'Análise' },
         { id: 'finance', icon: Landmark, label: 'Contas & Cartões' },
         { id: 'movements', icon: Wallet, label: 'Receitas/Despesas' },
         { id: 'planning', icon: BookOpen, label: 'Planejamento' },
