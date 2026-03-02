@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-/* UX Audit bypass: placeholder aria-label label */
-import { Landmark, CreditCard } from 'lucide-react';
+import { Landmark, CreditCard, ArrowRightLeft } from 'lucide-react';
 import AccountsView from './AccountsView';
 import CardsView from './CardsView';
+import TransfersView from './TransfersView';
 
-type Tab = 'accounts' | 'cards';
+type Tab = 'accounts' | 'cards' | 'transfers';
 
 interface FinanceViewProps {
     initialTab?: Tab;
@@ -18,8 +18,9 @@ export default function FinanceView({ initialTab = 'accounts' }: FinanceViewProp
     }, [initialTab]);
 
     const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-        { id: 'accounts', label: 'Contas Bancárias', icon: Landmark },
-        { id: 'cards', label: 'Cartões de Crédito', icon: CreditCard },
+        { id: 'accounts', label: 'Contas', icon: Landmark },
+        { id: 'cards', label: 'Cartões', icon: CreditCard },
+        { id: 'transfers', label: 'Transferências', icon: ArrowRightLeft },
     ];
 
     return (
@@ -32,14 +33,15 @@ export default function FinanceView({ initialTab = 'accounts' }: FinanceViewProp
                     return (
                         <button
                             key={tab.id}
+                            id={`tab-finance-${tab.id}`}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200
                                 ${isActive
                                     ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
                                     : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
-                            <Icon size={16} className={isActive ? 'text-orange-600' : ''} />
+                            <Icon size={15} className={isActive ? 'text-orange-600' : ''} />
                             {tab.label}
                         </button>
                     );
@@ -48,7 +50,9 @@ export default function FinanceView({ initialTab = 'accounts' }: FinanceViewProp
 
             {/* Content */}
             <div key={activeTab} className="animate-fade-in">
-                {activeTab === 'accounts' ? <AccountsView /> : <CardsView />}
+                {activeTab === 'accounts' && <AccountsView />}
+                {activeTab === 'cards' && <CardsView />}
+                {activeTab === 'transfers' && <TransfersView />}
             </div>
         </div>
     );

@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import {
     Menu, LogOut, LayoutDashboard, Landmark,
     User as UserIcon, TrendingUp, Target, PieChart, Calculator,
-    BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles, Plus, Smartphone, X, CalendarDays
+    BarChart3, Settings, Wallet, LineChart, BookOpen, Sparkles, Plus, Smartphone, X, CalendarDays,
+    ArrowRightLeft
 } from 'lucide-react';
 import { User } from '../types';
 import { VersionInfo } from '../version';
@@ -42,7 +43,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
 
     const isActive = (id: string) => {
         if (id === 'finance') return ['finance', 'accounts', 'cards'].includes(currentView);
-        if (id === 'movements') return ['movements', 'incomes', 'expenses', 'transfers', 'recurring', 'movements_incomplete'].includes(currentView);
+        if (id === 'movements') return ['movements', 'incomes', 'expenses', 'recurring', 'movements_incomplete'].includes(currentView);
         if (id === 'analytics') return ['analytics', 'projection', 'reports'].includes(currentView);
         if (id === 'planning') return ['planning', 'goals', 'budgets'].includes(currentView);
         return currentView === id;
@@ -53,6 +54,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
         { id: 'agenda', icon: CalendarDays, label: 'Agenda Mensal' },
         { id: 'fluxo-caixa', icon: Calculator, label: 'Fluxo de Caixa' },
         { id: 'finance', icon: Landmark, label: 'Contas & Cartões' },
+        { id: 'transfers', icon: ArrowRightLeft, label: 'Transferências' },
         { id: 'movements', icon: Wallet, label: 'Movimentações' },
         { id: 'analytics', icon: LineChart, label: 'Análises' },
         { id: 'planning', icon: BookOpen, label: 'Planejamento' },

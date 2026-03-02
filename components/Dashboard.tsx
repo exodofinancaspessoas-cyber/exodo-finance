@@ -36,7 +36,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
     recurring: RecurringExpense[];
   }>({ transactions: [], categories: [], accounts: [], cards: [], transfers: [], budgets: [], goals: [], recurring: [] });
   const [dismissedInsights, setDismissedInsights] = useState<Set<string>>(new Set());
-  const [isInsightsOpen, setIsInsightsOpen] = useState(true);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -107,6 +107,11 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
   const visibleInsights = useMemo(
     () => insights.filter(i => !dismissedInsights.has(i.id)),
     [insights, dismissedInsights]
+  );
+
+  const hasUrgentInsights = useMemo(
+    () => visibleInsights.some(i => i.severity === 'CRITICAL' || i.severity === 'WARNING'),
+    [visibleInsights]
   );
 
   const dismissInsight = (id: string) => {
@@ -382,7 +387,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
   return (
     <div className={`animate-fade-in space-y-6 pb-20 transition-all duration-300 ${isTransitioning ? 'opacity-50 scale-[0.99] grayscale-[0.2]' : 'opacity-100 scale-100'}`}>
 
-      {/* ── INSIGHTS PANEL (inline, collapsible) ─────────────────────────── */}
+      {/* ── INSIGHTS PANEL (inline, collapsible, starts minimized) ────────── */}
       {visibleInsights.length > 0 && (
         <div className="rounded-2xl overflow-hidden border border-slate-100 shadow-sm bg-white">
           {/* Header — click to expand/collapse */}
@@ -391,13 +396,41 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
             className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <Sparkles size={14} className="text-orange-400" />
+              <Sparkles
+                size={14}
+                className={`transition-colors ${!isInsightsOpen && hasUrgentInsights ? 'text-red-400' : 'text-orange-400'
+                  }`}
+              />
               <span className="text-xs font-black uppercase tracking-widest text-white">Êxodo IA — Insights</span>
-              <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
-                {visibleInsights.length}
-              </span>
+
+              {/* Badge urgente — pulsa quando minimizado e há algo crítico */}
+              {!isInsightsOpen && hasUrgentInsights ? (
+                <span
+                  className="inline-flex items-center gap-1 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none animate-bounce"
+                  title="Há alertas urgentes!"
+                >
+                  ⚠ {visibleInsights.length}
+                </span>
+              ) : (
+                <span className="bg-slate-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
+                  {visibleInsights.length}
+                </span>
+              )}
             </div>
-            <ChevronDown size={15} className={`text-slate-400 transition-transform duration-200 ${isInsightsOpen ? '' : '-rotate-90'}`} />
+
+            <div className="flex items-center gap-2">
+              {/* Ícone de urgência pulsando na lateral direita quando minimizado */}
+              {!isInsightsOpen && hasUrgentInsights && (
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                </span>
+              )}
+              <ChevronDown
+                size={15}
+                className={`text-slate-400 transition-transform duration-200 ${isInsightsOpen ? '' : '-rotate-90'}`}
+              />
+            </div>
           </button>
 
           {/* Alert list — animated collapse */}

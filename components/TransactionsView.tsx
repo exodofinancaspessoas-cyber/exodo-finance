@@ -2018,7 +2018,7 @@ export default function TransactionsView({ initialType = 'ALL', initialStatus = 
                 )
             }
 
-            <div className="fixed bottom-6 right-6 z-40">
+            <div className="hidden md:block fixed md:bottom-6 right-6 z-40">
                 <button
                     id="trigger-new-transaction"
                     onClick={() => handleOpenModal()}

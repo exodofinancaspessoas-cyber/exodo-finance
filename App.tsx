@@ -118,7 +118,7 @@ export default function App() {
       case 'expenses':
         return <TransactionsView key="expenses-view" initialType="DESPESA" />;
       case 'transfers':
-        return <TransactionsView key="transfers-view" initialType="ALL" />;
+        return <TransfersView />;
       case 'finance':
         return <FinanceView />;
       case 'accounts':
@@ -222,7 +222,7 @@ export default function App() {
         <button
           id="ai-chat-button"
           onClick={() => setIsChatOpen(true)}
-          className="fixed bottom-[88px] md:bottom-6 right-4 z-[90] w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-white shadow-xl shadow-slate-900/30 flex items-center justify-center transition-all active:scale-90 hover:shadow-2xl hover:scale-105 tap-highlight-none"
+          className="fixed bottom-[100px] md:bottom-6 right-4 z-[90] w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-white shadow-xl shadow-slate-900/30 flex items-center justify-center transition-all active:scale-90 hover:shadow-2xl hover:scale-105 tap-highlight-none"
           title="Assistente IA"
           aria-label="Abrir assistente IA"
         >
