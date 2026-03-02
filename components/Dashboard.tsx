@@ -437,7 +437,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
           {isInsightsOpen && (
             <div className="divide-y divide-slate-50">
               {visibleInsights.map(insight => (
-                <InsightCard key={insight.id} insight={insight} onDismiss={dismissInsight} />
+                <InsightCard key={insight.id} insight={insight} onDismiss={dismissInsight} onClick={onChangeView} />
               ))}
             </div>
           )}
@@ -977,7 +977,11 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
 }
 
 // ─── InsightCard sub-component ───────────────────────────────────────────────
-const InsightCard: React.FC<{ insight: Insight; onDismiss: (id: string) => void }> = ({ insight, onDismiss }) => {
+const InsightCard: React.FC<{
+  insight: Insight;
+  onDismiss: (id: string) => void;
+  onClick: (view: string) => void;
+}> = ({ insight, onDismiss, onClick }) => {
   const severityStyles: Record<InsightSeverity, string> = {
     CRITICAL: 'bg-red-50 border-l-4 border-l-red-500',
     WARNING: 'bg-amber-50 border-l-4 border-l-amber-400',
@@ -990,13 +994,26 @@ const InsightCard: React.FC<{ insight: Insight; onDismiss: (id: string) => void 
   };
 
   return (
-    <div className={`flex items-start gap-3 px-4 py-3.5 ${severityStyles[insight.severity]} transition-all`}>
+    <div
+      onClick={() => insight.targetView && onClick(insight.targetView)}
+      className={`flex items-start gap-3 px-4 py-3.5 ${severityStyles[insight.severity]} transition-all ${insight.targetView ? 'cursor-pointer hover:brightness-95 active:scale-[0.99]' : ''}`}
+    >
       <span className="text-base shrink-0 mt-0.5">{insight.icon}</span>
-      <p className={`text-xs font-medium leading-relaxed flex-1 ${textStyles[insight.severity]}`}>
-        {insight.message}
-      </p>
+      <div className="flex-1">
+        <p className={`text-xs font-medium leading-relaxed ${textStyles[insight.severity]}`}>
+          {insight.message}
+        </p>
+        {insight.targetView && (
+          <span className={`text-[9px] font-black uppercase tracking-tighter mt-1 block opacity-70 underline`}>
+            Clique para resolver
+          </span>
+        )}
+      </div>
       <button
-        onClick={() => onDismiss(insight.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDismiss(insight.id);
+        }}
         className="shrink-0 p-1 rounded-full hover:bg-black/5 text-slate-400 hover:text-slate-600 transition-colors"
         aria-label="Dispensar insight"
       >

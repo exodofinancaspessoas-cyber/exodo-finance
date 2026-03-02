@@ -8,6 +8,7 @@ export interface Insight {
     message: string;
     severity: InsightSeverity;
     icon: string;
+    targetView?: string;
 }
 
 interface InsightInput {
@@ -54,14 +55,16 @@ export function generateInsights(input: InsightInput): Insight[] {
                 id: `budget-over-${budget.id}`,
                 message: `🔴 Orçamento de ${catName} estourado! Você gastou ${formatBRL(spent)} de ${formatBRL(budget.amount)} (${Math.round(pct)}%).`,
                 severity: 'CRITICAL',
-                icon: '🔴'
+                icon: '🔴',
+                targetView: 'planning'
             });
         } else if (pct >= 80 && daysRemaining > 0) {
             insights.push({
                 id: `budget-warn-${budget.id}`,
                 message: `⚠️ Você usou ${Math.round(pct)}% do orçamento de ${catName} e ainda faltam ${daysRemaining} dia(s) no mês.`,
                 severity: 'WARNING',
-                icon: '⚠️'
+                icon: '⚠️',
+                targetView: 'planning'
             });
         }
     });
@@ -83,7 +86,8 @@ export function generateInsights(input: InsightInput): Insight[] {
             id: 'negative-balance',
             message: `⚠️ Atenção: com as despesas previstas, seu saldo pode ficar ${formatBRL(Math.abs(projectedBalance))} negativo antes do fim do mês.`,
             severity: 'CRITICAL',
-            icon: '⚠️'
+            icon: '⚠️',
+            targetView: 'projection'
         });
     }
 
@@ -99,7 +103,8 @@ export function generateInsights(input: InsightInput): Insight[] {
             id: 'tomorrow-income',
             message: `💰 Você receberá amanhã ${formatBRL(tomorrowIncome)}. ${afterExpenses > 0 ? `Sobrará aproximadamente ${formatBRL(afterExpenses)} após as despesas previstas.` : 'Fique atento às despesas pendentes.'}`,
             severity: 'INFO',
-            icon: '💰'
+            icon: '💰',
+            targetView: 'incomes'
         });
     }
 
@@ -111,7 +116,8 @@ export function generateInsights(input: InsightInput): Insight[] {
             id: 'overdue-bills',
             message: `🔴 Você tem ${overdue.length} conta(s) atrasada(s) totalizando ${formatBRL(total)}. Regularize para evitar juros.`,
             severity: 'CRITICAL',
-            icon: '🔴'
+            icon: '🔴',
+            targetView: 'movements'
         });
     }
 
@@ -149,7 +155,8 @@ export function generateInsights(input: InsightInput): Insight[] {
                 id: `cat-spike-${catId}`,
                 message: `📊 Seu gasto com ${catName} está ${formatBRL(increase)} acima da média dos últimos 3 meses. Confira se há alguma cobrança inesperada.`,
                 severity: 'INFO',
-                icon: '📊'
+                icon: '📊',
+                targetView: 'expenses'
             });
         }
     });
@@ -162,7 +169,8 @@ export function generateInsights(input: InsightInput): Insight[] {
                 id: `goal-near-${goal.id}`,
                 message: `🎯 Você está quase lá! Meta "${goal.name}" atingiu ${Math.round(pct)}%. Faltam apenas ${formatBRL(goal.target_amount - goal.current_amount)}.`,
                 severity: 'INFO',
-                icon: '🎯'
+                icon: '🎯',
+                targetView: 'planning'
             });
         }
     });
