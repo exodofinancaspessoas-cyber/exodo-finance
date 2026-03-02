@@ -166,72 +166,76 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 </header>
 
                 {/* Scrollable Content */}
-                <main className="flex-1 overflow-y-auto p-4 pb-[130px] md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full max-w-7xl mx-auto custom-scrollbar">
                     {children}
+                    {/* Espaçador físico para mobile evitar sobreposição do menu inferior */}
+                    <div className="h-32 md:hidden pointer-events-none" aria-hidden="true" />
                 </main>
-            </div>
 
-            {/* Mobile Bottom Navigation */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[40] bg-white/95 backdrop-blur-xl border-t border-slate-100 pb-safe-offset-0 shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
-                <div className="flex items-center justify-around px-1 pt-1 pb-2">
-                    {bottomNavLeft.map(item => (
-                        <button
-                            key={item.id}
-                            onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
-                            className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
-                                ? 'bg-orange-50 text-orange-600'
-                                : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
-                                }`}
-                            aria-label={item.label}
-                        >
-                            <div className="relative">
-                                <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
-                                {item.id === 'dashboard' && insightCount > 0 && (
-                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
-                                        {insightCount > 9 ? '9+' : insightCount}
-                                    </span>
-                                )}
+                {/* Mobile Bottom Navigation */}
+                <nav className="md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-100 pb-safe-offset-0 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] shrink-0">
+                    <div className="flex items-center justify-around px-1 pt-1 pb-2">
+                        {bottomNavLeft.map(item => (
+                            <button
+                                key={item.id}
+                                onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
+                                className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
+                                    ? 'bg-orange-50 text-orange-600'
+                                    : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
+                                    }`}
+                                aria-label={item.label}
+                            >
+                                <div className="relative">
+                                    <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
+                                    {item.id === 'dashboard' && insightCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                                            {insightCount > 9 ? '9+' : insightCount}
+                                        </span>
+                                    )}
+                                </div>
+                                <span className={`text-[10px] font-bold uppercase tracking-tight leading-none mt-0.5 ${isActive(item.id) ? 'text-orange-600' : 'text-slate-400'
+                                    }`}>
+                                    {item.label}
+                                </span>
+                            </button>
+                        ))}
+
+                        {/* Central FAB */}
+                        <div className="relative -top-5 h-5 w-[60px]"> {/* Contêiner para o FAB flutuante */}
+                            <div className="absolute left-0 right-0 flex justify-center">
+                                <button
+                                    onClick={() => { hapticFeedback(15); onQuickAdd?.(); }}
+                                    className="w-[60px] h-[60px] bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 border-[3px] border-white active:scale-90 transition-all group btn-mobile-active tap-highlight-none"
+                                    aria-label="Novo Lançamento"
+                                >
+                                    <Plus size={26} className="group-active:rotate-90 transition-transform duration-200" strokeWidth={2.5} />
+                                </button>
+                                <div className="absolute -top-1 -right-0 w-4 h-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
+                                    <Plus size={8} strokeWidth={3.5} className="text-white" />
+                                </div>
                             </div>
-                            <span className={`text-[10px] font-bold uppercase tracking-tight leading-none mt-0.5 ${isActive(item.id) ? 'text-orange-600' : 'text-slate-400'
-                                }`}>
-                                {item.label}
-                            </span>
-                        </button>
-                    ))}
-
-                    {/* Central FAB */}
-                    <div className="relative -top-5">
-                        <button
-                            onClick={() => { hapticFeedback(15); onQuickAdd?.(); }}
-                            className="w-[60px] h-[60px] bg-slate-900 text-white rounded-full flex items-center justify-center shadow-2xl shadow-slate-900/40 border-[3px] border-white active:scale-90 transition-all group btn-mobile-active tap-highlight-none"
-                            aria-label="Novo Lançamento"
-                        >
-                            <Plus size={26} className="group-active:rotate-90 transition-transform duration-200" strokeWidth={2.5} />
-                        </button>
-                        <div className="absolute -top-1 -right-0 w-4 h-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
-                            <Plus size={8} strokeWidth={3.5} className="text-white" />
                         </div>
-                    </div>
 
-                    {bottomNavRight.map(item => (
-                        <button
-                            key={item.id}
-                            onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
-                            className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
-                                ? 'bg-orange-50 text-orange-600'
-                                : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
-                                }`}
-                            aria-label={item.label}
-                        >
-                            <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
-                            <span className={`text-[10px] font-bold uppercase tracking-tight leading-none mt-0.5 ${isActive(item.id) ? 'text-orange-600' : 'text-slate-400'
-                                }`}>
-                                {item.label}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </nav>
+                        {bottomNavRight.map(item => (
+                            <button
+                                key={item.id}
+                                onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
+                                className={`flex flex-col items-center gap-0.5 min-w-[64px] min-h-[48px] px-3 py-2 rounded-2xl transition-all tap-highlight-none ${isActive(item.id)
+                                    ? 'bg-orange-50 text-orange-600'
+                                    : 'text-slate-400 hover:text-slate-600 active:bg-slate-100'
+                                    }`}
+                                aria-label={item.label}
+                            >
+                                <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.8} />
+                                <span className={`text-[10px] font-bold uppercase tracking-tight leading-none mt-0.5 ${isActive(item.id) ? 'text-orange-600' : 'text-slate-400'
+                                    }`}>
+                                    {item.label}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                </nav>
+            </div>
 
             {/* Mobile Right Drawer */}
             {menuVisible && (

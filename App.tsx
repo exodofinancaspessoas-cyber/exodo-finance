@@ -184,37 +184,35 @@ export default function App() {
         onQuickAdd={() => setIsQuickAddOpen(true)}
         insightCount={insightCount}
       >
-        <div className="relative h-full w-full">
+        <div className="relative w-full">
           {renderView()}
+        </div>   {/* Manual for those who prefer reading */}
+        {showManual && (
+          <ActionManual
+            onClose={() => {
+              setShowManual(false);
+              localStorage.setItem('onboarding_completed', 'true');
+            }}
+            onStartTour={() => {
+              setShowManual(false);
+              setShowOnboarding(true);
+              // Ensure we don't show the manual again if they reload mid-tour
+              localStorage.setItem('onboarding_completed', 'true');
+            }}
+          />
+        )}
 
-          {/* Manual for those who prefer reading */}
-          {showManual && (
-            <ActionManual
-              onClose={() => {
-                setShowManual(false);
-                localStorage.setItem('onboarding_completed', 'true');
-              }}
-              onStartTour={() => {
-                setShowManual(false);
-                setShowOnboarding(true);
-                // Ensure we don't show the manual again if they reload mid-tour
-                localStorage.setItem('onboarding_completed', 'true');
-              }}
-            />
-          )}
-
-          {/* Interactive Onboarding Flow */}
-          {showOnboarding && (
-            <OnboardingFlow
-              onStageChange={setCurrentView}
-              onComplete={() => {
-                setShowOnboarding(false);
-                localStorage.setItem('onboarding_completed', 'true');
-                setCurrentView('dashboard');
-              }}
-            />
-          )}
-        </div>
+        {/* Interactive Onboarding Flow */}
+        {showOnboarding && (
+          <OnboardingFlow
+            onStageChange={setCurrentView}
+            onComplete={() => {
+              setShowOnboarding(false);
+              localStorage.setItem('onboarding_completed', 'true');
+              setCurrentView('dashboard');
+            }}
+          />
+        )}
       </Layout>
 
       {isQuickAddOpen && (
