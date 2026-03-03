@@ -9,6 +9,7 @@ import {
 import { Transfer, Account } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency, formatDate } from '../utils';
+import { hapticFeedback } from './ui/Skeleton';
 
 // ─── Account Icon ──────────────────────────────────────────────────────────────
 const AccountIcon = ({ type, className }: { type: string; className?: string }) => {
@@ -192,7 +193,7 @@ export default function TransfersView() {
         setIsModalOpen(true);
     };
 
-    const { hapticFeedback } = require('./ui/Skeleton');
+
 
     return (
         <div className="animate-in fade-in duration-700">

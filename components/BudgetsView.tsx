@@ -4,6 +4,7 @@ import { PieChart, TrendingUp, AlertTriangle, Edit3, Save, X } from 'lucide-reac
 import { StorageService } from '../services/storage';
 import { Budget, Category, Transaction } from '../types';
 import { formatCurrency } from '../utils';
+import { hapticFeedback } from './ui/Skeleton';
 
 export default function BudgetsView() {
     const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -56,7 +57,7 @@ export default function BudgetsView() {
         await loadData();
     };
 
-    const { hapticFeedback } = require('./ui/Skeleton');
+
 
     return (
         <div className="animate-in fade-in duration-700 flex flex-col gap-8">

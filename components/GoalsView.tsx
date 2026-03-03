@@ -4,6 +4,7 @@ import { Target, Plus, Edit2, Trash2, CheckCircle, TrendingUp, AlertCircle, Doll
 import { Goal } from '../types';
 import { StorageService } from '../services/storage';
 import { formatCurrency } from '../utils';
+import { hapticFeedback } from './ui/Skeleton';
 
 export default function GoalsView() {
     const [goals, setGoals] = useState<Goal[]>([]);
@@ -106,7 +107,7 @@ export default function GoalsView() {
         }
     };
 
-    const { hapticFeedback } = require('./ui/Skeleton');
+
 
     return (
         <div className="animate-in fade-in duration-700">
