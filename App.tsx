@@ -266,31 +266,29 @@ export default function App() {
 
       {/* ── CENTRAL ACTION BUTTONS (Floating Group) ── */}
       {!isQuickAddOpen && (
-        <div className="fixed bottom-[100px] md:bottom-24 left-1/2 -translate-x-1/2 w-full max-w-7xl pointer-events-none z-[90] px-4 flex justify-end">
-          <div className="flex flex-col gap-3 pointer-events-auto">
-            {/* Main Action: New Transaction */}
-            <button
-              onClick={() => setIsQuickAddOpen(true)}
-              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-xl shadow-orange-500/30 flex items-center justify-center transition-all active:scale-90 hover:shadow-2xl hover:scale-105 tap-highlight-none group"
-              title="Novo Lançamento"
-              aria-label="Abrir novo lançamento"
-            >
-              <Plus size={24} strokeWidth={3} className="text-white group-hover:rotate-90 transition-transform duration-300" />
-            </button>
+        <div className="fixed bottom-[100px] md:bottom-20 right-6 md:right-8 z-[90] flex flex-col gap-3">
+          {/* Main Action: New Transaction */}
+          <button
+            onClick={() => setIsQuickAddOpen(true)}
+            className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-xl shadow-orange-500/30 flex items-center justify-center transition-all active:scale-90 hover:shadow-2xl hover:-translate-y-1 tap-highlight-none group"
+            title="Novo Lançamento"
+            aria-label="Abrir novo lançamento"
+          >
+            <Plus size={24} strokeWidth={3} className="text-white group-hover:rotate-90 transition-transform duration-300" />
+          </button>
 
-            {/* Secondary Action: AI Chat */}
-            {!isChatOpen && (
-              <button
-                id="ai-chat-button"
-                onClick={() => setIsChatOpen(true)}
-                className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-white shadow-xl shadow-slate-900/30 flex items-center justify-center transition-all active:scale-90 hover:shadow-2xl hover:scale-105 tap-highlight-none"
-                title="Assistente IA"
-                aria-label="Abrir assistente IA"
-              >
-                <Sparkles size={18} className="text-orange-400 md:w-[22px] md:h-[22px]" />
-              </button>
-            )}
-          </div>
+          {/* Secondary Action: AI Chat */}
+          {!isChatOpen && (
+            <button
+              id="ai-chat-button"
+              onClick={() => setIsChatOpen(true)}
+              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-white shadow-xl shadow-slate-900/30 flex items-center justify-center transition-all active:scale-90 hover:shadow-2xl hover:-translate-y-1 tap-highlight-none"
+              title="Assistente IA"
+              aria-label="Abrir assistente IA"
+            >
+              <Sparkles size={18} className="text-orange-400 md:w-[22px] md:h-[22px]" />
+            </button>
+          )}
         </div>
       )}
 

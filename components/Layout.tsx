@@ -165,7 +165,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 </header>
 
                 {/* Scrollable Content */}
-                <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-7xl mx-auto custom-scrollbar px-4 pt-4 md:px-12 md:pt-12 relative">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-[1600px] mx-auto custom-scrollbar px-4 pt-4 md:px-12 md:pt-12 relative">
                     {/* ── VISÃO GERAL — Grid de Cards ───────────────────────────────────── */}
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="text-3xl font-black text-[var(--ios-text)] tracking-tighter">

@@ -1,5 +1,5 @@
-export const APP_VERSION = '1.2.1'; // Desktop Layout & Theme Fix
-export const DEPLOY_DATE = '2026-03-03 17:40';
+export const APP_VERSION = '1.2.2'; // Scrollbar & Layout Expansion
+export const DEPLOY_DATE = '2026-03-03 17:45';
 
 export const VersionInfo = {
     version: APP_VERSION,

@@ -207,21 +207,23 @@
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--ios-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: rgba(161, 161, 170, 0.3);
+  /* Zinc-400 with opacity */
+  border-radius: 10px;
+  border: 2px solid var(--ios-bg);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(161, 161, 170, 0.5);
 }
 
 @keyframes fadeIn {
