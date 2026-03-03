@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Target, PieChart } from 'lucide-react';
 import GoalsView from './GoalsView';
 import BudgetsView from './BudgetsView';
+import { hapticFeedback } from './ui/Skeleton';
 
 type Tab = 'goals' | 'budgets';
 
@@ -18,7 +19,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
 export default function PlanningView({ initialTab = 'goals' }: Props) {
     const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
-    const { hapticFeedback } = require('./ui/Skeleton');
+
 
     return (
         <div className="animate-in fade-in duration-700 flex flex-col gap-8">
