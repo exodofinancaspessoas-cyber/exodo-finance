@@ -1,42 +1,42 @@
 @layer base {
   :root {
-    --ios-bg: #f2f2f7;
-    --ios-card-bg: rgba(255, 255, 255, 0.85);
-    --ios-sidebar-bg: rgba(255, 255, 255, 0.85);
-    --ios-text: #0f172a;
-    --ios-text-secondary: #64748b;
+    --ios-bg: #000000;
+    --ios-card-bg: rgba(20, 20, 22, 0.85);
+    --ios-sidebar-bg: #121214;
+    --ios-text: #ffffff;
+    --ios-text-secondary: #a1a1aa;
     --ios-blur: blur(20px) saturate(180%);
     --ios-blue: #ff9500;
-    /* Branco com Laranja: primário é laranja */
-    --ios-green: #34c759;
-    --ios-red: #ff3b30;
-    --ios-orange: #ff9500;
-    --ios-glass-border: rgba(0, 0, 0, 0.08);
-    /* Borda mais escura para contraste no branco */
-    --ios-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --ios-green: #30d158;
+    --ios-red: #ff453a;
+    --ios-orange: #ff9f0a;
+    --ios-glass-border: rgba(255, 255, 255, 0.08);
+    --ios-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 
     /* Robust Mobile Height */
     height: 100%;
     overflow-x: hidden;
   }
 
-  .dark {
-    --ios-bg: #000000;
-    --ios-card-bg: rgba(20, 20, 22, 0.85);
-    --ios-sidebar-bg: #121214;
-    --ios-text: #ffffff;
-    --ios-text-secondary: #a1a1aa;
-    --ios-blue: #0a84ff;
-    --ios-green: #30d158;
-    --ios-red: #ff453a;
-    --ios-orange: #ff9f0a;
-    --ios-glass-border: rgba(255, 255, 255, 0.08);
-    --ios-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  .light {
+    --ios-bg: #f2f2f7;
+    --ios-card-bg: rgba(255, 255, 255, 0.85);
+    --ios-sidebar-bg: rgba(255, 255, 255, 0.85);
+    --ios-text: #0f172a;
+    --ios-text-secondary: #64748b;
+    --ios-blue: #ff9500;
+    /* Branco com Laranja */
+    --ios-green: #34c759;
+    --ios-red: #ff3b30;
+    --ios-orange: #ff9500;
+    --ios-glass-border: rgba(0, 0, 0, 0.08);
+    --ios-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   }
 
   html,
   body {
-    background-color: var(--ios-bg);
+    background-color: #000;
+    /* Absolute base for the system */
     color: var(--ios-text);
     @apply antialiased transition-colors duration-500;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
@@ -48,7 +48,6 @@
     margin: 0;
     padding: 0;
     position: relative;
-    max-width: 100vw;
     min-height: 100%;
     min-height: -webkit-fill-available;
 
