@@ -22,7 +22,7 @@ export default function AnalyticsView({ initialTab = 'projection' }: Props) {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div className="flex items-center gap-1 bg-white border border-slate-100 rounded-xl p-1.5 shadow-sm w-fit">
+            <div className="flex items-center gap-1 ios-glass border rounded-xl p-1.5 shadow-sm w-fit" style={{ borderColor: 'var(--ios-glass-border)' }}>
                 {TABS.map(tab => {
                     const Icon = tab.icon;
                     const active = activeTab === tab.id;
@@ -31,8 +31,8 @@ export default function AnalyticsView({ initialTab = 'projection' }: Props) {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${active
-                                ? 'bg-slate-900 text-white shadow-md'
-                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                ? 'bg-[#ff9500] text-white shadow-md'
+                                : 'text-[var(--ios-text-secondary)] hover:text-[var(--ios-text)] hover:bg-white/5'
                                 }`}
                         >
                             <Icon size={16} />

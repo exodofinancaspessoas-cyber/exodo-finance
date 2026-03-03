@@ -288,85 +288,87 @@ export default function TransactionFormModal({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in overflow-hidden">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] border border-slate-100">
+            <div className="ios-glass ios-squircle-md shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] border animate-slide-up" style={{ borderColor: 'var(--ios-glass-border)' }}>
                 {/* Header */}
-                <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 sticky top-0 z-20 shrink-0">
+                <div className="p-6 border-b flex justify-between items-center bg-black/5 sticky top-0 z-20 shrink-0" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isTransferMode ? 'bg-blue-100 text-blue-600' : formData.type === 'RECEITA' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isTransferMode ? 'bg-blue-500/10 text-blue-500' : formData.type === 'RECEITA' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                             {isTransferMode ? <ArrowRightLeft size={20} /> : formData.type === 'RECEITA' ? <ArrowUpCircle size={20} /> : <ArrowDownCircle size={20} />}
                         </div>
                         <div>
-                            <h3 className="font-black text-lg text-slate-800 tracking-tight">
+                            <h3 className="font-black text-lg tracking-tight" style={{ color: 'var(--ios-text)' }}>
                                 {isTransferMode ? 'Nova Transferência' : initialTransaction ? 'Editar Lançamento' : 'Novo Lançamento'}
                             </h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5">Gestão Financeira Completa</p>
+                            <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest leading-none mt-0.5" style={{ color: 'var(--ios-text)' }}>Gestão Financeira Completa</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-full text-slate-400 transition-all active:scale-90">
+                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center bg-black/5 hover:bg-black/10 rounded-full transition-all active:scale-90" style={{ color: 'var(--ios-text-secondary)' }}>
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Mode Toggle */}
-                    {!initialTransaction && (
-                        <div className="flex p-1.5 bg-slate-100 rounded-2xl gap-1.5">
-                            <button
-                                type="button"
-                                onClick={() => { setIsTransferMode(false); setFormData({ ...formData, type: 'RECEITA' }); }}
-                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${!isTransferMode && formData.type === 'RECEITA' ? 'bg-white text-emerald-600 shadow-md scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                Receita
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { setIsTransferMode(false); setFormData({ ...formData, type: 'DESPESA' }); }}
-                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${!isTransferMode && formData.type === 'DESPESA' ? 'bg-white text-rose-600 shadow-md scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                Despesa
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setIsTransferMode(true)}
-                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${isTransferMode ? 'bg-white text-blue-600 shadow-md scale-[1.02]' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                Transferência
-                            </button>
-                        </div>
-                    )}
+                <form onSubmit={isTransferMode ? handleTransferSubmit : handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        {/* Mode Toggle */}
+                        {!initialTransaction && (
+                            <div className="flex p-1.5 bg-black/5 rounded-2xl gap-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsTransferMode(false); setFormData({ ...formData, type: 'RECEITA' }); }}
+                                    className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${!isTransferMode && formData.type === 'RECEITA' ? 'bg-[var(--ios-text)] text-[var(--ios-bg)] shadow-md scale-[1.02]' : 'text-[var(--ios-text-secondary)] hover:text-[var(--ios-text)]'}`}
+                                >
+                                    Receita
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsTransferMode(false); setFormData({ ...formData, type: 'DESPESA' }); }}
+                                    className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${!isTransferMode && formData.type === 'DESPESA' ? 'bg-[var(--ios-text)] text-[var(--ios-bg)] shadow-md scale-[1.02]' : 'text-[var(--ios-text-secondary)] hover:text-[var(--ios-text)]'}`}
+                                >
+                                    Despesa
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsTransferMode(true)}
+                                    className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${isTransferMode ? 'bg-[var(--ios-text)] text-[var(--ios-bg)] shadow-md scale-[1.02]' : 'text-[var(--ios-text-secondary)] hover:text-[var(--ios-text)]'}`}
+                                >
+                                    Transferência
+                                </button>
+                            </div>
+                        )}
 
-                    <form onSubmit={isTransferMode ? handleTransferSubmit : handleSubmit} className="space-y-6">
                         {isTransferMode ? (
                             /* TRANSFER FORM */
                             <div className="space-y-5 animate-in slide-in-from-top-4 duration-500">
-                                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-[11px] text-blue-700 font-bold leading-relaxed flex items-start gap-2.5">
+                                <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl text-[11px] text-blue-500 font-bold leading-relaxed flex items-start gap-2.5">
                                     <Sparkles size={14} className="mt-0.5 shrink-0" />
                                     Transfira entre suas contas e o saldo se ajustará automaticamente sem afetar suas estatísticas de receita/despesa.
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Origem</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Origem</label>
                                         <select
-                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-xs font-black outline-none focus:bg-white focus:border-blue-500/10 transition-all appearance-none"
+                                            className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-4 text-xs font-black outline-none focus:bg-transparent focus:border-blue-500/20 transition-all appearance-none"
+                                            style={{ color: 'var(--ios-text)' }}
                                             value={transferData.from}
                                             onChange={e => setTransferData({ ...transferData, from: e.target.value })}
                                             required
                                         >
-                                            <option value="">Selecione...</option>
-                                            {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                            <option value="" className="text-black">Selecione...</option>
+                                            {accounts.map(a => <option key={a.id} value={a.id} className="text-black">{a.name}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Destino</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Destino</label>
                                         <select
-                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-xs font-black outline-none focus:bg-white focus:border-blue-500/10 transition-all appearance-none"
+                                            className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-4 text-xs font-black outline-none focus:bg-transparent focus:border-blue-500/20 transition-all appearance-none"
+                                            style={{ color: 'var(--ios-text)' }}
                                             value={transferData.to}
                                             onChange={e => setTransferData({ ...transferData, to: e.target.value })}
                                             required
                                         >
-                                            <option value="">Selecione...</option>
-                                            {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                            <option value="" className="text-black">Selecione...</option>
+                                            {accounts.map(a => <option key={a.id} value={a.id} className="text-black">{a.name}</option>)}
                                         </select>
                                     </div>
                                 </div>
@@ -389,20 +391,20 @@ export default function TransactionFormModal({
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Data</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Data</label>
                                         <input
                                             type="date"
-                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-xs font-black outline-none"
+                                            className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-4 text-xs font-black outline-none text-[var(--ios-text)]"
                                             value={transferData.date}
                                             onChange={e => setTransferData({ ...transferData, date: e.target.value })}
                                             required
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Identificação</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Identificação</label>
                                         <input
                                             type="text"
-                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-xs font-black outline-none"
+                                            className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-4 text-xs font-black outline-none text-[var(--ios-text)] placeholder:opacity-20"
                                             value={transferData.description}
                                             onChange={e => setTransferData({ ...transferData, description: e.target.value })}
                                             placeholder="Ex: Reserva, Reserva"
@@ -410,13 +412,6 @@ export default function TransactionFormModal({
                                     </div>
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={isSaving}
-                                    className="w-full py-5 rounded-3xl bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all hover:bg-blue-700 disabled:opacity-50 mt-4"
-                                >
-                                    {isSaving ? 'Processando...' : 'Confirmar Transferência'}
-                                </button>
                             </div>
                         ) : (
                             /* TRANSACTION FORM */
@@ -424,9 +419,9 @@ export default function TransactionFormModal({
                                 {/* Basic Info */}
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between px-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">O que é este lançamento?</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)]">O que é este lançamento?</label>
                                         <div className="flex gap-2">
-                                            <button type="button" onClick={() => ocrInputRef.current?.click()} className="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center transition-all active:scale-75 shadow-sm border border-orange-100">
+                                            <button type="button" onClick={() => ocrInputRef.current?.click()} className="w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center transition-all active:scale-75 shadow-sm border border-orange-500/20">
                                                 <ScanLine size={14} />
                                             </button>
                                             <input type="file" ref={ocrInputRef} onChange={handleOCRCapture} accept="image/*" className="hidden" />
@@ -435,7 +430,7 @@ export default function TransactionFormModal({
                                     <div className="relative">
                                         <input
                                             type="text"
-                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-3xl p-5 text-lg font-black outline-none focus:bg-white focus:border-emerald-500/10 transition-all placeholder:text-slate-200"
+                                            className="w-full bg-black/5 border-2 border-transparent rounded-3xl p-5 text-lg font-black outline-none focus:bg-transparent focus:border-emerald-500/10 transition-all text-[var(--ios-text)] placeholder:opacity-20"
                                             value={formData.description}
                                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                                             onBlur={handleDescriptionBlur}
@@ -453,12 +448,12 @@ export default function TransactionFormModal({
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Valor Total</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Valor Total</label>
                                         <div className="relative">
-                                            <span className={`absolute left-5 top-1/2 -translate-y-1/2 font-black ${formData.type === 'RECEITA' ? 'text-emerald-600' : 'text-rose-600'}`}>R$</span>
+                                            <span className={`absolute left-5 top-1/2 -translate-y-1/2 font-black ${formData.type === 'RECEITA' ? 'text-emerald-500' : 'text-rose-500'}`}>R$</span>
                                             <input
                                                 type="number" step="0.01"
-                                                className={`w-full bg-slate-50 border-2 border-slate-50 rounded-3xl pl-12 pr-4 py-5 font-black text-xl outline-none focus:bg-white transition-all ${formData.type === 'RECEITA' ? 'text-emerald-700 focus:border-emerald-500/10' : 'text-rose-700 focus:border-rose-500/10'}`}
+                                                className={`w-full bg-black/5 border-2 border-transparent rounded-3xl pl-12 pr-4 py-5 font-black text-xl outline-none focus:bg-transparent transition-all ${formData.type === 'RECEITA' ? 'text-emerald-500 focus:border-emerald-500/10' : 'text-rose-500 focus:border-rose-500/10'}`}
                                                 value={formData.amount}
                                                 onChange={e => setFormData({ ...formData, amount: e.target.value })}
                                                 onFocus={e => e.target.select()}
@@ -473,7 +468,7 @@ export default function TransactionFormModal({
                                             <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-indigo-500">R$</span>
                                             <input
                                                 type="number" step="0.01"
-                                                className="w-full bg-indigo-50/20 border-2 border-indigo-50 rounded-3xl pl-12 pr-4 py-5 font-black text-xl outline-none focus:bg-white focus:border-indigo-500/10 transition-all text-indigo-700"
+                                                className="w-full bg-indigo-500/5 border-2 border-transparent rounded-3xl pl-12 pr-4 py-5 font-black text-xl outline-none focus:bg-transparent focus:border-indigo-500/10 transition-all text-indigo-500"
                                                 value={formData.interest_amount}
                                                 onChange={e => setFormData({ ...formData, interest_amount: e.target.value })}
                                                 onFocus={e => e.target.select()}
@@ -483,21 +478,20 @@ export default function TransactionFormModal({
                                     </div>
                                 </div>
 
-                                {/* Category Selector */}
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Categoria</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Categoria</label>
                                     <div className="relative">
-                                        <Search size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <Search size={14} className="absolute left-5 top-1/2 -translate-y-1/2 opacity-30 text-[var(--ios-text)]" />
                                         <input
                                             type="text"
                                             placeholder="Pesquisar categoria..."
-                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-3xl pl-12 pr-20 py-4 text-[11px] font-bold outline-none focus:bg-white focus:border-slate-100 transition-all"
+                                            className="w-full bg-black/5 border-2 border-transparent rounded-3xl pl-12 pr-20 py-4 text-[11px] font-bold outline-none focus:bg-transparent focus:border-white/10 transition-all text-[var(--ios-text)] placeholder:opacity-20"
                                             value={categorySearch}
                                             onChange={e => { setCategorySearch(e.target.value); setIsCategoryListExpanded(true); }}
                                             onFocus={() => setIsCategoryListExpanded(true)}
                                         />
                                         {formData.category_id && (
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-slate-900 text-white px-3 py-1.5 rounded-full shadow-lg">
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-[var(--ios-text)] text-[var(--ios-bg)] px-3 py-1.5 rounded-full shadow-lg">
                                                 <Tag size={10} />
                                                 <span className="text-[9px] font-black uppercase truncate max-w-[80px]">
                                                     {categories.find(c => c.id === formData.category_id)?.name}
@@ -507,27 +501,26 @@ export default function TransactionFormModal({
                                     </div>
 
                                     {isCategoryListExpanded && (
-                                        <div className="bg-slate-50 rounded-3xl p-4 grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-300 custom-scrollbar">
+                                        <div className="bg-black/5 rounded-3xl p-4 grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-300 custom-scrollbar border" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                             {filteredCategories.map(c => (
                                                 <button
                                                     key={c.id}
                                                     type="button"
                                                     onClick={() => { setFormData({ ...formData, category_id: c.id }); setIsCategoryListExpanded(false); setCategorySearch(''); }}
-                                                    className={`p-3 rounded-2xl flex items-center gap-3 transition-all active:scale-[0.98] ${formData.category_id === c.id ? 'bg-slate-900 text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-600 hover:bg-slate-50'}`}
+                                                    className={`p-3 rounded-2xl flex items-center gap-3 transition-all active:scale-[0.98] ${formData.category_id === c.id ? 'bg-[var(--ios-text)] text-[var(--ios-bg)] shadow-lg' : 'bg-[var(--ios-card-bg)] border border-white/5 hover:bg-black/5'}`}
                                                 >
-                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: formData.category_id === c.id ? 'transparent' : c.color + '20', color: formData.category_id === c.id ? 'white' : c.color }}>
-                                                        <Tag size={12} fill={formData.category_id === c.id ? 'white' : 'currentColor'} />
+                                                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: formData.category_id === c.id ? 'transparent' : c.color + '20', color: formData.category_id === c.id ? 'var(--ios-bg)' : c.color }}>
+                                                        <Tag size={12} fill={formData.category_id === c.id ? 'currentColor' : 'currentColor'} />
                                                     </div>
-                                                    <span className="text-[10px] font-black uppercase tracking-tight truncate">{c.name}</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-tight truncate" style={{ color: formData.category_id === c.id ? 'var(--ios-bg)' : 'var(--ios-text)' }}>{c.name}</span>
                                                 </button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Payment Info */}
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Forma de Pagamento</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Forma de Pagamento</label>
                                     <div className="grid grid-cols-4 gap-2">
                                         {[
                                             { id: 'DINHEIRO', label: 'Cash', icon: Banknote },
@@ -539,7 +532,7 @@ export default function TransactionFormModal({
                                                 key={method.id}
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, payment_method: method.id as PaymentMethod })}
-                                                className={`py-4 rounded-2xl border-2 flex flex-col items-center gap-1.5 transition-all ${formData.payment_method === method.id ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm' : 'border-slate-50 bg-slate-50 text-slate-400 opacity-60'}`}
+                                                className={`py-4 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${formData.payment_method === method.id ? 'border-orange-500/50 bg-orange-500/10 text-orange-500 shadow-sm' : 'border-transparent bg-black/5 text-[var(--ios-text-secondary)] opacity-40'}`}
                                             >
                                                 <method.icon size={16} />
                                                 <span className="text-[8px] font-black uppercase tracking-widest">{method.label}</span>
@@ -549,15 +542,15 @@ export default function TransactionFormModal({
 
                                     {(formData.payment_method === 'DEBITO' || formData.payment_method === 'PIX') && (
                                         <div className="space-y-2 animate-in fade-in duration-300">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Conta Bancária</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Conta Bancária</label>
                                             <select
-                                                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-xs font-black outline-none focus:bg-white transition-all appearance-none"
+                                                className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-4 text-xs font-black outline-none focus:border-white/10 transition-all appearance-none text-[var(--ios-text)]"
                                                 value={formData.account_id}
                                                 onChange={e => setFormData({ ...formData, account_id: e.target.value })}
                                                 required
                                             >
-                                                <option value="">Selecione a conta...</option>
-                                                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                                <option value="" className="text-black">Selecione a conta...</option>
+                                                {accounts.map(a => <option key={a.id} value={a.id} className="text-black">{a.name}</option>)}
                                             </select>
                                         </div>
                                     )}
@@ -565,38 +558,38 @@ export default function TransactionFormModal({
                                     {formData.payment_method === 'CREDITO' && (
                                         <div className="space-y-4 animate-in fade-in duration-300">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Cartão de Crédito</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Cartão de Crédito</label>
                                                 <select
-                                                    className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-xs font-black outline-none focus:bg-white transition-all appearance-none"
+                                                    className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-4 text-xs font-black outline-none focus:border-white/10 transition-all appearance-none text-[var(--ios-text)]"
                                                     value={formData.card_id}
                                                     onChange={e => setFormData({ ...formData, card_id: e.target.value })}
                                                     required
                                                 >
-                                                    <option value="">Selecione o cartão...</option>
-                                                    {cards.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                    <option value="" className="text-black">Selecione o cartão...</option>
+                                                    {cards.map(c => <option key={c.id} value={c.id} className="text-black">{c.name}</option>)}
                                                 </select>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-4">
-                                                <label className={`flex items-center space-x-3 p-4 border rounded-2xl cursor-pointer transition-all ${formData.is_installment ? 'bg-indigo-50 border-indigo-200' : 'border-slate-100 hover:bg-slate-50'}`}>
+                                                <label className={`flex items-center space-x-3 p-4 border rounded-2xl cursor-pointer transition-all ${formData.is_installment ? 'bg-orange-500/10 border-orange-500/20' : 'border-white/5 hover:bg-black/5'}`}>
                                                     <input
                                                         type="checkbox"
                                                         checked={formData.is_installment}
                                                         onChange={e => setFormData({ ...formData, is_installment: e.target.checked })}
-                                                        className="w-4 h-4 text-indigo-600 rounded"
+                                                        className="w-4 h-4 text-orange-500 rounded bg-transparent border-white/20"
                                                     />
-                                                    <span className="text-[10px] font-black uppercase text-slate-700">Parcelado?</span>
+                                                    <span className="text-[10px] font-black uppercase" style={{ color: 'var(--ios-text)' }}>Parcelado?</span>
                                                 </label>
                                                 {formData.is_installment && (
-                                                    <div className="flex items-center bg-slate-50 rounded-2xl px-4 py-2">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase mr-3">Em:</span>
+                                                    <div className="flex items-center bg-black/5 rounded-2xl px-4 py-2">
+                                                        <span className="text-[9px] font-black opacity-30 uppercase mr-3" style={{ color: 'var(--ios-text)' }}>Em:</span>
                                                         <input
                                                             type="number" min="2" max="120"
-                                                            className="bg-transparent w-full text-xs font-black outline-none text-slate-900"
+                                                            className="bg-transparent w-full text-xs font-black outline-none text-[var(--ios-text)]"
                                                             value={formData.installments_count}
                                                             onChange={e => setFormData({ ...formData, installments_count: Number(e.target.value) })}
                                                         />
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase">x</span>
+                                                        <span className="text-[9px] font-black opacity-30 uppercase" style={{ color: 'var(--ios-text)' }}>x</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -608,177 +601,196 @@ export default function TransactionFormModal({
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Data</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Data</label>
                                             <input
                                                 type="date"
-                                                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-xs font-black outline-none focus:bg-white transition-all"
+                                                className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-4 text-[16px] font-black outline-none focus:bg-transparent focus:border-white/10 transition-all text-[var(--ios-text)]"
                                                 value={formData.date}
                                                 onChange={e => setFormData({ ...formData, date: e.target.value })}
                                                 required
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Status</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Status</label>
                                             <select
-                                                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-xs font-black outline-none focus:bg-white transition-all appearance-none"
+                                                className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-4 text-[16px] font-black outline-none focus:bg-transparent focus:border-white/10 transition-all appearance-none text-[var(--ios-text)]"
                                                 value={formData.status}
                                                 onChange={e => setFormData({ ...formData, status: e.target.value as TransactionStatus })}
                                                 required
                                             >
                                                 {formData.type === 'RECEITA' ? (
                                                     <>
-                                                        <option value="PREVISTA">Prevista</option>
-                                                        <option value="RECEBIDA">Recebida</option>
-                                                        <option value="ATRASADA">Atrasada</option>
+                                                        <option value="PREVISTA" className="text-black">Prevista</option>
+                                                        <option value="RECEBIDA" className="text-black">Recebida</option>
+                                                        <option value="ATRASADA" className="text-black">Atrasada</option>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <option value="PREVISTA">Prevista</option>
-                                                        <option value="CONFIRMADA">Agendada</option>
-                                                        <option value="PAGA">Paga</option>
-                                                        <option value="ATRASADA">Atrasada</option>
+                                                        <option value="PREVISTA" className="text-black">Prevista</option>
+                                                        <option value="CONFIRMADA" className="text-black">Agendada</option>
+                                                        <option value="PAGA" className="text-black">Paga</option>
+                                                        <option value="ATRASADA" className="text-black">Atrasada</option>
                                                     </>
                                                 )}
                                             </select>
                                         </div>
                                     </div>
+                                </div>
 
-                                    {!formData.is_installment && (
-                                        <div className="space-y-4">
-                                            <label className={`flex items-center space-x-3 p-4 border rounded-2xl cursor-pointer transition-all ${formData.is_recurring ? 'bg-indigo-50 border-indigo-200' : 'border-slate-100'}`}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={formData.is_recurring}
-                                                    onChange={e => setFormData({ ...formData, is_recurring: e.target.checked })}
-                                                    className="w-4 h-4 text-indigo-600 rounded"
-                                                />
-                                                <span className="text-[10px] font-black uppercase text-slate-700">Repetir (Fixos/Variáveis)?</span>
-                                            </label>
+                                {!formData.is_installment && (
+                                    <div className="space-y-4">
+                                        <label className={`flex items-center space-x-3 p-4 border rounded-2xl cursor-pointer transition-all ${formData.is_recurring ? 'bg-orange-500/10 border-orange-500/20' : 'border-white/5'}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.is_recurring}
+                                                onChange={e => setFormData({ ...formData, is_recurring: e.target.checked })}
+                                                className="w-4 h-4 text-orange-500 rounded bg-transparent border-white/20"
+                                            />
+                                            <span className="text-[10px] font-black uppercase" style={{ color: 'var(--ios-text)' }}>Repetir (Fixos/Variáveis)??</span>
+                                        </label>
 
-                                            {formData.is_recurring && (
-                                                <div className="p-5 bg-slate-50 rounded-[24px] space-y-5 animate-in fade-in slide-in-from-top-2 border border-slate-100 shadow-inner">
-                                                    <div className="space-y-3">
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Este valor é...</label>
-                                                        <div className="flex bg-white p-1 rounded-2xl border border-slate-200 gap-1">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setFormData({ ...formData, recurring_type: 'FIXO' })}
-                                                                className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${formData.recurring_type === 'FIXO' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}
-                                                            >
-                                                                Fixo
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setFormData({ ...formData, recurring_type: 'VARIAVEL' })}
-                                                                className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${formData.recurring_type === 'VARIAVEL' ? 'bg-orange-500 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}
-                                                            >
-                                                                Variável
-                                                            </button>
-                                                        </div>
+                                        {formData.is_recurring && (
+                                            <div className="p-5 bg-black/5 rounded-[24px] space-y-5 animate-in fade-in slide-in-from-top-2 border border-white/5 shadow-inner">
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-black opacity-30 uppercase tracking-widest px-1" style={{ color: 'var(--ios-text)' }}>Este valor é...</label>
+                                                    <div className="flex bg-black/5 p-1 rounded-2xl border border-white/5 gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, recurring_type: 'FIXO' })}
+                                                            className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${formData.recurring_type === 'FIXO' ? 'bg-[var(--ios-text)] text-[var(--ios-bg)] shadow-lg' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
+                                                        >
+                                                            Fixo
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, recurring_type: 'VARIAVEL' })}
+                                                            className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${formData.recurring_type === 'VARIAVEL' ? 'bg-orange-500 text-white shadow-lg' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
+                                                        >
+                                                            Variável
+                                                        </button>
                                                     </div>
+                                                </div>
 
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Frequência</label>
-                                                            <div className="relative">
-                                                                <RefreshCw size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500" />
-                                                                <select
-                                                                    className="w-full bg-white border-2 border-slate-100 rounded-2xl pl-10 pr-4 py-3 text-xs font-black outline-none focus:border-indigo-100 appearance-none"
-                                                                    value={formData.frequency}
-                                                                    onChange={e => setFormData({ ...formData, frequency: e.target.value as RecurrenceFrequency })}
-                                                                >
-                                                                    <option value="DIARIO">Diário</option>
-                                                                    <option value="SEMANAL">Semanal</option>
-                                                                    <option value="MENSAL">Mensal</option>
-                                                                    <option value="ANUAL">Anual</option>
-                                                                </select>
-                                                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Vencimento</label>
-                                                            <div className="relative">
-                                                                <Calendar size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500" />
-                                                                <select
-                                                                    className="w-full bg-white border-2 border-slate-100 rounded-2xl pl-10 pr-4 py-3 text-xs font-black outline-none focus:border-indigo-100 appearance-none"
-                                                                    value={formData.day_of_month}
-                                                                    onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
-                                                                >
-                                                                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                                                        <option key={d} value={d}>Dia {d}</option>
-                                                                    ))}
-                                                                </select>
-                                                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-                                                            </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black opacity-30 uppercase tracking-widest px-1" style={{ color: 'var(--ios-text)' }}>Frequência</label>
+                                                        <div className="relative">
+                                                            <RefreshCw size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" />
+                                                            <select
+                                                                className="w-full bg-black/5 border-2 border-transparent rounded-2xl pl-10 pr-4 py-3 text-xs font-black outline-none focus:border-white/10 appearance-none text-[var(--ios-text)]"
+                                                                value={formData.frequency}
+                                                                onChange={e => setFormData({ ...formData, frequency: e.target.value as RecurrenceFrequency })}
+                                                            >
+                                                                <option value="DIARIO" className="text-black">Diário</option>
+                                                                <option value="SEMANAL" className="text-black">Semanal</option>
+                                                                <option value="MENSAL" className="text-black">Mensal</option>
+                                                                <option value="ANUAL" className="text-black">Anual</option>
+                                                            </select>
+                                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 pointer-events-none text-[var(--ios-text)]" />
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <div className="flex justify-between items-center px-1">
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Repetições</label>
-                                                            <span className="text-[8px] font-bold text-slate-300 uppercase">Opcional</span>
+                                                        <label className="text-[10px] font-black opacity-30 uppercase tracking-widest px-1" style={{ color: 'var(--ios-text)' }}>Vencimento</label>
+                                                        <div className="relative">
+                                                            <Calendar size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" />
+                                                            <select
+                                                                className="w-full bg-black/5 border-2 border-transparent rounded-2xl pl-10 pr-4 py-3 text-xs font-black outline-none focus:border-white/10 appearance-none text-[var(--ios-text)]"
+                                                                value={formData.day_of_month}
+                                                                onChange={e => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
+                                                            >
+                                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                                                    <option key={d} value={d} className="text-black">Dia {d}</option>
+                                                                ))}
+                                                            </select>
+                                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 pointer-events-none text-[var(--ios-text)]" />
                                                         </div>
-                                                        <input
-                                                            type="number"
-                                                            className="w-full bg-white border-2 border-slate-100 rounded-2xl p-3 text-xs font-black outline-none focus:border-indigo-100"
-                                                            placeholder="Indeterminado (Até cancelar)"
-                                                            value={formData.recurring_duration}
-                                                            onChange={e => setFormData({ ...formData, recurring_duration: e.target.value })}
-                                                        />
                                                     </div>
-
-                                                    {formData.recurring_type === 'VARIAVEL' && (
-                                                        <div className="space-y-3 pt-4 border-t border-slate-200/60">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">
-                                                                    <Sparkles size={14} />
-                                                                </div>
-                                                                <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Valor Programado</label>
-                                                            </div>
-                                                            <div className="relative">
-                                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-orange-500 text-sm">R$</span>
-                                                                <input
-                                                                    type="number" step="0.01"
-                                                                    className="w-full bg-white border-2 border-orange-100/50 rounded-2xl pl-11 pr-4 py-4 text-sm font-black outline-none focus:border-orange-200 transition-all text-orange-900 shadow-sm"
-                                                                    value={formData.programmed_amount}
-                                                                    onChange={e => setFormData({ ...formData, programmed_amount: e.target.value })}
-                                                                    placeholder="0,00"
-                                                                />
-                                                            </div>
-                                                            <p className="text-[9px] text-slate-400 leading-tight font-medium px-1 italic">
-                                                                * Para itens variáveis, este valor gera previsões automáticas no seu fluxo de caixa futuro.
-                                                            </p>
-                                                        </div>
-                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
 
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Observações</label>
-                                        <textarea
-                                            className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-4 text-xs font-medium outline-none focus:bg-white transition-all resize-none h-20"
-                                            value={formData.observation}
-                                            onChange={e => setFormData({ ...formData, observation: e.target.value })}
-                                            placeholder="Alguma nota extra sobre este lançamento..."
-                                        />
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between items-center px-1">
+                                                        <label className="text-[10px] font-black opacity-30 uppercase tracking-widest" style={{ color: 'var(--ios-text)' }}>Repetições</label>
+                                                        <span className="text-[8px] font-bold opacity-20 uppercase" style={{ color: 'var(--ios-text)' }}>Opcional</span>
+                                                    </div>
+                                                    <input
+                                                        type="number"
+                                                        className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-3 text-[16px] font-black outline-none focus:border-white/10 text-[var(--ios-text)]"
+                                                        placeholder="Indeterminado (Até cancelar)"
+                                                        value={formData.recurring_duration}
+                                                        onChange={e => setFormData({ ...formData, recurring_duration: e.target.value })}
+                                                    />
+                                                </div>
+
+                                                {formData.recurring_type === 'VARIAVEL' && (
+                                                    <div className="space-y-3 pt-4 border-t border-white/10">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                                                <Sparkles size={14} />
+                                                            </div>
+                                                            <label className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Valor Programado</label>
+                                                        </div>
+                                                        <div className="relative">
+                                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-orange-500 text-sm">R$</span>
+                                                            <input
+                                                                type="number" step="0.01"
+                                                                className="w-full bg-black/5 border-2 border-orange-500/10 rounded-2xl pl-11 pr-4 py-4 text-[16px] font-black outline-none focus:border-orange-500/30 transition-all text-orange-500 shadow-sm"
+                                                                value={formData.programmed_amount}
+                                                                onChange={e => setFormData({ ...formData, programmed_amount: e.target.value })}
+                                                                placeholder="0,00"
+                                                            />
+                                                        </div>
+                                                        <p className="text-[9px] opacity-30 leading-tight font-medium px-1 italic" style={{ color: 'var(--ios-text)' }}>
+                                                            * Para itens variáveis, este valor gera previsões automáticas no seu fluxo de caixa futuro.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
+                                )}
 
-                                <button
-                                    type="submit"
-                                    disabled={isSaving}
-                                    className={`w-full py-5 rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-3 ${formData.type === 'RECEITA' ? 'bg-emerald-600 shadow-emerald-500/20 hover:bg-emerald-700' : 'bg-rose-600 shadow-rose-500/20 hover:bg-rose-700'} text-white`}
-                                >
-                                    {isSaving ? 'Processando...' : initialTransaction ? 'Atualizar Lançamento' : 'Confirmar Lançamento'}
-                                    <Check size={18} strokeWidth={4} />
-                                </button>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 text-[var(--ios-text)] pl-1">Observações</label>
+                                    <textarea
+                                        className="w-full bg-black/5 border-2 border-transparent rounded-2xl p-4 text-[16px] font-medium outline-none focus:bg-transparent focus:border-white/10 transition-all resize-none h-20 text-[var(--ios-text)] placeholder:opacity-20"
+                                        value={formData.observation}
+                                        onChange={e => setFormData({ ...formData, observation: e.target.value })}
+                                        placeholder="Alguma nota extra sobre este lançamento..."
+                                    />
+                                </div>
                             </div>
                         )}
-                    </form>
-                </div>
+                    </div>
+
+                    <div className="p-6 bg-black/5 flex gap-3 border-t sticky bottom-0 z-20 shrink-0" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest bg-black/5 hover:bg-black/10 rounded-2xl transition-all active:scale-95"
+                            style={{ color: 'var(--ios-text-secondary)' }}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSaving}
+                            className="flex-[2] py-4 bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <RefreshCw size={14} className="animate-spin" />
+                                    Salvando...
+                                </>
+                            ) : (
+                                <>
+                                    {initialTransaction ? 'Salvar Alterações' : 'Confirmar Lançamento'}
+                                    <Check size={14} strokeWidth={4} />
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

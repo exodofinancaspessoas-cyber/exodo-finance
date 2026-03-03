@@ -608,14 +608,14 @@ export default function FluxoCaixaView() {
                             <div className="flex-1 overflow-hidden">
                                 <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
                                     <table className="w-full text-left border-collapse">
-                                        <thead className="sticky top-0 bg-white z-10 shadow-sm">
-                                            <tr className="border-b border-slate-100">
+                                        <thead className="sticky top-0 bg-[var(--ios-card-bg)]/95 backdrop-blur-md z-10 shadow-sm border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                            <tr className="border-[var(--ios-glass-border)]">
                                                 <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Descrição</th>
                                                 <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Data</th>
                                                 <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Valor</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-50">
+                                        <tbody className="divide-y divide-[var(--ios-glass-border)]">
                                             {detailData.incomes.length > 0 ? detailData.incomes.map(item => (
                                                 <tr key={item.id}
                                                     className="group hover:bg-black/5 active:bg-black/10 cursor-pointer transition-colors"
@@ -643,10 +643,10 @@ export default function FluxoCaixaView() {
                                                 <tr>
                                                     <td colSpan={3} className="py-20 text-center">
                                                         <div className="flex flex-col items-center gap-3">
-                                                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
+                                                            <div className="w-12 h-12 rounded-2xl bg-[var(--ios-text-secondary)]/5 flex items-center justify-center text-[var(--ios-text-secondary)]/30">
                                                                 <ArrowUpRight size={24} />
                                                             </div>
-                                                            <p className="text-slate-400 text-sm font-medium italic">Nenhuma receita pendente.</p>
+                                                            <p className="text-[var(--ios-text-secondary)] text-sm font-medium italic">Nenhuma receita pendente.</p>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -701,14 +701,14 @@ export default function FluxoCaixaView() {
                             <div className="flex-1 overflow-hidden">
                                 <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
                                     <table className="w-full text-left border-collapse">
-                                        <thead className="sticky top-0 bg-white z-10 shadow-sm">
-                                            <tr className="border-b border-slate-100">
+                                        <thead className="sticky top-0 bg-[var(--ios-card-bg)]/95 backdrop-blur-md z-10 shadow-sm border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                            <tr className="border-[var(--ios-glass-border)]">
                                                 <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest">Descrição</th>
                                                 <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest text-center">Data</th>
                                                 <th className="px-4 py-3 text-[9px] font-black uppercase text-slate-400 tracking-widest text-right">Valor</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-50">
+                                        <tbody className="divide-y divide-[var(--ios-glass-border)]">
                                             {detailData.expenses.length > 0 ? detailData.expenses.map(item => (
                                                 <tr key={item.id}
                                                     className="group hover:bg-black/5 active:bg-black/10 cursor-pointer transition-colors"
@@ -738,10 +738,10 @@ export default function FluxoCaixaView() {
                                                 <tr>
                                                     <td colSpan={3} className="py-20 text-center">
                                                         <div className="flex flex-col items-center gap-3">
-                                                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
+                                                            <div className="w-12 h-12 rounded-2xl bg-[var(--ios-text-secondary)]/5 flex items-center justify-center text-[var(--ios-text-secondary)]/30">
                                                                 <ArrowDownRight size={24} />
                                                             </div>
-                                                            <p className="text-slate-400 text-sm font-medium italic">Nenhuma despesa pendente.</p>
+                                                            <p className="text-[var(--ios-text-secondary)] text-sm font-medium italic">Nenhuma despesa pendente.</p>
                                                         </div>
                                                     </td>
                                                 </tr>

@@ -130,18 +130,18 @@
   }
 
   .animate-overdue {
-    animation: alert-pulse 2s infinite ease-in-out;
+    animation: alert-pulse 3s infinite ease-in-out;
   }
 
   @keyframes alert-pulse {
 
     0%,
     100% {
-      background-color: rgba(255, 59, 48, 0.1);
+      background-color: rgba(255, 59, 48, 0.05);
     }
 
     50% {
-      background-color: rgba(255, 59, 48, 0.3);
+      background-color: rgba(255, 59, 48, 0.15);
     }
   }
 

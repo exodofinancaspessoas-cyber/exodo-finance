@@ -501,7 +501,7 @@ export default function TransactionsView({
                             <input
                                 type="text"
                                 placeholder="Buscar lançamento..."
-                                className="w-full pl-11 pr-4 py-4 bg-black/5 ios-squircle-sm border-none outline-none text-sm font-bold placeholder:text-[var(--ios-text-secondary)] opacity-10 focus:bg-black/10 transition-all shadow-inner"
+                                className="w-full pl-11 pr-4 py-4 bg-black/5 ios-squircle-sm border-none outline-none text-[16px] font-bold placeholder:text-[var(--ios-text-secondary)] opacity-10 focus:bg-black/10 transition-all shadow-inner"
                                 style={{ color: 'var(--ios-text)' }}
                                 value={filters.search}
                                 onChange={e => setFilters({ ...filters, search: e.target.value })}
@@ -525,7 +525,7 @@ export default function TransactionsView({
                             <button
                                 key={btn.id}
                                 onClick={() => { hapticFeedback(5); setFilters({ ...filters, type: btn.id as any }); setShowRecurring(false); }}
-                                className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${filters.type === btn.id && !showRecurring ? 'bg-white dark:bg-slate-800 shadow-md scale-[1.02]' : 'hover:bg-black/5'}`}
+                                className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${filters.type === btn.id && !showRecurring ? 'bg-[var(--ios-card-bg)] shadow-md scale-[1.02]' : 'hover:bg-black/5'}`}
                                 style={{ color: filters.type === btn.id && !showRecurring ? 'var(--ios-text)' : 'var(--ios-text-secondary)' }}
                             >
                                 <btn.icon size={14} strokeWidth={3} className={filters.type === btn.id ? (btn.color ? `text-[${btn.color}]` : 'text-[#007aff]') : 'opacity-40'} />
@@ -534,7 +534,7 @@ export default function TransactionsView({
                         ))}
                         <button
                             onClick={() => { hapticFeedback(5); setShowRecurring(true); setFilters({ ...filters, type: 'ALL' }); }}
-                            className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${showRecurring ? 'bg-white/10 text-[#ff9500] shadow-md scale-[1.02]' : 'hover:bg-black/5'}`}
+                            className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${showRecurring ? 'bg-[var(--ios-card-bg)] text-[#ff9500] shadow-md scale-[1.02]' : 'hover:bg-black/5'}`}
                             style={{ color: showRecurring ? '#ff9500' : 'var(--ios-text-secondary)' }}
                         >
                             <Repeat size={14} strokeWidth={3} className={showRecurring ? 'text-[#ff9500]' : 'opacity-40'} />
@@ -551,7 +551,7 @@ export default function TransactionsView({
                         <div>
                             <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Tipo</label>
                             <select
-                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-[16px] bg-black/5 outline-none transition-all"
                                 style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.type}
                                 onChange={e => setFilters({ ...filters, type: e.target.value as any })}
@@ -564,7 +564,7 @@ export default function TransactionsView({
                         <div>
                             <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Status</label>
                             <select
-                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-[16px] bg-black/5 outline-none transition-all"
                                 style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.status}
                                 onChange={e => setFilters({ ...filters, status: e.target.value as any })}
@@ -582,7 +582,7 @@ export default function TransactionsView({
                         <div>
                             <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Categoria</label>
                             <select
-                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-[16px] bg-black/5 outline-none transition-all"
                                 style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.category}
                                 onChange={e => setFilters({ ...filters, category: e.target.value })}
@@ -599,7 +599,7 @@ export default function TransactionsView({
                         <div>
                             <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Conta/Cartão</label>
                             <select
-                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-[16px] bg-black/5 outline-none transition-all"
                                 style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.account}
                                 onChange={e => setFilters({ ...filters, account: e.target.value })}
@@ -953,7 +953,7 @@ export default function TransactionsView({
                                                             </button>
                                                         )}
                                                         <button
-                                                            onClick={() => isTransfer ? alert('EdiÃ§Ã£o de transferÃªncias em breve.') : handleOpenModal(t)}
+                                                            onClick={() => isTransfer ? alert('Edição de transferências em breve.') : handleOpenModal(t)}
                                                             className="p-1.5 hover:bg-black/5 rounded-lg text-[var(--ios-text-secondary)] hover:text-[#007aff] transition-colors disabled:opacity-50"
                                                             disabled={isSaving || isTransfer}
                                                         >

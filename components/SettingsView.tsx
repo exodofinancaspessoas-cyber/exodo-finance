@@ -106,9 +106,9 @@ export default function SettingsView({
                     <div className="p-6">
                         <div className="flex flex-col sm:flex-row gap-4">
                             {[
-                                { id: 'light', label: 'Claro (Laranja)', icon: Sun },
-                                { id: 'dark', label: 'Escuro', icon: Moon },
-                                { id: 'system', label: 'Sistema', icon: Monitor },
+                                { id: 'dark', label: 'Escuro (Padrão)', icon: Moon },
+                                { id: 'system', label: 'Sistema (Branco com Laranja)', icon: Monitor },
+                                { id: 'light', label: 'Claro', icon: Sun },
                             ].map((mode) => (
                                 <button
                                     key={mode.id}
