@@ -57,7 +57,8 @@ export default function Auth({ onLogin }: AuthProps) {
                         id: StorageService.generateId(),
                         name: formData.name,
                         email: formData.email,
-                        password: formData.password
+                        password: formData.password,
+                        theme: 'dark'
                     };
                     StorageService.setUser(newUser);
                     onLogin(newUser);
@@ -153,7 +154,8 @@ export default function Auth({ onLogin }: AuthProps) {
                                             id: StorageService.generateId(),
                                             name: formData.name || 'Usuário de Teste',
                                             email: formData.email,
-                                            password: formData.password
+                                            password: formData.password,
+                                            theme: 'dark'
                                         };
                                         StorageService.setUser(mockUser);
                                         onLogin(mockUser);

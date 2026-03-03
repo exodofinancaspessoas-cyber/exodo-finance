@@ -106,24 +106,24 @@ export default function SettingsView({
                     <div className="p-6">
                         <div className="flex flex-col sm:flex-row gap-4">
                             {[
-                                { id: 'light', label: 'Claro', icon: Sun },
+                                { id: 'light', label: 'Claro (Laranja)', icon: Sun },
                                 { id: 'dark', label: 'Escuro', icon: Moon },
                                 { id: 'system', label: 'Sistema', icon: Monitor },
                             ].map((mode) => (
                                 <button
                                     key={mode.id}
                                     onClick={() => onUpdateTheme(mode.id as any)}
-                                    className={`flex-1 flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${(user.theme || 'system') === mode.id
-                                        ? 'border-[#007aff] bg-[#007aff]/10 ring-2 ring-[#007aff]/10'
+                                    className={`flex-1 flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${(user.theme || 'dark') === mode.id
+                                        ? 'border-[#ff9500] bg-[#ff9500]/10 ring-2 ring-[#ff9500]/10'
                                         : 'hover:bg-black/5'
                                         }`}
-                                    style={{ borderColor: (user.theme || 'system') === mode.id ? undefined : 'var(--ios-glass-border)' }}
+                                    style={{ borderColor: (user.theme || 'dark') === mode.id ? '#ff9500' : 'var(--ios-glass-border)' }}
                                 >
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${(user.theme || 'system') === mode.id ? 'text-[#007aff]' : 'text-[var(--ios-text-secondary)]'
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${(user.theme || 'dark') === mode.id ? 'text-[#ff9500]' : 'text-[var(--ios-text-secondary)]'
                                         }`}>
                                         <mode.icon size={24} />
                                     </div>
-                                    <span className="text-sm font-bold transition-colors" style={{ color: (user.theme || 'system') === mode.id ? 'var(--ios-text)' : 'var(--ios-text-secondary)' }}>
+                                    <span className="text-sm font-bold transition-colors" style={{ color: (user.theme || 'dark') === mode.id ? 'var(--ios-text)' : 'var(--ios-text-secondary)' }}>
                                         {mode.label}
                                     </span>
                                 </button>

@@ -42,7 +42,7 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    const theme = user.theme || 'system';
+    const theme = user.theme || 'dark';
     const root = window.document.documentElement;
 
     const applyTheme = (t: 'light' | 'dark' | 'system') => {
