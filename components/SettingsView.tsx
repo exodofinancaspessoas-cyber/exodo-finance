@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 /* UX Audit bypass: placeholder aria-label label */
-import { Settings, ShieldAlert, Trash2, RotateCcw, Database, AlertTriangle, CheckSquare, Square, X, Play, Sparkles } from 'lucide-react';
+import { Settings, ShieldAlert, Trash2, RotateCcw, Database, AlertTriangle, CheckSquare, Square, X, Play, Sparkles, Sun, Moon, Monitor } from 'lucide-react';
+import { User } from '../types';
 import { StorageService } from '../services/storage';
 
 type ResetOption = {
@@ -20,7 +21,15 @@ const RESET_OPTIONS: ResetOption[] = [
     { id: 'cards', label: 'Cartões de Crédito', description: 'Configurações de cartões e limites.', table: 'cards' },
 ];
 
-export default function SettingsView({ onRestartTour }: { onRestartTour: () => void }) {
+export default function SettingsView({
+    user,
+    onUpdateTheme,
+    onRestartTour
+}: {
+    user: User,
+    onUpdateTheme: (theme: 'light' | 'dark' | 'system') => void,
+    onRestartTour: () => void
+}) {
     const [isSaving, setIsSaving] = useState(false);
     const [isPartialModalOpen, setIsPartialModalOpen] = useState(false);
     const [selectedOptions, setSelectedOptions] = useState<Set<string>>(new Set(['transactions', 'recurring']));
@@ -78,30 +87,67 @@ export default function SettingsView({ onRestartTour }: { onRestartTour: () => v
         <div className="space-y-6 max-w-4xl mx-auto pb-20">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    <h2 className="text-2xl font-bold transition-colors" style={{ color: 'var(--ios-text)' }}>
                         <Settings className="text-indigo-600" /> Configurações do Sistema
                     </h2>
-                    <p className="text-slate-500 font-sans">Gerencie seus dados e preferências do aplicativo</p>
+                    <p className="font-sans transition-colors" style={{ color: 'var(--ios-text-secondary)' }}>Gerencie seus dados e preferências do aplicativo</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                            <Database size={18} className="text-indigo-600" /> Gerenciamento de Dados
+                {/* Appearance Section */}
+                <div className="ios-glass ios-squircle-lg border transition-all overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                    <div className="p-6 border-b transition-colors" style={{ borderColor: 'var(--ios-glass-border)', backgroundColor: 'rgba(0,0,0,0.03)' }}>
+                        <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--ios-text)' }}>
+                            <Moon size={18} className="text-indigo-600" /> Aparência do Sistema
+                        </h3>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            {[
+                                { id: 'light', label: 'Claro', icon: Sun },
+                                { id: 'dark', label: 'Escuro', icon: Moon },
+                                { id: 'system', label: 'Sistema', icon: Monitor },
+                            ].map((mode) => (
+                                <button
+                                    key={mode.id}
+                                    onClick={() => onUpdateTheme(mode.id as any)}
+                                    className={`flex-1 flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${(user.theme || 'system') === mode.id
+                                        ? 'border-[#007aff] bg-[#007aff]/10 ring-2 ring-[#007aff]/10'
+                                        : 'hover:bg-black/5'
+                                        }`}
+                                    style={{ borderColor: (user.theme || 'system') === mode.id ? undefined : 'var(--ios-glass-border)' }}
+                                >
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${(user.theme || 'system') === mode.id ? 'text-[#007aff]' : 'text-[var(--ios-text-secondary)]'
+                                        }`}>
+                                        <mode.icon size={24} />
+                                    </div>
+                                    <span className="text-sm font-bold transition-colors" style={{ color: (user.theme || 'system') === mode.id ? 'var(--ios-text)' : 'var(--ios-text-secondary)' }}>
+                                        {mode.label}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="ios-glass ios-squircle-lg border transition-all overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                    <div className="p-6 border-b transition-colors" style={{ borderColor: 'var(--ios-glass-border)', backgroundColor: 'black/5' }}>
+                        <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--ios-text)' }}>
+                            <Database size={18} className="text-[#007aff]" /> Gerenciamento de Dados
                         </h3>
                     </div>
 
                     <div className="p-6 space-y-6">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border border-orange-100 bg-orange-50/30">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border border-orange-500/10 bg-orange-500/5">
                             <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-[#ff9500]/10 flex items-center justify-center text-[#ff9500] shrink-0">
                                     <RotateCcw size={20} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-slate-800">Limpeza Seletiva (Parcial)</h4>
-                                    <p className="text-sm text-slate-600 font-sans">Escolha exatamente quais módulos você deseja resetar.</p>
+                                    <h4 className="font-bold" style={{ color: 'var(--ios-text)' }}>Limpeza Seletiva (Parcial)</h4>
+                                    <p className="text-sm font-sans" style={{ color: 'var(--ios-text-secondary)' }}>Escolha exatamente quais módulos você deseja resetar.</p>
                                 </div>
                             </div>
                             <button
@@ -113,14 +159,14 @@ export default function SettingsView({ onRestartTour }: { onRestartTour: () => v
                             </button>
                         </div>
 
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border border-red-100 bg-red-50/30">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border border-red-500/10 bg-red-500/5">
                             <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-[#ff3b30]/10 flex items-center justify-center text-[#ff3b30] shrink-0">
                                     <ShieldAlert size={20} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-slate-800">Limpeza Total (Nuclear)</h4>
-                                    <p className="text-sm text-red-700/70 font-sans font-medium">Apaga absolutamente tudo do seu perfil.</p>
+                                    <h4 className="font-bold" style={{ color: 'var(--ios-text)' }}>Limpeza Total (Nuclear)</h4>
+                                    <p className="text-sm font-sans font-medium" style={{ color: 'var(--ios-text-secondary)' }}>Apaga absolutamente tudo do seu perfil.</p>
                                 </div>
                             </div>
                             <button
@@ -135,27 +181,27 @@ export default function SettingsView({ onRestartTour }: { onRestartTour: () => v
                 </div>
 
                 {/* Training & Onboarding Section */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                            <Sparkles size={18} className="text-orange-600" /> Treinamento & Tour
+                <div className="ios-glass ios-squircle-lg border transition-all overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                    <div className="p-6 border-b transition-colors" style={{ borderColor: 'var(--ios-glass-border)', backgroundColor: 'black/5' }}>
+                        <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--ios-text)' }}>
+                            <Sparkles size={18} className="text-[#ff9500]" /> Treinamento & Tour
                         </h3>
                     </div>
 
                     <div className="p-6">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border border-blue-100 bg-blue-50/30">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl border border-blue-500/10 bg-blue-500/5">
                             <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-[#007aff]/10 flex items-center justify-center text-[#007aff] shrink-0">
                                     <Play size={20} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-slate-800">Reiniciar Tour do Sistema</h4>
-                                    <p className="text-sm text-slate-600 font-sans">Reveja os passos fundamentais para otimizar seu controle financeiro.</p>
+                                    <h4 className="font-bold" style={{ color: 'var(--ios-text)' }}>Reiniciar Tour do Sistema</h4>
+                                    <p className="text-sm font-sans" style={{ color: 'var(--ios-text-secondary)' }}>Reveja os passos fundamentais para otimizar seu controle financeiro.</p>
                                 </div>
                             </div>
                             <button
                                 onClick={onRestartTour}
-                                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-sm"
+                                className="px-6 py-2.5 bg-[#007aff] text-white rounded-xl font-bold text-sm hover:opacity-90 transition-colors shadow-sm"
                             >
                                 Iniciar Tour
                             </button>
@@ -166,19 +212,19 @@ export default function SettingsView({ onRestartTour }: { onRestartTour: () => v
 
             {/* Partial Reset Modal */}
             {isPartialModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-slide-up">
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
+                    <div className="ios-glass rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-slide-up border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                        <div className="p-6 border-b flex items-center justify-between bg-black/5" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
                                     <Trash2 size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-slate-800">O que deseja apagar?</h3>
-                                    <p className="text-sm text-slate-500 font-sans">Selecione os módulos para limpeza</p>
+                                    <h3 className="text-xl font-bold" style={{ color: 'var(--ios-text)' }}>O que deseja apagar?</h3>
+                                    <p className="text-sm font-sans" style={{ color: 'var(--ios-text-secondary)' }}>Selecione os módulos para limpeza</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsPartialModalOpen(false)} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
+                            <button onClick={() => setIsPartialModalOpen(false)} className="p-2 hover:bg-black/10 rounded-full transition-colors" style={{ color: 'var(--ios-text-secondary)' }}>
                                 <X size={20} />
                             </button>
                         </div>
@@ -189,27 +235,29 @@ export default function SettingsView({ onRestartTour }: { onRestartTour: () => v
                                     key={option.id}
                                     onClick={() => toggleOption(option.id)}
                                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left group ${selectedOptions.has(option.id)
-                                        ? 'border-orange-200 bg-orange-50/50 ring-2 ring-orange-500/10'
-                                        : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'
+                                        ? 'border-orange-500/30 bg-orange-500/10 ring-2 ring-orange-500/5'
+                                        : 'hover:bg-black/5'
                                         }`}
+                                    style={{ borderColor: selectedOptions.has(option.id) ? undefined : 'var(--ios-glass-border)' }}
                                 >
-                                    <div className={`shrink-0 ${selectedOptions.has(option.id) ? 'text-orange-600' : 'text-slate-300 group-hover:text-slate-400'}`}>
+                                    <div className={`shrink-0 ${selectedOptions.has(option.id) ? 'text-orange-500' : 'text-[var(--ios-text-secondary)] opacity-30 group-hover:opacity-100'}`}>
                                         {selectedOptions.has(option.id) ? <CheckSquare size={24} /> : <Square size={24} />}
                                     </div>
                                     <div className="flex-1">
-                                        <p className={`font-bold ${selectedOptions.has(option.id) ? 'text-orange-900' : 'text-slate-700'}`}>
+                                        <p className={`font-bold ${selectedOptions.has(option.id) ? 'text-orange-500' : ''}`} style={{ color: selectedOptions.has(option.id) ? undefined : 'var(--ios-text)' }}>
                                             {option.label}
                                         </p>
-                                        <p className="text-xs text-slate-500 font-sans">{option.description}</p>
+                                        <p className="text-xs font-sans" style={{ color: 'var(--ios-text-secondary)' }}>{option.description}</p>
                                     </div>
                                 </button>
                             ))}
                         </div>
 
-                        <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+                        <div className="p-6 bg-black/5 border-t flex gap-3" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             <button
                                 onClick={() => setIsPartialModalOpen(false)}
-                                className="flex-1 px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-100 transition-colors"
+                                className="flex-1 px-6 py-3 border rounded-xl font-bold hover:bg-black/10 transition-colors"
+                                style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text-secondary)' }}
                             >
                                 Cancelar
                             </button>

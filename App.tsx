@@ -38,6 +38,47 @@ export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [insightCount, setInsightCount] = useState(0);
 
+  // Theme logic
+  useEffect(() => {
+    if (!user) return;
+
+    const theme = user.theme || 'system';
+    const root = window.document.documentElement;
+
+    const applyTheme = (t: 'light' | 'dark' | 'system') => {
+      if (t === 'dark') {
+        root.classList.add('dark');
+      } else if (t === 'light') {
+        root.classList.remove('dark');
+      } else {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        if (systemTheme === 'dark') {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      }
+    };
+
+    applyTheme(theme as 'light' | 'dark' | 'system');
+
+    // Subscribe to system theme changes if set to system
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = () => applyTheme('system');
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, [user?.theme]);
+
+  const handleUpdateTheme = async (theme: 'light' | 'dark' | 'system') => {
+    if (user) {
+      const updatedUser = { ...user, theme };
+      setUser(updatedUser);
+      await StorageService.updateTheme(theme);
+    }
+  };
+
   // Onboarding states
   const [showOnboarding, setShowOnboarding] = useState(() => {
     return !!localStorage.getItem('onboarding_stage');
@@ -155,10 +196,14 @@ export default function App() {
       case 'budgets':
         return <PlanningView initialTab="budgets" />;
       case 'simulator': return <InvoiceSimulator />;
-      case 'settings': return <SettingsView onRestartTour={() => {
-        localStorage.removeItem('onboarding_completed');
-        setShowManual(true);
-      }} />;
+      case 'settings': return <SettingsView
+        user={user}
+        onUpdateTheme={handleUpdateTheme}
+        onRestartTour={() => {
+          localStorage.removeItem('onboarding_completed');
+          setShowManual(true);
+        }}
+      />;
       case 'loading': return <div className="h-full w-full flex items-center justify-center font-bold text-slate-300">Carregando...</div>;
       default:
         return <Dashboard currentMonth={currentMonth} onChangeMonth={setCurrentMonth} onChangeView={setCurrentView} />;

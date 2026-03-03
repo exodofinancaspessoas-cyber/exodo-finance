@@ -351,25 +351,25 @@ export default function FluxoCaixaView() {
         <div className="space-y-8 animate-fade-in pb-20">
             {/* Header */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                <div>
-                    <h2 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200">
-                            <Table size={24} />
-                        </div>
-                        {useCustomRange ? 'Período Personalizado' : forecastDays ? `Previsão de ${forecastDays} Dias` : 'Fluxo de Caixa Mensal'}
-                    </h2>
-                    <p className="text-slate-500 font-medium ml-1">
-                        {useCustomRange ? 'Visão detalhada do período selecionado.' : forecastDays ? 'Visão antecipada de entradas e saídas.' : 'Análise focada no planejado versus realizado.'}
-                    </p>
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-[#5856d6]/10 text-[#5856d6] dark:text-[#7d7aff] ios-squircle flex items-center justify-center shrink-0 border border-[#5856d6]/20">
+                        <Table size={32} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <span className="text-[10px] font-black text-[#5856d6] dark:text-[#7d7aff] uppercase tracking-widest leading-none">Fluxo</span>
+                        <h2 className="text-4xl font-black text-[var(--ios-text)] tracking-tight leading-none mt-1">
+                            {useCustomRange ? 'Personalizado' : forecastDays ? `${forecastDays} Dias` : 'Caixa Mensal'}
+                        </h2>
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Forecast Selector */}
-                    <div className="flex w-full sm:w-auto bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                    <div className="flex w-full sm:w-auto bg-[var(--ios-card-bg)]/80 backdrop-blur-md rounded-xl border p-1 shadow-sm" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         {/* Mensal */}
                         <button
                             onClick={() => { setForecastDays(null); setUseCustomRange(false); setDisplayType('detailed'); }}
-                            className={`flex-1 sm:flex-none px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === null && !useCustomRange ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'}`}
+                            className={`flex-1 sm:flex-none px-4 py-2.5 text-[10px] font-black uppercase tracking-wider ios-squircle transition-all ${forecastDays === null && !useCustomRange ? 'bg-[var(--ios-text)] text-[var(--ios-bg)]' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
                         >
                             Mensal
                         </button>
@@ -379,9 +379,9 @@ export default function FluxoCaixaView() {
                             <button
                                 key={days}
                                 onClick={() => { setForecastDays(days); setUseCustomRange(false); setDisplayType('detailed'); }}
-                                className={`flex-1 sm:flex-none px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${forecastDays === days && !useCustomRange ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'}`}
+                                className={`flex-1 sm:flex-none px-4 py-2.5 text-[10px] font-black uppercase tracking-wider ios-squircle transition-all ${forecastDays === days && !useCustomRange ? 'bg-[var(--ios-text)] text-[var(--ios-bg)]' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
                             >
-                                {days} Dias
+                                {days}D
                             </button>
                         ))}
 
@@ -389,27 +389,23 @@ export default function FluxoCaixaView() {
                         <div className="relative" ref={daysMenuRef}>
                             <button
                                 onClick={() => setShowDaysMenu(p => !p)}
-                                className={`flex items-center gap-1 px-4 py-3 sm:py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${([60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].includes(forecastDays ?? 0) && !useCustomRange)
-                                    ? 'bg-indigo-600 text-white shadow-md'
-                                    : 'text-slate-500 hover:bg-slate-50 active:bg-slate-100'
+                                className={`flex items-center justify-center gap-1 w-10 h-10 ios-squircle transition-all ${([60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].includes(forecastDays ?? 0) && !useCustomRange)
+                                    ? 'bg-[var(--ios-text)] text-[var(--ios-bg)]'
+                                    : 'text-[var(--ios-text-secondary)] hover:bg-black/5'
                                     }`}
                             >
-                                {([60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].includes(forecastDays ?? 0) && !useCustomRange)
-                                    ? `${forecastDays} Dias`
-                                    : 'Mais'
-                                }
-                                <ChevronDown size={12} className={`transition-transform duration-200 ${showDaysMenu ? 'rotate-180' : ''}`} />
+                                <ChevronDown size={14} className={`transition-transform duration-200 ${showDaysMenu ? 'rotate-180' : ''}`} />
                             </button>
 
                             {showDaysMenu && (
-                                <div className="absolute top-full right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 overflow-hidden py-1 min-w-[130px] animate-in fade-in slide-in-from-top-2 duration-150">
+                                <div className="absolute top-full right-0 mt-2 bg-[var(--ios-card-bg)]/95 backdrop-blur-xl ios-squircle-sm border shadow-2xl z-50 overflow-hidden py-1 min-w-[130px] animate-in fade-in slide-in-from-top-2 duration-150" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                     {[60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].map(days => (
                                         <button
                                             key={days}
                                             onClick={() => { setForecastDays(days); setUseCustomRange(false); setDisplayType('detailed'); setShowDaysMenu(false); }}
-                                            className={`w-full text-left px-5 py-2.5 text-[11px] font-black uppercase tracking-wider transition-colors ${forecastDays === days && !useCustomRange
-                                                ? 'bg-indigo-600 text-white'
-                                                : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-700'
+                                            className={`w-full text-left px-5 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${forecastDays === days && !useCustomRange
+                                                ? 'bg-[#ff2d55] text-white'
+                                                : 'text-[var(--ios-text-secondary)] hover:bg-black/5 hover:text-[var(--ios-text)]'
                                                 }`}
                                         >
                                             {days} Dias
@@ -424,54 +420,56 @@ export default function FluxoCaixaView() {
                     <div className="relative" ref={datePickerRef}>
                         <button
                             onClick={() => setShowDatePicker(p => !p)}
-                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl border shadow-sm transition-all ${useCustomRange
-                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-200'
-                                : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                            className={`flex items-center gap-2 px-4 h-11 text-[10px] font-black uppercase tracking-wider ios-squircle border shadow-sm transition-all ${useCustomRange
+                                ? 'bg-[#ff2d55] text-white border-[#ff2d55]'
+                                : 'bg-[var(--ios-card-bg)]/80 backdrop-blur-md text-[var(--ios-text-secondary)] border-[var(--ios-glass-border)]'
                                 }`}
                         >
-                            <Calendar size={14} />
+                            <Calendar size={14} strokeWidth={2.5} />
                             {useCustomRange && customStartDate && customEndDate
-                                ? `${new Date(customStartDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} → ${new Date(customEndDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
+                                ? `${new Date(customStartDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
                                 : 'Período'
                             }
                         </button>
 
                         {showDatePicker && (
-                            <div className="absolute top-full right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 p-5 min-w-[280px] animate-in fade-in slide-in-from-top-2 duration-150">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Selecionar Período</p>
-                                <div className="space-y-3">
+                            <div className="absolute top-full right-0 mt-2 bg-[var(--ios-card-bg)]/95 backdrop-blur-xl ios-squircle-md border shadow-2xl z-50 p-6 min-w-[280px] animate-in fade-in slide-in-from-top-2 duration-150" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--ios-text-secondary)] mb-5">Intervalo</p>
+                                <div className="space-y-4">
                                     <div>
-                                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5">Data Inicial</label>
+                                        <label className="block text-[9px] font-black uppercase text-[var(--ios-text-secondary)] tracking-widest mb-2 ml-1">Início</label>
                                         <input
                                             type="date"
                                             value={customStartDate}
                                             onChange={e => setCustomStartDate(e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            className="w-full px-4 py-3.5 bg-black/5 border ios-squircle-sm text-sm font-bold text-[var(--ios-text)] focus:ring-1 focus:ring-[#ff2d55]/30 transition-all outline-none"
+                                            style={{ borderColor: 'var(--ios-glass-border)' }}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5">Data Final</label>
+                                        <label className="block text-[9px] font-black uppercase text-[var(--ios-text-secondary)] tracking-widest mb-2 ml-1">Fim</label>
                                         <input
                                             type="date"
                                             value={customEndDate}
                                             min={customStartDate}
                                             onChange={e => setCustomEndDate(e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            className="w-full px-4 py-3.5 bg-black/5 border ios-squircle-sm text-sm font-bold text-[var(--ios-text)] focus:ring-1 focus:ring-[#ff2d55]/30 transition-all outline-none"
+                                            style={{ borderColor: 'var(--ios-glass-border)' }}
                                         />
                                     </div>
-                                    <div className="flex gap-2 pt-1">
+                                    <div className="flex gap-2 pt-2">
                                         <button
                                             onClick={() => { setCustomStartDate(''); setCustomEndDate(''); setUseCustomRange(false); setShowDatePicker(false); }}
-                                            className="flex-1 py-2 rounded-xl border border-slate-200 text-[10px] font-black uppercase text-slate-500 hover:bg-slate-50 transition-all"
+                                            className="flex-1 py-3 ios-squircle text-[10px] font-black uppercase text-[var(--ios-text-secondary)] hover:bg-black/5 transition-all"
                                         >
                                             Limpar
                                         </button>
                                         <button
                                             disabled={!customStartDate || !customEndDate}
                                             onClick={() => { if (customStartDate && customEndDate) { setUseCustomRange(true); setForecastDays(null); setDisplayType('detailed'); setShowDatePicker(false); } }}
-                                            className="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                            className="flex-1 py-3 ios-squircle bg-[#ff2d55] text-white text-[10px] font-black uppercase tracking-widest shadow-lg disabled:opacity-30 transition-all"
                                         >
-                                            Aplicar
+                                            Ok
                                         </button>
                                     </div>
                                 </div>
@@ -480,35 +478,35 @@ export default function FluxoCaixaView() {
                     </div>
 
                     {/* View Switcher */}
-                    <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                    <div className="flex bg-[var(--ios-card-bg)]/80 backdrop-blur-md rounded-xl border p-1 shadow-sm" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         <button
                             onClick={() => setDisplayType('detailed')}
-                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${displayType === 'detailed' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider ios-squircle transition-all ${displayType === 'detailed' ? 'bg-[var(--ios-text)] text-[var(--ios-bg)]' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
                         >
-                            <List size={14} /> Foco Mensal
+                            <List size={14} strokeWidth={2.5} /> Foco
                         </button>
                         <button
                             onClick={() => setDisplayType('table')}
-                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${displayType === 'table' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider ios-squircle transition-all ${displayType === 'table' ? 'bg-[var(--ios-text)] text-[var(--ios-bg)]' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
                         >
-                            <LayoutGrid size={14} /> Tabela Geral
+                            <LayoutGrid size={14} strokeWidth={2.5} /> Tabela
                         </button>
                     </div>
 
-                    <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                    <div className="flex bg-[var(--ios-card-bg)]/80 backdrop-blur-md rounded-xl border p-1 shadow-sm" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         <button
                             onClick={() => setShowProjections(!showProjections)}
-                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${showProjections ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider ios-squircle transition-all ${showProjections ? 'bg-[#5856d6] text-white shadow-md' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
                         >
-                            <TrendingUp size={14} /> {showProjections ? 'Ocultar Projeção' : 'Ver Projeção'}
+                            <TrendingUp size={14} strokeWidth={2.5} /> {showProjections ? 'Ocultar' : 'Ver'} Projeção
                         </button>
                     </div>
 
                     {!forecastDays && !useCustomRange && (
-                        <div className="flex items-center gap-1 bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
-                            <button onClick={() => { setStartMonthOffset(p => p - 1); setSelectedMonthIndex(0); }} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"><ChevronLeft size={20} /></button>
-                            <div className="px-4 text-xs font-black uppercase tracking-widest text-slate-600">Navegar</div>
-                            <button onClick={() => { setStartMonthOffset(p => p + 1); setSelectedMonthIndex(0); }} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"><ChevronRight size={20} /></button>
+                        <div className="flex items-center gap-1 bg-[var(--ios-card-bg)]/80 backdrop-blur-md rounded-xl border p-1 shadow-sm" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <button onClick={() => { setStartMonthOffset(p => p - 1); setSelectedMonthIndex(0); }} className="w-10 h-10 flex items-center justify-center ios-squircle text-[var(--ios-text-secondary)] hover:text-[#ff2d55] hover:bg-black/5 transition-all"><ChevronLeft size={20} strokeWidth={2.5} /></button>
+                            <div className="px-3 text-[10px] font-black uppercase tracking-widest text-[var(--ios-text-secondary)]">Menu</div>
+                            <button onClick={() => { setStartMonthOffset(p => p + 1); setSelectedMonthIndex(0); }} className="w-10 h-10 flex items-center justify-center ios-squircle text-[var(--ios-text-secondary)] hover:text-[#ff2d55] hover:bg-black/5 transition-all"><ChevronRight size={20} strokeWidth={2.5} /></button>
                         </div>
                     )}
                 </div>
@@ -522,21 +520,21 @@ export default function FluxoCaixaView() {
                         <button
                             key={m.key}
                             onClick={() => setSelectedMonthIndex(idx)}
-                            className={`flex-shrink-0 px-6 py-4 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center min-w-[120px] relative overflow-hidden
+                            className={`flex-shrink-0 px-6 py-4 ios-squircle-md border-2 transition-all duration-300 flex flex-col items-center min-w-[120px] relative overflow-hidden backdrop-blur-sm
                             ${selectedMonthIndex === idx
-                                    ? 'bg-white border-indigo-500 shadow-2xl shadow-indigo-100 scale-105 z-10'
-                                    : 'bg-white/40 border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-white/60'
+                                    ? 'bg-[var(--ios-card-bg)] border-[#ff2d55] shadow-xl shadow-[#ff2d55]/10 scale-105 z-10'
+                                    : 'bg-[var(--ios-card-bg)]/40 border-[var(--ios-glass-border)] text-[var(--ios-text-secondary)] hover:border-[var(--ios-text-secondary)] hover:bg-[var(--ios-card-bg)]/60'
                                 }`}
                         >
-                            {m.isCurrent && !selectedMonthIndex === idx && (
-                                <div className="absolute top-0 right-0 p-1">
-                                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                            {m.isCurrent && selectedMonthIndex !== idx && (
+                                <div className="absolute top-0 right-0 p-2">
+                                    <div className="w-2 h-2 bg-[#ff2d55] rounded-full shadow-[0_0_8px_rgba(255,45,85,0.4)]"></div>
                                 </div>
                             )}
-                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${selectedMonthIndex === idx ? 'text-indigo-400' : 'text-slate-300'}`}>
+                            <span className={`text-[9px] font-black uppercase tracking-[0.3em] mb-1 ${selectedMonthIndex === idx ? 'text-[#ff2d55]' : 'text-[var(--ios-text-secondary)]/50'}`}>
                                 {m.key.split('-')[0]}
                             </span>
-                            <span className={`text-xl font-black uppercase ${selectedMonthIndex === idx ? 'text-indigo-900' : 'text-slate-500'}`}>
+                            <span className={`text-xl font-black uppercase tracking-tighter ${selectedMonthIndex === idx ? 'text-[var(--ios-text)]' : 'text-[var(--ios-text-secondary)]'}`}>
                                 {m.label.split(' ')[0]}
                             </span>
                         </button>
@@ -545,25 +543,25 @@ export default function FluxoCaixaView() {
             )}
 
             {(forecastDays || useCustomRange) && (
-                <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="bg-[#5856d6]/10 border border-[#5856d6]/20 p-6 ios-squircle-md flex flex-col md:flex-row items-center justify-between gap-4 backdrop-blur-sm">
                     <div>
                         {useCustomRange ? (
                             <>
-                                <h4 className="text-indigo-900 font-black text-xl">Período Personalizado</h4>
-                                <p className="text-indigo-600 text-sm font-medium">
-                                    {new Date(customStartDate + 'T12:00:00').toLocaleDateString('pt-BR')} até {new Date(customEndDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                                <h4 className="text-[var(--ios-text)] font-black text-xl tracking-tight">Período Personalizado</h4>
+                                <p className="text-[var(--ios-text-secondary)] text-sm font-medium">
+                                    {new Date(customStartDate + 'T12:00:00').toLocaleDateString('pt-BR')} → {new Date(customEndDate + 'T12:00:00').toLocaleDateString('pt-BR')}
                                 </p>
                             </>
                         ) : (
                             <>
-                                <h4 className="text-indigo-900 font-black text-xl">Previsão de {forecastDays} Dias Corridos</h4>
-                                <p className="text-indigo-600 text-sm font-medium">Análise de hoje até {(new Date(Date.now() + (forecastDays ?? 0) * 86400000)).toLocaleDateString('pt-BR')}</p>
+                                <h4 className="text-[var(--ios-text)] font-black text-xl tracking-tight">Previsão de {forecastDays} Dias</h4>
+                                <p className="text-[var(--ios-text-secondary)] text-sm font-medium">Análise preditiva até {(new Date(Date.now() + (forecastDays ?? 0) * 86400000)).toLocaleDateString('pt-BR')}</p>
                             </>
                         )}
                     </div>
-                    <div className="bg-white/50 backdrop-blur-sm px-6 py-3 rounded-2xl border border-indigo-200 flex items-center gap-3">
-                        <Calendar className="text-indigo-500" size={20} />
-                        <span className="text-indigo-900 font-bold text-sm">Período Selecionado</span>
+                    <div className="bg-black/5 backdrop-blur-sm px-6 py-3 ios-squircle-sm border border-[var(--ios-glass-border)] flex items-center gap-3">
+                        <Calendar className="text-[#5856d6]" size={20} strokeWidth={2.5} />
+                        <span className="text-[var(--ios-text)] font-black text-[10px] uppercase tracking-widest">Ativo</span>
                     </div>
                 </div>
             )}
@@ -574,34 +572,34 @@ export default function FluxoCaixaView() {
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
 
                         {/* INCOMES PANEL */}
-                        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200 border border-slate-100 overflow-hidden flex flex-col">
-                            <div className="bg-indigo-600 p-8 relative overflow-hidden">
+                        <div className="bg-[var(--ios-card-bg)]/80 backdrop-blur-md ios-squircle-lg border shadow-xl flex flex-col overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <div className="bg-[#34c759]/10 p-8 relative overflow-hidden border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white">
-                                                <ArrowUpRight size={22} />
+                                            <div className="w-10 h-10 bg-[#34c759]/20 backdrop-blur-md ios-squircle flex items-center justify-center text-[#34c759]">
+                                                <ArrowUpRight size={22} strokeWidth={2.5} />
                                             </div>
-                                            <h3 className="text-white font-black text-2xl uppercase tracking-tighter">Receitas</h3>
+                                            <h3 className="text-[var(--ios-text)] font-black text-2xl uppercase tracking-tighter">Receitas</h3>
                                         </div>
-                                        <div className="text-indigo-100 text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full">Projetado</div>
+                                        <div className="text-[#34c759] text-[9px] font-black uppercase tracking-[0.2em] bg-[#34c759]/10 px-3 py-1 ios-squircle-sm">Previsto</div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
-                                            <p className="text-indigo-200 text-[9px] font-black uppercase tracking-widest mb-1">Total Previsto</p>
-                                            <p className="text-3xl font-black text-white tracking-tight">{formatCurrency(detailData.totalPlannedIncome + detailData.totalOverdueIncome)}</p>
+                                            <p className="text-[var(--ios-text-secondary)] text-[9px] font-black uppercase tracking-widest mb-1 opacity-60">Total Esperado</p>
+                                            <p className="text-3xl font-black text-[var(--ios-text)] tracking-tight">{formatCurrency(detailData.totalPlannedIncome + detailData.totalOverdueIncome)}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-indigo-200 text-[9px] font-black uppercase tracking-widest mb-1">Total Recebido</p>
-                                            <p className="text-3xl font-black text-emerald-300 tracking-tight">{formatCurrency(detailData.totalRealizedIncome)}</p>
+                                            <p className="text-[#34c759] text-[9px] font-black uppercase tracking-widest mb-1 opacity-80">Recebido</p>
+                                            <p className="text-3xl font-black text-[#34c759] tracking-tight">{formatCurrency(detailData.totalRealizedIncome)}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Progress graph background decoration */}
-                                <div className="absolute bottom-0 left-0 w-full h-1 bg-white/10">
+                                <div className="absolute bottom-0 left-0 w-full h-1 bg-black/5 dark:bg-white/5">
                                     <div
-                                        className="h-full bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.5)] transition-all duration-1000"
+                                        className="h-full bg-[#34c759] shadow-[0_0_15px_rgba(52,199,89,0.3)] transition-all duration-1000"
                                         style={{ width: `${Math.min(100, (detailData.totalRealizedIncome / (detailData.totalPlannedIncome + detailData.totalOverdueIncome || 1)) * 100)}%` }}
                                     ></div>
                                 </div>
@@ -620,24 +618,24 @@ export default function FluxoCaixaView() {
                                         <tbody className="divide-y divide-slate-50">
                                             {detailData.incomes.length > 0 ? detailData.incomes.map(item => (
                                                 <tr key={item.id}
-                                                    className="group hover:bg-slate-50 active:bg-slate-100 cursor-pointer transition-colors"
+                                                    className="group hover:bg-black/5 active:bg-black/10 cursor-pointer transition-colors"
                                                     onClick={() => { hapticFeedback?.(5); setSelectedItem(item); }}
                                                 >
-                                                    <td className="px-4 py-4">
-                                                        <span className="font-bold text-slate-700 text-sm block">{item.description}</span>
-                                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${item.status === 'PREVISTA' || item.status === 'PROJETADA' ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                                                    <td className="px-6 py-5">
+                                                        <span className="font-bold text-[var(--ios-text)] text-sm block tracking-tight">{item.description}</span>
+                                                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 ios-squircle-sm ${item.status === 'PREVISTA' || item.status === 'PROJETADA' ? 'bg-[#ff9500]/10 text-[#ff9500]' : 'bg-[#34c759]/10 text-[#34c759]'}`}>
                                                             {item.status}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-4 text-center">
-                                                        <span className="text-xs font-bold text-slate-500 tabular-nums">{formatDate(item.planned_date)}</span>
+                                                    <td className="px-6 py-5 text-center">
+                                                        <span className="text-xs font-bold text-[var(--ios-text-secondary)] tabular-nums">{formatDate(item.planned_date)}</span>
                                                     </td>
-                                                    <td className="px-4 py-4 text-right">
-                                                        <div className={`text-sm font-black tabular-nums ${item.actual_amount > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                    <td className="px-6 py-5 text-right">
+                                                        <div className={`text-sm font-black tabular-nums ${item.actual_amount > 0 ? 'text-[#34c759]' : 'text-[var(--ios-text-secondary)]'}`}>
                                                             {formatCurrency(item.planned_amount)}
                                                         </div>
                                                         {item.is_overdue && !item.actual_amount && (
-                                                            <span className="text-[8px] font-black text-rose-500 uppercase tracking-tighter">Atrasada</span>
+                                                            <span className="text-[8px] font-black text-[#ff3b30] uppercase tracking-tighter">Atrasada</span>
                                                         )}
                                                     </td>
                                                 </tr>
@@ -657,44 +655,44 @@ export default function FluxoCaixaView() {
                                     </table>
                                 </div>
                             </div>
-                            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center group cursor-pointer hover:bg-indigo-50 transition-all">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-[10px]">
+                            <div className="p-6 bg-black/5 border-t flex justify-between items-center group cursor-pointer hover:bg-[#34c759]/5 transition-all" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 ios-squircle bg-[#34c759]/10 text-[#34c759] flex items-center justify-center font-black text-[10px]">
                                         {Math.round((detailData.totalRealizedIncome / (detailData.totalPlannedIncome || 1)) * 100)}%
                                     </div>
-                                    <span className="text-xs font-black text-slate-500 uppercase">Recebimento Pendente</span>
+                                    <span className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">Pendente</span>
                                 </div>
-                                <span className="text-lg font-black text-indigo-600">{formatCurrency(detailData.totalPlannedIncome - detailData.totalRealizedIncome)}</span>
+                                <span className="text-xl font-black text-[#34c759] tracking-tighter">{formatCurrency(detailData.totalPlannedIncome - detailData.totalRealizedIncome)}</span>
                             </div>
                         </div>
 
                         {/* EXPENSES PANEL */}
-                        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200 border border-slate-100 overflow-hidden flex flex-col">
-                            <div className="bg-slate-900 p-8 relative overflow-hidden">
+                        <div className="bg-[var(--ios-card-bg)]/80 backdrop-blur-md ios-squircle-lg border shadow-xl flex flex-col overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <div className="bg-[#ff3b30]/10 p-8 relative overflow-hidden border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white">
-                                                <ArrowDownRight size={22} />
+                                            <div className="w-10 h-10 bg-[#ff3b30]/20 backdrop-blur-md ios-squircle flex items-center justify-center text-[#ff3b30]">
+                                                <ArrowDownRight size={22} strokeWidth={2.5} />
                                             </div>
-                                            <h3 className="text-white font-black text-2xl uppercase tracking-tighter">Despesas</h3>
+                                            <h3 className="text-[var(--ios-text)] font-black text-2xl uppercase tracking-tighter">Despesas</h3>
                                         </div>
-                                        <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest border border-slate-700 px-3 py-1 rounded-full">Projetado</div>
+                                        <div className="text-[#ff3b30] text-[9px] font-black uppercase tracking-[0.2em] bg-[#ff3b30]/10 px-3 py-1 ios-squircle-sm">Previsto</div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
-                                            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">Total Previsto</p>
-                                            <p className="text-3xl font-black text-white tracking-tight">{formatCurrency(detailData.totalPlannedExpense + detailData.totalOverdueExpense)}</p>
+                                            <p className="text-[var(--ios-text-secondary)] text-[9px] font-black uppercase tracking-widest mb-1 opacity-60">Total Esperado</p>
+                                            <p className="text-3xl font-black text-[var(--ios-text)] tracking-tight">{formatCurrency(detailData.totalPlannedExpense + detailData.totalOverdueExpense)}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">Total Pago</p>
-                                            <p className="text-3xl font-black text-rose-400 tracking-tight">{formatCurrency(detailData.totalRealizedExpense)}</p>
+                                            <p className="text-[#ff3b30] text-[9px] font-black uppercase tracking-widest mb-1 opacity-80">Pago</p>
+                                            <p className="text-3xl font-black text-[#ff3b30] tracking-tight">{formatCurrency(detailData.totalRealizedExpense)}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="absolute bottom-0 left-0 w-full h-1 bg-white/5">
+                                <div className="absolute bottom-0 left-0 w-full h-1 bg-black/5 dark:bg-white/5">
                                     <div
-                                        className="h-full bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.5)] transition-all duration-1000"
+                                        className="h-full bg-[#ff3b30] shadow-[0_0_15px_rgba(255,59,48,0.3)] transition-all duration-1000"
                                         style={{ width: `${Math.min(100, (detailData.totalRealizedExpense / (detailData.totalPlannedExpense + detailData.totalOverdueExpense || 1)) * 100)}%` }}
                                     ></div>
                                 </div>
@@ -713,24 +711,24 @@ export default function FluxoCaixaView() {
                                         <tbody className="divide-y divide-slate-50">
                                             {detailData.expenses.length > 0 ? detailData.expenses.map(item => (
                                                 <tr key={item.id}
-                                                    className="group hover:bg-slate-50 active:bg-slate-100 cursor-pointer transition-colors"
+                                                    className="group hover:bg-black/5 active:bg-black/10 cursor-pointer transition-colors"
                                                     onClick={() => { hapticFeedback?.(5); setSelectedItem(item); }}
                                                 >
-                                                    <td className="px-4 py-4">
-                                                        <span className="font-bold text-slate-700 text-sm block">{item.description}</span>
-                                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${item.status === 'PREVISTA' || item.status === 'PROJETADA' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                    <td className="px-6 py-5">
+                                                        <span className="font-bold text-[var(--ios-text)] text-sm block tracking-tight">{item.description}</span>
+                                                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 ios-squircle-sm ${item.status === 'PREVISTA' || item.status === 'PROJETADA' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : 'bg-[var(--ios-text-secondary)]/10 text-[var(--ios-text-secondary)]'}`}>
                                                             {item.status}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-4 text-center">
-                                                        <span className="text-xs font-bold text-slate-500 tabular-nums">{formatDate(item.planned_date)}</span>
+                                                    <td className="px-6 py-5 text-center">
+                                                        <span className="text-xs font-bold text-[var(--ios-text-secondary)] tabular-nums">{formatDate(item.planned_date)}</span>
                                                     </td>
-                                                    <td className="px-4 py-4 text-right">
-                                                        <div className="text-sm font-black tabular-nums text-rose-500/80">
+                                                    <td className="px-6 py-5 text-right">
+                                                        <div className="text-sm font-black tabular-nums text-[#ff3b30]/80">
                                                             {formatCurrency(item.planned_amount)}
                                                         </div>
                                                         {item.is_overdue && !item.actual_amount && (
-                                                            <span className="text-[8px] font-black text-rose-600 uppercase tracking-tighter flex items-center justify-end gap-1">
+                                                            <span className="text-[8px] font-black text-[#ff3b30] uppercase tracking-tighter flex items-center justify-end gap-1">
                                                                 <AlertCircle size={8} /> Atrasada
                                                             </span>
                                                         )}
@@ -752,23 +750,23 @@ export default function FluxoCaixaView() {
                                     </table>
                                 </div>
                             </div>
-                            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center group cursor-pointer hover:bg-rose-50 transition-all">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-black text-[10px]">
+                            <div className="p-6 bg-black/5 border-t flex justify-between items-center group cursor-pointer hover:bg-[#ff3b30]/5 transition-all" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 ios-squircle bg-[#ff3b30]/10 text-[#ff3b30] flex items-center justify-center font-black text-[10px]">
                                         {Math.round((detailData.totalRealizedExpense / (detailData.totalPlannedExpense || 1)) * 100)}%
                                     </div>
-                                    <span className="text-xs font-black text-slate-500 uppercase">Pagamento Pendente</span>
+                                    <span className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">Pendente</span>
                                 </div>
-                                <span className="text-lg font-black text-rose-600">{formatCurrency(detailData.totalPlannedExpense - detailData.totalRealizedExpense)}</span>
+                                <span className="text-xl font-black text-[#ff3b30] tracking-tighter">{formatCurrency(detailData.totalPlannedExpense - detailData.totalRealizedExpense)}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* FOCUSED SUMMARY CARD - REDESIGNED FOR MATHEMATICAL INTUITIVITY  */}
-                    <div className="bg-slate-900 rounded-[3.5rem] p-8 xl:p-12 text-white shadow-2xl relative overflow-hidden group">
+                    <div className="bg-[#1c1c1e] dark:bg-[#1c1c1e] rounded-[2.5rem] p-8 xl:p-12 text-white shadow-2xl relative overflow-hidden group border border-white/5">
                         <div className="relative z-10 w-full">
-                            <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-10 text-center xl:text-left">
-                                {forecastDays ? `Projeção de Saldo em ${forecastDays} dias` : 'Análise de Próximo Saldo Realista'}
+                            <h4 className="text-[10px] font-black text-[#5856d6] uppercase tracking-[0.4em] mb-10 text-center xl:text-left">
+                                {forecastDays ? `Projeção em ${forecastDays} dias` : 'Próximo Saldo Realista'}
                             </h4>
 
                             {(() => {
@@ -783,64 +781,64 @@ export default function FluxoCaixaView() {
                                 const isPositive = projectedFinal >= 0;
 
                                 return (
-                                    <div className="flex flex-col xl:flex-row items-stretch justify-between gap-6 xl:gap-8 overflow-x-auto pb-4">
+                                    <div className="flex flex-col xl:flex-row items-stretch justify-between gap-6 xl:gap-8 overflow-x-auto pb-4 no-scrollbar">
                                         {/* STEP 1: CURRENT BALANCE */}
-                                        <div className="flex-1 min-w-[200px] p-6 rounded-[2rem] bg-indigo-500/5 border border-indigo-500/10 text-center flex flex-col justify-center">
-                                            <p className="text-slate-400 text-[8px] font-black uppercase tracking-widest mb-2">Saldo Hoje</p>
+                                        <div className="flex-1 min-w-[200px] p-6 ios-squircle-md bg-white/5 border border-white/10 text-center flex flex-col justify-center">
+                                            <p className="text-white/40 text-[8px] font-black uppercase tracking-widest mb-2">Hoje</p>
                                             <div className="text-2xl font-black text-white">{formatCurrency(currentTotalBalance)}</div>
-                                            <p className="text-[9px] text-slate-500 font-medium mt-2">Disponível agora</p>
+                                            <p className="text-[9px] text-white/20 font-medium mt-2">Disponível</p>
                                         </div>
 
-                                        <div className="flex items-center justify-center text-indigo-500/40 opacity-50">
-                                            <Plus size={24} />
+                                        <div className="flex items-center justify-center text-white/20">
+                                            <Plus size={20} strokeWidth={3} />
                                         </div>
 
                                         {/* STEP 2: TOTAL RECEIVABLE */}
-                                        <div className="flex-1 min-w-[200px] p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10 text-center">
-                                            <p className="text-emerald-400 text-[8px] font-black uppercase tracking-widest mb-2">Total a Receber</p>
-                                            <div className="text-2xl font-black text-emerald-400">{formatCurrency(totalIn)}</div>
-                                            <div className="mt-3 pt-3 border-t border-emerald-500/10 space-y-1">
-                                                <div className="flex justify-between text-[8px] font-black uppercase text-slate-500">
-                                                    <span>Deste Período:</span>
-                                                    <span className="text-emerald-300">{formatCurrency(periodPendingIn)}</span>
+                                        <div className="flex-1 min-w-[200px] p-6 ios-squircle-md bg-[#34c759]/5 border border-[#34c759]/10 text-center">
+                                            <p className="text-[#34c759] text-[8px] font-black uppercase tracking-widest mb-2">A Receber</p>
+                                            <div className="text-2xl font-black text-[#34c759]">{formatCurrency(totalIn)}</div>
+                                            <div className="mt-3 pt-3 border-t border-white/5 space-y-1">
+                                                <div className="flex justify-between text-[8px] font-black uppercase text-white/40">
+                                                    <span>Período:</span>
+                                                    <span className="text-white/60">{formatCurrency(periodPendingIn)}</span>
                                                 </div>
-                                                <div className="flex justify-between text-[8px] font-black uppercase text-slate-500">
-                                                    <span>Contas Atrasadas:</span>
-                                                    <span className="text-indigo-400">{formatCurrency(detailData.totalOverdueIncome)}</span>
+                                                <div className="flex justify-between text-[8px] font-black uppercase text-white/40">
+                                                    <span>Atrasadas:</span>
+                                                    <span className="text-[#5856d6]">{formatCurrency(detailData.totalOverdueIncome)}</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-center text-rose-500/40 opacity-50">
-                                            <Minus size={24} />
+                                        <div className="flex items-center justify-center text-white/20">
+                                            <Minus size={20} strokeWidth={3} />
                                         </div>
 
                                         {/* STEP 3: TOTAL PAYABLE */}
-                                        <div className="flex-1 min-w-[200px] p-6 rounded-[2rem] bg-rose-500/5 border border-rose-500/10 text-center">
-                                            <p className="text-rose-400 text-[8px] font-black uppercase tracking-widest mb-2">Total a Pagar</p>
-                                            <div className="text-2xl font-black text-rose-400">{formatCurrency(totalOut)}</div>
-                                            <div className="mt-3 pt-3 border-t border-rose-500/10 space-y-1">
-                                                <div className="flex justify-between text-[8px] font-black uppercase text-slate-500">
-                                                    <span>Deste Período:</span>
-                                                    <span className="text-rose-300">{formatCurrency(periodPendingOut)}</span>
+                                        <div className="flex-1 min-w-[200px] p-6 ios-squircle-md bg-[#ff3b30]/5 border border-[#ff3b30]/10 text-center">
+                                            <p className="text-[#ff3b30] text-[8px] font-black uppercase tracking-widest mb-2">A Pagar</p>
+                                            <div className="text-2xl font-black text-[#ff3b30]">{formatCurrency(totalOut)}</div>
+                                            <div className="mt-3 pt-3 border-t border-white/5 space-y-1">
+                                                <div className="flex justify-between text-[8px] font-black uppercase text-white/40">
+                                                    <span>Período:</span>
+                                                    <span className="text-white/60">{formatCurrency(periodPendingOut)}</span>
                                                 </div>
-                                                <div className="flex justify-between text-[8px] font-black uppercase text-slate-500">
-                                                    <span>Contas Atrasadas:</span>
-                                                    <span className="text-indigo-400">{formatCurrency(detailData.totalOverdueExpense)}</span>
+                                                <div className="flex justify-between text-[8px] font-black uppercase text-white/40">
+                                                    <span>Atrasadas:</span>
+                                                    <span className="text-[#5856d6]">{formatCurrency(detailData.totalOverdueExpense)}</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-center text-indigo-400 opacity-50">
-                                            <Equal size={24} />
+                                        <div className="flex items-center justify-center text-white/20">
+                                            <Equal size={20} strokeWidth={3} />
                                         </div>
 
                                         {/* TARGET: FINAL BALANCE */}
-                                        <div className={`flex-[1.2] min-w-[250px] p-8 rounded-[2.5rem] ${isPositive ? 'bg-indigo-600 shadow-xl shadow-indigo-500/20' : 'bg-rose-600 shadow-xl shadow-rose-500/20'} flex flex-col justify-center text-center relative overflow-hidden group/target`}>
-                                            <p className="text-white/60 text-[9px] font-black uppercase tracking-widest mb-3">Saldo Final Estimado</p>
+                                        <div className={`flex-[1.2] min-w-[250px] p-8 ios-squircle-lg ${isPositive ? 'bg-[#5856d6] shadow-xl shadow-[#5856d6]/20' : 'bg-[#ff3b30] shadow-xl shadow-[#ff3b30]/20'} flex flex-col justify-center text-center relative overflow-hidden group/target`}>
+                                            <p className="text-white/60 text-[9px] font-black uppercase tracking-widest mb-3">Estimativa Final</p>
                                             <div className="text-4xl font-black text-white tracking-tighter">{formatCurrency(projectedFinal)}</div>
                                             <p className="text-white/50 text-[9px] mt-4 font-medium max-w-[200px] mx-auto leading-tight">
-                                                Valor estimado para o fim do ciclo considerando todas as pendências.
+                                                Saldo estimado considerando todas as movimentações futuras.
                                             </p>
                                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover/target:opacity-10 transition-opacity">
                                                 <Calculator size={60} />
@@ -855,45 +853,45 @@ export default function FluxoCaixaView() {
             ) : (
                 /* TABLE VIEW - Multi-month Comparison */
                 <div className="space-y-4">
-                    <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-3 h-3 bg-slate-200 rounded-sm"></div>
-                            <span>Valor Realizado</span>
+                    <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--ios-text-secondary)] ml-2 opacity-60">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 bg-[var(--ios-text-secondary)]/20 rounded-full"></div>
+                            <span>Realizado</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-3 h-3 border border-dashed border-indigo-300 rounded-sm"></div>
-                            <span>Valor Projetado</span>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 border-2 border-dashed border-[#5856d6]/40 rounded-full"></div>
+                            <span>Projetado</span>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden overflow-x-auto">
+                    <div className="bg-[var(--ios-card-bg)]/80 backdrop-blur-md ios-squircle-lg border shadow-xl overflow-hidden overflow-x-auto no-scrollbar" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         <table className="w-full text-left border-collapse min-w-[900px]">
                             <thead>
-                                <tr className="bg-slate-50/50 border-b border-slate-100">
-                                    <th className="sticky left-0 z-20 bg-slate-50 p-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-r border-slate-100 min-w-[220px]">
-                                        Categorias
+                                <tr className="bg-black/5 border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                    <th className="sticky left-0 z-20 bg-[var(--ios-card-bg)] p-6 text-[9px] font-black uppercase tracking-[0.3em] text-[var(--ios-text-secondary)] border-r" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                        CATEGORIAS
                                     </th>
                                     {months.map(col => (
-                                        <th key={col.key} className={`p-6 text-center text-xs font-black uppercase tracking-widest border-r border-slate-50 last:border-r-0 ${col.isCurrent ? 'bg-indigo-50/50 text-indigo-600' : 'text-slate-500'}`}>
+                                        <th key={col.key} className={`p-6 text-center text-[10px] font-black uppercase tracking-widest border-r last:border-r-0 ${col.isCurrent ? 'bg-[#5856d6]/5 text-[#5856d6]' : 'text-[var(--ios-text-secondary)]'}`} style={{ borderColor: 'var(--ios-glass-border)' }}>
                                             {col.label}
                                         </th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50">
+                            <tbody className="divide-y" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                 {/* RECEITAS */}
-                                <tr className="bg-indigo-50/20">
-                                    <td className="sticky left-0 z-10 bg-indigo-50/80 backdrop-blur-sm p-3 pl-6 text-[10px] font-black text-indigo-700 uppercase tracking-widest border-r border-indigo-100">Entradas</td>
-                                    {months.map(col => <td key={col.key} className="p-3 border-r border-indigo-50/30 last:border-r-0"></td>)}
+                                <tr className="bg-[#34c759]/5">
+                                    <td className="sticky left-0 z-10 bg-[#34c759]/10 backdrop-blur-sm p-3 pl-6 text-[9px] font-black text-[#34c759] uppercase tracking-widest border-r" style={{ borderColor: 'var(--ios-glass-border)' }}>Entradas</td>
+                                    {months.map(col => <td key={col.key} className="p-3 border-r last:border-r-0" style={{ borderColor: 'var(--ios-glass-border)' }}></td>)}
                                 </tr>
                                 {rows.filter(r => r.type === 'RECEITA').map(row => (
-                                    <tr key={row.categoryId} className="hover:bg-slate-50 transition-colors group">
-                                        <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50 p-4 pl-8 text-sm font-bold text-slate-700 border-r border-slate-100 transition-colors">{row.categoryName}</td>
+                                    <tr key={row.categoryId} className="hover:bg-black/5 transition-colors group">
+                                        <td className="sticky left-0 z-10 bg-[var(--ios-card-bg)] group-hover:bg-black/5 p-4 pl-8 text-sm font-bold text-[var(--ios-text)] border-r transition-colors" style={{ borderColor: 'var(--ios-glass-border)' }}>{row.categoryName}</td>
                                         {months.map(col => {
                                             const val = row.values[col.key];
                                             return (
-                                                <td key={col.key} className={`p-4 text-center border-r border-slate-50 last:border-r-0 ${col.isCurrent ? 'bg-indigo-50/10' : ''}`}>
-                                                    {val ? <div className={`inline-block px-3 py-1 rounded-lg text-sm font-black ${val.isProjected ? 'text-indigo-400 border border-dashed border-indigo-200' : 'text-indigo-600'}`}>{formatCurrency(val.amount)}</div> : <span className="text-slate-100">—</span>}
+                                                <td key={col.key} className={`p-4 text-center border-r last:border-r-0 ${col.isCurrent ? 'bg-[#34c759]/5' : ''}`} style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                                    {val ? <div className={`inline-block px-3 py-1 ios-squircle-sm text-sm font-black ${val.isProjected ? 'text-[#ff9500] border border-dashed border-[#ff9500]/30' : 'text-[#34c759]'}`}>{formatCurrency(val.amount)}</div> : <span className="text-[var(--ios-text-secondary)]/10">—</span>}
                                                 </td>
                                             );
                                         })}
@@ -901,18 +899,18 @@ export default function FluxoCaixaView() {
                                 ))}
 
                                 {/* DESPESAS */}
-                                <tr className="bg-rose-50/20">
-                                    <td className="sticky left-0 z-10 bg-rose-50/80 backdrop-blur-sm p-3 pl-6 text-[10px] font-black text-rose-700 uppercase tracking-widest border-r border-rose-100">Saídas</td>
-                                    {months.map(col => <td key={col.key} className="p-3 border-r border-rose-50/30 last:border-r-0"></td>)}
+                                <tr className="bg-[#ff3b30]/5">
+                                    <td className="sticky left-0 z-10 bg-[#ff3b30]/10 backdrop-blur-sm p-3 pl-6 text-[9px] font-black text-[#ff3b30] uppercase tracking-widest border-r" style={{ borderColor: 'var(--ios-glass-border)' }}>Saídas</td>
+                                    {months.map(col => <td key={col.key} className="p-3 border-r last:border-r-0" style={{ borderColor: 'var(--ios-glass-border)' }}></td>)}
                                 </tr>
                                 {rows.filter(r => r.type === 'DESPESA').map(row => (
-                                    <tr key={row.categoryId} className="hover:bg-slate-50 transition-colors group">
-                                        <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50 p-4 pl-8 text-sm font-bold text-slate-700 border-r border-slate-100 transition-colors">{row.categoryName}</td>
+                                    <tr key={row.categoryId} className="hover:bg-black/5 transition-colors group">
+                                        <td className="sticky left-0 z-10 bg-[var(--ios-card-bg)] group-hover:bg-black/5 p-4 pl-8 text-sm font-bold text-[var(--ios-text)] border-r transition-colors" style={{ borderColor: 'var(--ios-glass-border)' }}>{row.categoryName}</td>
                                         {months.map(col => {
                                             const val = row.values[col.key];
                                             return (
-                                                <td key={col.key} className={`p-4 text-center border-r border-slate-50 last:border-r-0 ${col.isCurrent ? 'bg-rose-50/10' : ''}`}>
-                                                    {val ? <div className={`inline-block px-3 py-1 rounded-lg text-sm font-black ${val.isProjected ? 'text-rose-400 border border-dashed border-rose-200' : 'text-rose-600'}`}>{formatCurrency(val.amount)}</div> : <span className="text-slate-100">—</span>}
+                                                <td key={col.key} className={`p-4 text-center border-r last:border-r-0 ${col.isCurrent ? 'bg-[#ff3b30]/5' : ''}`} style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                                    {val ? <div className={`inline-block px-3 py-1 ios-squircle-sm text-sm font-black ${val.isProjected ? 'text-[#ff9500] border border-dashed border-[#ff9500]/30' : 'text-[#ff3b30]'}`}>{formatCurrency(val.amount)}</div> : <span className="text-[var(--ios-text-secondary)]/10">—</span>}
                                                 </td>
                                             );
                                         })}
@@ -927,40 +925,40 @@ export default function FluxoCaixaView() {
             {/* DETAIL MODAL */}
             {selectedItem && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedItem(null)}></div>
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden animate-in fade-in zoom-in duration-300">
-                        <div className={`p-8 ${selectedItem.type === 'RECEITA' ? 'bg-emerald-600' : 'bg-rose-600'} text-white`}>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setSelectedItem(null)}></div>
+                    <div className="bg-[var(--ios-card-bg)]/95 backdrop-blur-xl ios-squircle-lg w-full max-w-lg shadow-2xl relative z-10 overflow-hidden animate-in fade-in zoom-in duration-300 border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                        <div className={`p-8 ${selectedItem.type === 'RECEITA' ? 'bg-[#34c759]' : 'bg-[#ff3b30]'} text-white`}>
                             <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 block mb-1">
-                                        {selectedItem.is_projection ? 'Lançamento Projetado' : 'Detalhes do Lançamento'}
+                                    <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-70 block mb-1">
+                                        {selectedItem.is_projection ? 'PROJEÇÃO' : 'DETALHES'}
                                     </span>
-                                    <h3 className="text-2xl font-black tracking-tight">{selectedItem.description}</h3>
+                                    <h3 className="text-3xl font-black tracking-tighter">{selectedItem.description}</h3>
                                 </div>
-                                <button onClick={() => setSelectedItem(null)} className="p-2 hover:bg-white/20 rounded-xl transition-colors">
-                                    <X size={24} />
+                                <button onClick={() => setSelectedItem(null)} className="w-10 h-10 ios-squircle bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors">
+                                    <X size={20} strokeWidth={3} />
                                 </button>
                             </div>
 
-                            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6">
-                                <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Valor Planejado</p>
-                                <div className="text-4xl font-black">{formatCurrency(selectedItem.planned_amount)}</div>
+                            <div className="bg-white/10 backdrop-blur-md ios-squircle-md p-6 border border-white/10">
+                                <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">Valor Planejado</p>
+                                <div className="text-4xl font-black tracking-tighter">{formatCurrency(selectedItem.planned_amount)}</div>
                             </div>
                         </div>
 
-                        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto no-scrollbar">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                                        <Calendar size={10} /> Vencimento
+                                <div className="p-5 bg-black/5 ios-squircle-md border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                    <p className="text-[8px] font-black text-[var(--ios-text-secondary)] uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                        <Calendar size={12} strokeWidth={2.5} /> VENCIMENTO
                                     </p>
-                                    <p className="font-bold text-slate-700">{formatDate(selectedItem.planned_date)}</p>
+                                    <p className="font-bold text-[var(--ios-text)]">{formatDate(selectedItem.planned_date)}</p>
                                 </div>
-                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
-                                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${selectedItem.status === 'PREVISTA' || selectedItem.status === 'PROJETADA'
-                                        ? 'bg-amber-100 text-amber-700'
-                                        : 'bg-indigo-100 text-indigo-700'
+                                <div className="p-5 bg-black/5 ios-squircle-md border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                    <p className="text-[8px] font-black text-[var(--ios-text-secondary)] uppercase tracking-[0.2em] mb-2">STATUS</p>
+                                    <span className={`text-[9px] font-black uppercase px-2 py-1 ios-squircle-sm ${selectedItem.status === 'PREVISTA' || selectedItem.status === 'PROJETADA'
+                                        ? 'bg-[#ff9500]/10 text-[#ff9500]'
+                                        : (selectedItem.type === 'RECEITA' ? 'bg-[#34c759]/10 text-[#34c759]' : 'bg-[#007aff]/10 text-[#007aff]')
                                         }`}>
                                         {selectedItem.status}
                                     </span>
@@ -968,13 +966,13 @@ export default function FluxoCaixaView() {
                             </div>
 
                             {selectedItem.original?.category_id && (
-                                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400">
-                                        <Tag size={20} />
+                                <div className="flex items-center gap-4 p-5 bg-black/5 ios-squircle-md border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                    <div className="w-12 h-12 ios-squircle bg-[var(--ios-card-bg)] shadow-sm flex items-center justify-center text-[var(--ios-text-secondary)] border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                        <Tag size={24} strokeWidth={2} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Categoria</p>
-                                        <p className="font-bold text-slate-700">
+                                        <p className="text-[8px] font-black text-[var(--ios-text-secondary)] uppercase tracking-[0.2em] mb-1">CATEGORIA</p>
+                                        <p className="font-bold text-[var(--ios-text)]">
                                             {categories.find((c: any) => c.id === selectedItem.original.category_id)?.name || 'Sem Categoria'}
                                         </p>
                                     </div>
@@ -982,13 +980,13 @@ export default function FluxoCaixaView() {
                             )}
 
                             {selectedItem.original?.account_id && (
-                                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400">
-                                        <Wallet size={20} />
+                                <div className="flex items-center gap-4 p-5 bg-black/5 ios-squircle-md border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                    <div className="w-12 h-12 ios-squircle bg-[var(--ios-card-bg)] shadow-sm flex items-center justify-center text-[var(--ios-text-secondary)] border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                        <Wallet size={24} strokeWidth={2} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Conta/Origem</p>
-                                        <p className="font-bold text-slate-700">
+                                        <p className="text-[8px] font-black text-[var(--ios-text-secondary)] uppercase tracking-[0.2em] mb-1">CONTA / ORIGEM</p>
+                                        <p className="font-bold text-[var(--ios-text)]">
                                             {accounts.find((a: any) => a.id === selectedItem.original.account_id)?.name || 'Nenhuma'}
                                         </p>
                                     </div>
@@ -996,27 +994,27 @@ export default function FluxoCaixaView() {
                             )}
 
                             {selectedItem.actual_amount > 0 && (
-                                <div className="p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100">
+                                <div className="p-6 bg-[#34c759]/10 ios-squircle-lg border border-[#34c759]/20">
                                     <div className="flex justify-between items-center mb-1">
-                                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Valor Realizado</p>
-                                        <p className="text-[9px] font-bold text-emerald-500 uppercase">{formatDate(selectedItem.actual_date)}</p>
+                                        <p className="text-[8px] font-black text-[#34c759] uppercase tracking-[0.2em]">VALOR REALIZADO</p>
+                                        <p className="text-[8px] font-bold text-[#34c759] uppercase">{formatDate(selectedItem.actual_date)}</p>
                                     </div>
-                                    <p className="text-2xl font-black text-emerald-700">{formatCurrency(selectedItem.actual_amount)}</p>
+                                    <p className="text-3xl font-black text-[#34c759] tracking-tighter">{formatCurrency(selectedItem.actual_amount)}</p>
                                 </div>
                             )}
 
                             {selectedItem.is_overdue && !selectedItem.actual_amount && (
-                                <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 flex items-center gap-3">
-                                    <AlertCircle className="text-rose-600" size={20} />
-                                    <p className="text-xs font-bold text-rose-700 italic">Atenção: Este lançamento está atrasado!</p>
+                                <div className="p-5 bg-[#ff3b30]/10 ios-squircle-md border border-[#ff3b30]/20 flex items-center gap-3">
+                                    <AlertCircle className="text-[#ff3b30]" size={20} strokeWidth={2.5} />
+                                    <p className="text-xs font-bold text-[#ff3b30]">Atenção: Este lançamento está atrasado!</p>
                                 </div>
                             )}
 
                             <button
                                 onClick={() => setSelectedItem(null)}
-                                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 active:scale-[0.98] transition-all shadow-xl shadow-slate-200"
+                                className="w-full py-4 bg-[var(--ios-text)] text-[var(--ios-bg)] ios-squircle font-black uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all shadow-xl"
                             >
-                                Fechar Detalhes
+                                FECHAR
                             </button>
                         </div>
                     </div>

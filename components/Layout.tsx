@@ -74,14 +74,14 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
     const activeMobileLabel = activeItem?.label ?? 'Êxodo';
 
     return (
-        <div className="flex h-screen bg-[#f2f2f7] relative overflow-hidden font-sans text-slate-900">
+        <div className="flex h-screen bg-[var(--ios-bg)] relative overflow-hidden font-sans text-[var(--ios-text)] transition-colors duration-300">
             {/* Sidebar Desktop */}
-            <aside className="hidden md:flex flex-col w-72 h-[calc(100vh-32px)] m-4 ios-glass ios-squircle-lg border border-white/40 shadow-xl shadow-black/5 shrink-0 transition-all duration-300 z-50">
+            <aside className="hidden md:flex flex-col w-72 h-[calc(100vh-32px)] m-4 ios-glass rounded-2xl border shadow-xl shadow-black/5 shrink-0 transition-all duration-300 z-50 overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
                 <div className="p-8 flex items-center space-x-4">
                     <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 ios-squircle flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-orange-500/20">Ê</div>
                     <div className="flex flex-col">
-                        <h1 className="text-xl font-black text-slate-800 tracking-tight leading-tight">Êxodo</h1>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Finance Pro</p>
+                        <h1 className="text-xl font-black text-[var(--ios-text)] tracking-tight leading-tight">Êxodo</h1>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--ios-text-secondary)]">Finance Pro</p>
                     </div>
                 </div>
 
@@ -91,34 +91,34 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                             key={item.id}
                             id={`nav-${item.id}`}
                             onClick={() => { hapticFeedback(5); onChangeView(item.id); }}
-                            className={`flex items-center space-x-3 w-full px-5 py-3.5 ios-squircle transition-all duration-300 group
+                            className={`flex items-center space-x-3 w-full px-5 py-3.5 rounded-2xl transition-all duration-300 group
                 ${isActive(item.id)
-                                    ? 'bg-white text-[#ff9500] shadow-sm scale-[1.02]'
-                                    : 'text-slate-500 hover:bg-white/50 hover:text-slate-800'
+                                    ? 'bg-black/10 text-[#ff9500] shadow-sm scale-[1.02]'
+                                    : 'text-slate-500 hover:bg-black/5 hover:text-slate-800'
                                 }
               `}
                         >
                             <div className="relative shrink-0 transition-transform duration-300 group-hover:scale-110">
-                                <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 2} className={isActive(item.id) ? 'text-[#ff9500]' : 'text-slate-400 group-hover:text-slate-600'} />
+                                <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 2} className={isActive(item.id) ? 'text-[#ff9500]' : 'text-slate-400 group-hover:text-[#ff9500]'} />
                                 {item.id === 'dashboard' && insightCount > 0 && (
-                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-white">
+                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-[var(--ios-bg)]">
                                         {insightCount > 9 ? '9+' : insightCount}
                                     </span>
                                 )}
                             </div>
-                            <span className={`text-sm font-bold tracking-tight ${isActive(item.id) ? 'text-slate-900' : 'text-slate-500'}`}>{item.label}</span>
+                            <span className={`text-sm font-bold tracking-tight ${isActive(item.id) ? 'text-[var(--ios-text)]' : 'text-[var(--ios-text-secondary)]'}`}>{item.label}</span>
                         </button>
                     ))}
                 </nav>
 
-                <div className="p-6 border-t border-white/20">
-                    <div className="flex items-center space-x-4 mb-6 px-2 bg-white/40 p-3 ios-squircle">
-                        <div className="w-12 h-12 ios-squircle bg-white flex items-center justify-center shadow-sm border border-white">
+                <div className="p-6 border-t" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                    <div className="flex items-center space-x-4 mb-6 px-2 bg-black/5 p-3 rounded-2xl border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                        <div className="w-12 h-12 rounded-xl bg-black/5 flex items-center justify-center shadow-sm border" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             <UserIcon size={24} className="text-slate-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black text-slate-800 truncate">{user.name}</p>
-                            <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider flex items-center gap-1">
+                            <p className="text-sm font-black text-[var(--ios-text)] truncate">{user.name}</p>
+                            <p className="text-[9px] text-[var(--ios-text-secondary)] font-black uppercase tracking-wider flex items-center gap-1">
                                 v{VersionInfo.version}
                                 {isSupabaseConfigured() ? (
                                     <Cloud size={10} className="text-[#34c759]" />
@@ -131,7 +131,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
 
                     <button
                         onClick={onLogout}
-                        className="flex items-center justify-center space-x-2 text-slate-400 hover:text-red-500 text-xs font-bold w-full transition-all hover:bg-red-50 py-3 ios-squircle"
+                        className="flex items-center justify-center space-x-2 text-slate-400 hover:text-[#ff3b30] text-xs font-bold w-full transition-all hover:bg-[#ff3b30]/10 py-3 rounded-xl"
                     >
                         <LogOut size={16} /> <span>Encerrar Sessão</span>
                     </button>
@@ -142,11 +142,11 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
             <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-transparent w-full">
 
                 {/* Mobile Header */}
-                <header className="md:hidden flex items-center justify-between px-6 py-4 bg-[#f2f2f7]/80 backdrop-blur-xl z-20 min-h-[64px]">
+                <header className="md:hidden flex items-center justify-between px-6 py-4 bg-[var(--ios-bg)]/80 backdrop-blur-xl z-20 min-h-[64px] border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 ios-squircle flex items-center justify-center text-white font-black text-lg shadow-md shadow-orange-500/10">Ê</div>
                         <div className="flex flex-col">
-                            <h2 className="text-lg font-black text-slate-800 tracking-tight leading-tight">{activeMobileLabel}</h2>
+                            <h2 className="text-lg font-black text-[var(--ios-text)] tracking-tight leading-tight">{activeMobileLabel}</h2>
                             {!isSupabaseConfigured() && (
                                 <span className="text-[#ff9500] text-[8px] font-black uppercase tracking-widest flex items-center gap-0.5">
                                     Offline
@@ -156,10 +156,11 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                     </div>
                     <button
                         onClick={openMenu}
-                        className="w-10 h-10 flex items-center justify-center text-[#007aff] ios-glass ios-squircle border border-white/50 transition-all active:scale-95 tap-highlight-none"
+                        className="w-10 h-10 flex items-center justify-center text-[#ff9500] ios-glass rounded-xl border transition-all active:scale-95 tap-highlight-none"
+                        style={{ borderColor: 'var(--ios-glass-border)' }}
                         aria-label="Abrir menu"
                     >
-                        <Menu size={20} strokeWidth={2.5} className="text-[#ff9500]" />
+                        <Menu size={20} strokeWidth={2.5} />
                     </button>
                 </header>
 
@@ -167,7 +168,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 <main className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto custom-scrollbar px-4 pt-4 md:px-12 md:pt-12">
                     {/* ── VISÃO GERAL — Grid de Cards ───────────────────────────────────── */}
                     <div className="flex items-center justify-between mb-8">
-                        <h3 className="text-3xl font-black text-slate-900 tracking-tighter">
+                        <h3 className="text-3xl font-black text-[var(--ios-text)] tracking-tighter">
                             {isActive('dashboard') ? 'Resumo' : activeMobileLabel}
                         </h3>
                     </div>
@@ -178,7 +179,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                 </main>
 
                 {/* Mobile Bottom Navigation */}
-                <nav className="md:hidden bg-white/80 backdrop-blur-2xl border-t border-white/20 pb-safe-offset-0 shadow-[0_-4px_32px_rgba(0,0,0,0.04)] shrink-0 z-50">
+                <nav className="md:hidden bg-[var(--ios-card-bg)]/80 backdrop-blur-2xl border-t pb-safe-offset-0 shadow-[0_-4px_32px_rgba(0,0,0,0.04)] shrink-0 z-50 transition-colors" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <div className="flex items-center justify-around px-3 pt-2 pb-6">
                         {bottomNavLeft.map(item => (
                             <button
@@ -193,7 +194,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                                 <div className="relative">
                                     <item.icon size={22} strokeWidth={isActive(item.id) ? 2.5 : 1.5} />
                                     {item.id === 'dashboard' && insightCount > 0 && (
-                                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-[#f2f2f7]">
+                                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-[var(--ios-bg)]">
                                             {insightCount > 9 ? '9+' : insightCount}
                                         </span>
                                     )}
@@ -233,7 +234,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                     />
 
                     {/* Drawer panel — slides from right */}
-                    <div className={`w-[78vw] max-w-[320px] h-full bg-slate-900 text-white flex flex-col shadow-2xl transform transition-transform duration-300 ease-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                    <div className={`w-[78vw] max-w-[320px] h-full bg-[#1c1c1e] text-white flex flex-col shadow-2xl transform transition-transform duration-300 ease-out border-l border-white/10 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                         {/* Drawer header */}
                         <div className="flex items-center justify-between px-5 pt-safe pt-6 pb-4 border-b border-slate-800">
                             <div className="flex items-center gap-2.5">

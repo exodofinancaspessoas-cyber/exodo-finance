@@ -401,10 +401,10 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
                 className={`transition-colors ${!isInsightsOpen && hasUrgentInsights ? 'text-[#ff3b30]' : 'text-[#ff9500]'
                   }`}
               />
-              <span className="text-xs font-black uppercase tracking-tight text-slate-800">IA Insights</span>
+              <span className="text-xs font-black uppercase tracking-tight" style={{ color: 'var(--ios-text)' }}>IA Insights</span>
 
               {!isInsightsOpen && (
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full leading-none ${hasUrgentInsights ? 'bg-[#ff3b30] text-white animate-bounce' : 'bg-slate-200 text-slate-600'}`}>
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full leading-none ${hasUrgentInsights ? 'bg-[#ff3b30] text-white animate-bounce' : 'bg-black/10 text-[var(--ios-text-secondary)]'}`}>
                   {visibleInsights.length}
                 </span>
               )}
@@ -435,7 +435,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
             </div>
             <div>
               <h4 className="text-sm font-black text-[#ff9500] uppercase tracking-tight">Pendências</h4>
-              <p className="text-xs text-slate-600 font-bold">{incompleteTransactions.length} lançamentos precisam de atenção</p>
+              <p className="text-xs font-bold opacity-60" style={{ color: 'var(--ios-text)' }}>{incompleteTransactions.length} lançamentos precisam de atenção</p>
             </div>
           </div>
           <button
@@ -448,45 +448,45 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       )}
 
       {/* ── HERO: Linha de Saldo ─────────────────────────────────────────── */}
-      <div id="hero-balance" className="relative bg-white ios-squircle-lg p-8 shadow-2xl shadow-black/5 border border-white">
+      <div id="hero-balance" className="relative ios-glass ios-squircle-lg p-8 shadow-2xl shadow-black/5 border" style={{ borderColor: 'var(--ios-glass-border)' }}>
         <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#007aff]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-1">
+              <h1 className="text-2xl font-black tracking-tight mb-1" style={{ color: 'var(--ios-text)' }}>
                 Olá, {user?.name?.split(' ')[0] || 'Visitante'}
               </h1>
               <p className="text-[#007aff] text-[10px] font-black uppercase tracking-widest">Seu Resumo Financeiro</p>
             </div>
 
-            <div className="flex items-center bg-[#f2f2f7] ios-squircle p-1 border border-slate-200 shadow-inner">
-              <button onClick={handlePrevMonth} className="p-2 hover:bg-white ios-squircle text-slate-400 hover:text-[#007aff] transition-all">
+            <div className="flex items-center bg-black/5 ios-squircle p-1 border shadow-inner" style={{ borderColor: 'var(--ios-glass-border)' }}>
+              <button onClick={handlePrevMonth} className="p-2 hover:bg-white/10 ios-squircle text-[var(--ios-text-secondary)] hover:text-[#007aff] transition-all">
                 <ChevronLeft size={18} />
               </button>
               <button onClick={handleCurrentMonth} className="px-5 py-2 flex items-center gap-2 group">
                 <Calendar size={14} className="text-[#007aff]" />
-                <span className="text-slate-800 text-xs font-black capitalize min-w-[120px] text-center">{monthLabel}</span>
+                <span className="text-xs font-black capitalize min-w-[120px] text-center" style={{ color: 'var(--ios-text)' }}>{monthLabel}</span>
               </button>
-              <button onClick={handleNextMonth} className="p-2 hover:bg-white ios-squircle text-slate-400 hover:text-[#007aff] transition-all">
+              <button onClick={handleNextMonth} className="p-2 hover:bg-white/10 ios-squircle text-[var(--ios-text-secondary)] hover:text-[#007aff] transition-all">
                 <ChevronRight size={18} />
               </button>
             </div>
           </div>
 
           <div className="text-center mb-10">
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Saldo Final Estimado</p>
-            <h2 className={`text-5xl font-black tracking-tighter ${isPositive ? 'text-slate-900' : 'text-[#ff3b30]'}`}>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--ios-text-secondary)' }}>Saldo Final Estimado</p>
+            <h2 className="text-5xl font-black tracking-tighter" style={{ color: isPositive ? 'var(--ios-text)' : '#ff3b30' }}>
               {formatCurrency(monthEndBalance)}
             </h2>
-            <div className={`inline-flex items-center gap-1.5 mt-4 px-4 py-1.5 ios-squircle text-xs font-black ${monthBalance >= 0 ? 'bg-[#007aff]/10 text-[#007aff]' : 'bg-[#ff3b30]/10 text-[#ff3b30] animate-overdue'}`}>
+            <div className={`inline-flex items-center gap-1.5 mt-4 px-4 py-1.5 ios-squircle text-xs font-black ${monthBalance >= 0 ? 'bg-[#34c759]/10 text-[#34c759]' : 'bg-[#ff3b30]/10 text-[#ff3b30] animate-overdue'}`}>
               {monthBalance >= 0 ? <TrendingUp size={14} strokeWidth={3} /> : <TrendingDown size={14} strokeWidth={3} />}
               {monthBalance >= 0 ? '+' : ''}{formatCurrency(monthBalance)} no mês
             </div>
           </div>
 
           <div className="relative mb-2">
-            <div className="absolute top-4 left-0 right-0 h-1.5 bg-[#f2f2f7] ios-squircle" />
+            <div className="absolute top-4 left-0 right-0 h-1.5 bg-black/5 dark:bg-white/5 ios-squircle" />
             <div
               className={`absolute top-4 left-0 h-1.5 ios-squircle transition-all duration-1000 ${isPositive ? 'bg-[#007aff]' : 'bg-[#ff3b30]'}`}
               style={{ width: `${currentPct}%` }}
@@ -494,27 +494,27 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
 
             <div className="flex justify-between relative z-10">
               <div className="flex flex-col items-center gap-2">
-                <div className="w-9 h-9 ios-squircle bg-white border-2 border-[#007aff] flex items-center justify-center shadow-lg">
+                <div className="w-9 h-9 ios-squircle bg-[var(--ios-card-bg)] border-2 border-[#007aff] flex items-center justify-center shadow-lg">
                   <div className="w-2.5 h-2.5 ios-squircle bg-[#007aff]" />
                 </div>
-                <p className="text-slate-400 text-[10px] font-black uppercase tracking-tighter">Início</p>
-                <p className="text-slate-900 text-xs font-black">{formatCurrency(monthBeginBalance)}</p>
+                <p className="text-[10px] font-black uppercase tracking-tighter" style={{ color: 'var(--ios-text-secondary)' }}>Início</p>
+                <p className="text-xs font-black" style={{ color: 'var(--ios-text)' }}>{formatCurrency(monthBeginBalance)}</p>
               </div>
 
               <div className="flex flex-col items-center gap-2">
-                <div className="w-9 h-9 ios-squircle bg-white border-2 border-[#34c759] flex items-center justify-center shadow-lg transform scale-110">
+                <div className="w-9 h-9 ios-squircle bg-[var(--ios-card-bg)] border-2 border-[#34c759] flex items-center justify-center shadow-lg transform scale-110">
                   <div className="w-2.5 h-2.5 ios-squircle bg-[#34c759]" />
                 </div>
-                <p className="text-slate-400 text-[10px] font-black uppercase tracking-tighter">Final</p>
-                <p className="text-slate-900 text-xs font-black">{formatCurrency(monthEndBalance)}</p>
+                <p className="text-[10px] font-black uppercase tracking-tighter" style={{ color: 'var(--ios-text-secondary)' }}>Final</p>
+                <p className="text-xs font-black" style={{ color: 'var(--ios-text)' }}>{formatCurrency(monthEndBalance)}</p>
               </div>
 
               <div className="flex flex-col items-center gap-2">
-                <div className="w-9 h-9 ios-squircle bg-slate-100 border-2 border-slate-200 flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 ios-squircle bg-slate-300" />
+                <div className="w-9 h-9 ios-squircle bg-[var(--ios-card-bg)] border-2 border-[var(--ios-text-secondary)]/20 flex items-center justify-center">
+                  <div className="w-2.5 h-2.5 ios-squircle bg-[var(--ios-text-secondary)]/40" />
                 </div>
-                <p className="text-slate-400 text-[10px] font-black uppercase tracking-tighter">Projetado</p>
-                <p className="text-slate-500 text-xs font-black">{formatCurrency(monthProjectedBalance)}</p>
+                <p className="text-[10px] font-black uppercase tracking-tighter" style={{ color: 'var(--ios-text-secondary)' }}>Projetado</p>
+                <p className="text-xs font-black" style={{ color: 'var(--ios-text-secondary)' }}>{formatCurrency(monthProjectedBalance)}</p>
               </div>
             </div>
           </div>
@@ -526,18 +526,18 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
         {incompleteTransactions.length > 0 && (
           <div
             onClick={() => onChangeView('movements_incomplete')}
-            className="mb-6 p-4 bg-orange-50 border-2 border-orange-100 rounded-2xl flex items-center justify-between gap-4 cursor-pointer active:scale-[0.98] transition-all shadow-lg shadow-orange-900/5 group"
+            className="mb-6 p-4 bg-[#ff9500]/10 border-2 border-[#ff9500]/20 rounded-2xl flex items-center justify-between gap-4 cursor-pointer active:scale-[0.98] transition-all shadow-lg shadow-black/5 group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+              <div className="w-12 h-12 bg-[#ff9500] rounded-xl flex items-center justify-center text-white shadow-lg shadow-[#ff9500]/30">
                 <AlertCircle size={24} strokeWidth={3} />
               </div>
               <div>
-                <p className="text-orange-900 font-black text-sm uppercase tracking-wider">Lançamentos Pendentes</p>
-                <p className="text-orange-700/80 text-[10px] font-bold">Você tem {incompleteTransactions.length} {incompleteTransactions.length === 1 ? 'item' : 'itens'} que precisam de atenção.</p>
+                <p className="font-black text-sm uppercase tracking-wider" style={{ color: '#ff9500' }}>Lançamentos Pendentes</p>
+                <p className="text-[10px] font-bold opacity-80" style={{ color: 'var(--ios-text)' }}>Você tem {incompleteTransactions.length} {incompleteTransactions.length === 1 ? 'item' : 'itens'} que precisam de atenção.</p>
               </div>
             </div>
-            <div className="bg-orange-100 p-2 rounded-lg text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-all">
+            <div className="bg-[#ff9500]/20 p-2 rounded-lg text-[#ff9500] group-hover:bg-[#ff9500] group-hover:text-white transition-all">
               <ArrowRight size={18} />
             </div>
           </div>
@@ -545,8 +545,8 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
 
         <div className="flex items-center justify-between mb-4">
           <div className="flex flex-col">
-            <h3 className="text-xl font-black text-slate-800 tracking-tight leading-none mb-1">Visão Geral</h3>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{monthLabel}</span>
+            <h3 className="text-xl font-black tracking-tight leading-none mb-1" style={{ color: 'var(--ios-text)' }}>Visão Geral</h3>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--ios-text-secondary)' }}>{monthLabel}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -561,27 +561,29 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
             {/* Card: Saldo em Contas */}
             <div
               onClick={() => onChangeView('finance')}
-              className="group bg-white ios-squircle p-5 shadow-sm hover:shadow-xl border border-white transition-all cursor-pointer relative overflow-hidden active:scale-95"
+              className="group ios-glass ios-squircle p-5 shadow-sm hover:shadow-xl border transition-all cursor-pointer relative overflow-hidden active:scale-95"
+              style={{ borderColor: 'var(--ios-glass-border)' }}
             >
               <div className="relative z-10">
                 <div className="w-10 h-10 ios-squircle bg-[#007aff]/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
                   <Landmark size={20} strokeWidth={2.5} className="text-[#007aff]" />
                 </div>
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Saldo Total</p>
-                <p className="text-xl font-black text-slate-900 leading-none">{formatCurrency(monthEndBalance)}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ios-text-secondary)' }}>Saldo Total</p>
+                <p className="text-xl font-black leading-none" style={{ color: 'var(--ios-text)' }}>{formatCurrency(monthEndBalance)}</p>
               </div>
             </div>
 
             {/* Card: Receitas */}
             <div
               onClick={() => onChangeView('movements')}
-              className="group bg-white ios-squircle p-5 shadow-sm hover:shadow-xl border border-white transition-all cursor-pointer relative overflow-hidden active:scale-95"
+              className="group ios-glass ios-squircle p-5 shadow-sm hover:shadow-xl border transition-all cursor-pointer relative overflow-hidden active:scale-95"
+              style={{ borderColor: 'var(--ios-glass-border)' }}
             >
               <div className="relative z-10">
                 <div className="w-10 h-10 ios-squircle bg-[#007aff]/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
                   <ArrowUpCircle size={20} strokeWidth={2.5} className="text-[#007aff]" />
                 </div>
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Receitas</p>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ios-text-secondary)' }}>Receitas</p>
                 <p className="text-xl font-black text-[#007aff] leading-none">+{formatCurrency(monthlyStats.income)}</p>
               </div>
             </div>
@@ -589,13 +591,14 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
             {/* Card: Despesas */}
             <div
               onClick={() => onChangeView('movements')}
-              className="group bg-white ios-squircle p-5 shadow-sm hover:shadow-xl border border-white transition-all cursor-pointer relative overflow-hidden active:scale-95"
+              className="group ios-glass ios-squircle p-5 shadow-sm hover:shadow-xl border transition-all cursor-pointer relative overflow-hidden active:scale-95"
+              style={{ borderColor: 'var(--ios-glass-border)' }}
             >
               <div className="relative z-10">
                 <div className="w-10 h-10 ios-squircle bg-[#ff3b30]/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
                   <ArrowDownCircle size={20} strokeWidth={2.5} className="text-[#ff3b30]" />
                 </div>
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Despesas</p>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ios-text-secondary)' }}>Despesas</p>
                 <p className="text-xl font-black text-[#ff3b30] leading-none">-{formatCurrency(monthlyStats.expense)}</p>
               </div>
             </div>
@@ -603,16 +606,17 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
             {/* Card: Cartões */}
             <div
               onClick={() => onChangeView('finance')}
-              className="group bg-white ios-squircle p-5 shadow-sm hover:shadow-xl border border-white transition-all cursor-pointer relative overflow-hidden active:scale-95"
+              className="group ios-glass ios-squircle p-5 shadow-sm hover:shadow-xl border transition-all cursor-pointer relative overflow-hidden active:scale-95"
+              style={{ borderColor: 'var(--ios-glass-border)' }}
             >
               <div className="relative z-10">
                 <div className="w-10 h-10 ios-squircle bg-[#34c759]/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
                   <CreditCard size={20} strokeWidth={2.5} className="text-[#34c759]" />
                 </div>
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Uso Cartão</p>
-                <p className="text-xl font-black text-slate-900 leading-none">{formatCurrency(monthlyCardUsed)}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ios-text-secondary)' }}>Uso Cartão</p>
+                <p className="text-xl font-black leading-none" style={{ color: 'var(--ios-text)' }}>{formatCurrency(monthlyCardUsed)}</p>
                 {totalCardLimit > 0 && (
-                  <div className="mt-3 w-full bg-[#f2f2f7] rounded-full h-1">
+                  <div className="mt-3 w-full bg-black/10 rounded-full h-1">
                     <div
                       className="h-full rounded-full bg-[#34c759] transition-all duration-1000"
                       style={{ width: `${cardUsagePct}%` }}
@@ -625,13 +629,14 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
             {/* Card: Resultado Mês */}
             <div
               onClick={() => onChangeView('analytics')}
-              className={`group ios-squircle p-5 shadow-sm hover:shadow-xl border transition-all cursor-pointer active:scale-95 ${monthBalance >= 0 ? 'bg-[#007aff]/5 border-[#007aff]/10' : 'bg-[#ff3b30]/5 border-[#ff3b30]/10'}`}
+              className={`group ios-glass ios-squircle p-5 shadow-sm hover:shadow-xl border transition-all cursor-pointer active:scale-95 ${monthBalance >= 0 ? 'bg-[#007aff]/5' : 'bg-[#ff3b30]/5'}`}
+              style={{ borderColor: 'var(--ios-glass-border)' }}
             >
               <div className="relative z-10">
                 <div className={`w-10 h-10 ios-squircle flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${monthBalance >= 0 ? 'bg-[#007aff]/20' : 'bg-[#ff3b30]/20'}`}>
                   {monthBalance >= 0 ? <TrendingUp size={20} strokeWidth={2.5} className="text-[#007aff]" /> : <TrendingDown size={20} strokeWidth={2.5} className="text-[#ff3b30]" />}
                 </div>
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Balanço</p>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ios-text-secondary)' }}>Balanço</p>
                 <p className={`text-xl font-black leading-none ${monthBalance >= 0 ? 'text-[#007aff]' : 'text-[#ff3b30]'}`}>
                   {monthBalance >= 0 ? '+' : ''}{formatCurrency(monthBalance)}
                 </p>
@@ -641,14 +646,15 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
             {/* Card: Contas a Pagar */}
             <div
               onClick={() => onChangeView('agenda')}
-              className={`group ios-squircle p-5 shadow-sm hover:shadow-xl border transition-all cursor-pointer active:scale-95 ${globalPendingStats.overduePayable > 0 ? 'bg-[#ff3b30]/5 border-[#ff3b30]/10' : 'bg-slate-900 border-slate-900'}`}
+              className={`group ios-glass ios-squircle p-5 shadow-sm hover:shadow-xl border transition-all cursor-pointer active:scale-95 ${globalPendingStats.overduePayable > 0 ? 'bg-[#ff3b30]/10' : ''}`}
+              style={{ borderColor: 'var(--ios-glass-border)' }}
             >
               <div className="relative z-10">
-                <div className={`w-10 h-10 ios-squircle flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${globalPendingStats.overduePayable > 0 ? 'bg-[#ff3b30]/20' : 'bg-white/10'}`}>
+                <div className={`w-10 h-10 ios-squircle flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${globalPendingStats.overduePayable > 0 ? 'bg-[#ff3b30]/20' : 'bg-black/5'}`}>
                   <Clock size={20} strokeWidth={2.5} className={globalPendingStats.overduePayable > 0 ? 'text-[#ff3b30]' : 'text-[#ff9500]'} />
                 </div>
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">A Pagar</p>
-                <p className={`text-xl font-black leading-none ${globalPendingStats.overduePayable > 0 ? 'text-[#ff3b30]' : 'text-white'}`}>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--ios-text-secondary)' }}>A Pagar</p>
+                <p className="text-xl font-black leading-none" style={{ color: globalPendingStats.overduePayable > 0 ? '#ff3b30' : 'var(--ios-text)' }}>
                   {formatCurrency(globalPendingStats.overduePayable > 0 ? globalPendingStats.overduePayable : globalPendingStats.totalPayable)}
                 </p>
               </div>
@@ -660,35 +666,35 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       {/* ── SEÇÃO: Próximos Vencimentos e Projeção de Dívidas ───────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Próximos Pagamentos */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div className="ios-glass ios-squircle-lg border shadow-sm p-5" style={{ borderColor: 'var(--ios-glass-border)' }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <Calendar size={18} className="text-rose-500" /> Próximas Contas
+            <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--ios-text)' }}>
+              <Calendar size={18} className="text-[#ff2d55]" /> Próximas Contas
             </h3>
-            <button onClick={() => onChangeView('agenda')} className="text-xs font-bold text-indigo-600 hover:underline">Ver tudo</button>
+            <button onClick={() => onChangeView('agenda')} className="text-xs font-black text-[#007aff] hover:underline uppercase tracking-tight">Ver tudo</button>
           </div>
           <div className="space-y-3">
             {globalPendingStats.upcoming.length > 0 ? globalPendingStats.upcoming.map(t => (
-              <div key={t.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100/50">
+              <div key={t.id} className="flex items-center justify-between p-3 bg-white/5 ios-squircle-md border" style={{ borderColor: 'var(--ios-glass-border)' }}>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-800 truncate max-w-[140px]">{t.description}</span>
-                  <span className="text-[10px] text-slate-400 font-medium">{formatDate(t.date)}</span>
+                  <span className="text-xs font-bold truncate max-w-[140px]" style={{ color: 'var(--ios-text)' }}>{t.description}</span>
+                  <span className="text-[10px] font-bold" style={{ color: 'var(--ios-text-secondary)' }}>{formatDate(t.date)}</span>
                 </div>
-                <span className="font-bold text-sm text-slate-900">{formatCurrency(t.amount)}</span>
+                <span className="font-black text-sm" style={{ color: 'var(--ios-text)' }}>{formatCurrency(t.amount)}</span>
               </div>
             )) : (
-              <div className="py-8 text-center text-slate-400 text-xs italic">Nenhum pagamento pendente.</div>
+              <div className="py-8 text-center text-xs italic" style={{ color: 'var(--ios-text-secondary)' }}>Nenhum pagamento pendente.</div>
             )}
           </div>
         </div>
 
         {/* Projeção de Dívida Mensal */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div className="ios-glass ios-squircle-lg border shadow-sm p-5" style={{ borderColor: 'var(--ios-glass-border)' }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <Activity size={18} className="text-rose-500" /> Dívidas por Mês
+            <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--ios-text)' }}>
+              <Activity size={18} className="text-[#ff3b30]" /> Dívidas por Mês
             </h3>
-            <button onClick={() => onChangeView('projections')} className="text-xs font-bold text-indigo-600 hover:underline">Projeção detalhada</button>
+            <button onClick={() => onChangeView('projections')} className="text-xs font-black text-[#007aff] hover:underline uppercase tracking-tight">Projeção detalhada</button>
           </div>
           <div className="flex items-end justify-between h-32 gap-2 pt-2">
             {monthlyDebtProjection.map((m, i) => {
@@ -698,15 +704,15 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
                 <div key={i} className="flex-1 flex flex-col items-center gap-2">
                   <div className="w-full relative group">
                     <div
-                      className="w-full bg-rose-50 rounded-t-lg group-hover:bg-rose-100 transition-all duration-500"
+                      className="w-full bg-[#ff3b30]/10 rounded-t-lg group-hover:bg-[#ff3b30]/20 transition-all duration-500"
                       style={{ height: `${Math.max(height, 5)}%` }}
                     >
-                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 font-bold">
+                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[var(--ios-text)] text-[var(--ios-bg)] text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 font-bold">
                         {formatCurrency(m.amount)}
                       </div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">{m.label}</span>
+                  <span className="text-[10px] font-bold text-[var(--ios-text-secondary)] uppercase">{m.label}</span>
                 </div>
               );
             })}
@@ -715,13 +721,13 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       </div>
 
       {/* ── GRÁFICO: Evolução dos últimos 7 dias ─────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+      <div className="ios-glass ios-squircle-lg border shadow-sm overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
+        <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--ios-glass-border)' }}>
           <div>
-            <h3 className="font-bold text-slate-800">Evolução das despesas</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Visão de {monthLabel}</p>
+            <h3 className="font-bold" style={{ color: 'var(--ios-text)' }}>Evolução das despesas</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--ios-text-secondary)' }}>Visão de {monthLabel}</p>
           </div>
-          <button onClick={() => onChangeView('analytics')} className="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1">
+          <button onClick={() => onChangeView('analytics')} className="text-[#007aff] text-xs font-black hover:underline flex items-center gap-1 uppercase tracking-tight">
             Ver análise <ArrowRight size={12} />
           </button>
         </div>
@@ -738,11 +744,12 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
                   <stop offset="95%" stopColor="#007aff" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={v => v === 0 ? '0' : `${(v / 1000).toFixed(0)}k`} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--ios-glass-border)" />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--ios-text-secondary)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--ios-text-secondary)' }} axisLine={false} tickLine={false} tickFormatter={v => v === 0 ? '0' : `${(v / 1000).toFixed(0)}k`} />
               <Tooltip
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                contentStyle={{ borderRadius: '12px', border: '1px solid var(--ios-glass-border)', backgroundColor: 'var(--ios-card-bg)', backdropFilter: 'blur(10px)', color: 'var(--ios-text)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                itemStyle={{ color: 'var(--ios-text)' }}
                 formatter={(v: number, name: string) => [formatCurrency(v), name === 'despesas' ? 'Despesas' : 'Receitas']}
               />
               <Area type="monotone" dataKey="receitas" stroke="#007aff" strokeWidth={2} fill="url(#gradReceita)" dot={{ r: 3, fill: '#007aff', strokeWidth: 0 }} activeDot={{ r: 5 }} />
@@ -756,52 +763,52 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
         {/* Atividade recente */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <Activity size={16} className="text-indigo-500" /> Atividade Recente
+        <div className="lg:col-span-3 ios-glass ios-squircle-lg border shadow-sm overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
+          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--ios-glass-border)' }}>
+            <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--ios-text)' }}>
+              <Activity size={16} className="text-[#5856d6]" /> Atividade Recente
             </h3>
-            <button onClick={() => onChangeView('movements')} className="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1">
+            <button onClick={() => onChangeView('movements')} className="text-[#007aff] text-xs font-black hover:underline flex items-center gap-1 uppercase tracking-tight">
               Ver tudo <ArrowRight size={12} />
             </button>
           </div>
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y" style={{ borderColor: 'var(--ios-glass-border)' }}>
             {recentTransactions.length > 0 ? recentTransactions.map(t => {
               const cat = categories.find(c => c.id === t.category_id);
               return (
-                <div key={t.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors cursor-pointer">
+                <div key={t.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-black/5 transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: (cat?.color || (t.type === 'RECEITA' ? '#10b981' : '#ef4444')) + '18' }}
+                      style={{ backgroundColor: (cat?.color || (t.type === 'RECEITA' ? '#34c759' : '#ff3b30')) + '18' }}
                     >
                       {t.type === 'RECEITA'
-                        ? <ArrowUpCircle size={17} className="text-[#007aff]" />
+                        ? <ArrowUpCircle size={17} className="text-[#34c759]" />
                         : <ArrowDownCircle size={17} className="text-[#ff3b30]" />}
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-800 text-sm leading-tight">{t.description}</p>
-                      <p className="text-xs text-slate-400">{formatDate(t.date)} · {cat?.name || 'Geral'}</p>
+                      <p className="font-bold text-sm leading-tight" style={{ color: 'var(--ios-text)' }}>{t.description}</p>
+                      <p className="text-xs" style={{ color: 'var(--ios-text-secondary)' }}>{formatDate(t.date)} · {cat?.name || 'Geral'}</p>
                     </div>
                   </div>
-                  <span className={`font-black text-sm ${t.type === 'RECEITA' ? 'text-[#007aff]' : 'text-[#ff3b30]'}`}>
+                  <span className={`font-black text-sm ${t.type === 'RECEITA' ? 'text-[#34c759]' : 'text-[#ff3b30]'}`}>
                     {t.type === 'RECEITA' ? '+' : '-'}{formatCurrency(t.amount)}
                   </span>
                 </div>
               );
             }) : (
-              <div className="px-5 py-10 text-center text-slate-400 text-sm">Nenhuma atividade encontrada.</div>
+              <div className="px-5 py-10 text-center text-sm" style={{ color: 'var(--ios-text-secondary)' }}>Nenhuma atividade encontrada.</div>
             )}
           </div>
         </div>
 
         {/* Maiores Gastos */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <TrendingUp size={16} className="text-orange-500" /> Maiores Gastos
+        <div className="lg:col-span-2 ios-glass ios-squircle-lg border shadow-sm overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
+          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--ios-glass-border)' }}>
+            <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--ios-text)' }}>
+              <TrendingUp size={16} className="text-[#ff9500]" /> Maiores Gastos
             </h3>
-            <span className="text-xs text-slate-400 capitalize">{currentMonth.toLocaleString('pt-BR', { month: 'short' })}</span>
+            <span className="text-xs capitalize font-bold" style={{ color: 'var(--ios-text-secondary)' }}>{currentMonth.toLocaleString('pt-BR', { month: 'short' })}</span>
           </div>
           <div className="p-5 space-y-4">
             {topCategories.length > 0 ? topCategories.map((cat, i) => (
@@ -809,11 +816,11 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
                 <div className="flex justify-between items-center mb-1.5">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                    <span className="text-sm font-medium text-slate-700">{cat.name}</span>
+                    <span className="text-sm font-bold" style={{ color: 'var(--ios-text)' }}>{cat.name}</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-800">{formatCurrency(cat.amount)}</span>
+                  <span className="text-sm font-black" style={{ color: 'var(--ios-text)' }}>{formatCurrency(cat.amount)}</span>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-[var(--ios-text-secondary)]/10 rounded-full h-1.5 overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{
@@ -824,12 +831,12 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
                 </div>
               </div>
             )) : (
-              <p className="text-sm text-slate-400 text-center py-6">Sem gastos registrados neste mês.</p>
+              <p className="text-sm text-center py-6 font-bold" style={{ color: 'var(--ios-text-secondary)' }}>Sem gastos registrados neste mês.</p>
             )}
           </div>
 
           {/* Dica financeira */}
-          <div className={`mx-4 mb-4 p-4 rounded-xl text-[10px] font-black uppercase tracking-tight ${monthBalance >= 0 ? 'bg-[#007aff]/10 text-[#007aff]' : 'bg-[#ff3b30]/10 text-[#ff3b30] animate-overdue'}`}>
+          <div className={`mx-4 mb-4 p-4 rounded-xl text-[10px] font-black uppercase tracking-tight ${monthBalance >= 0 ? 'bg-[#34c759]/10 text-[#34c759]' : 'bg-[#ff3b30]/10 text-[#ff3b30] animate-overdue'}`}>
             {monthBalance >= 0
               ? '✅ Resultado Positivo! Considere planejar seus sonhos.'
               : '⚠️ Alerta: Despesas maiores que receitas. Reveja seus hábitos.'}
@@ -849,24 +856,19 @@ const InsightCard: React.FC<{
   onClick: (view: string) => void;
 }> = ({ insight, onDismiss, onClick }) => {
   const severityStyles: Record<InsightSeverity, string> = {
-    CRITICAL: 'bg-red-50 border-l-4 border-l-red-500',
-    WARNING: 'bg-amber-50 border-l-4 border-l-amber-400',
-    INFO: 'bg-slate-50 border-l-4 border-l-slate-300',
-  };
-  const textStyles: Record<InsightSeverity, string> = {
-    CRITICAL: 'text-red-800',
-    WARNING: 'text-amber-800',
-    INFO: 'text-slate-700',
+    CRITICAL: 'bg-[#ff3b30]/10 border-l-4 border-l-[#ff3b30]',
+    WARNING: 'bg-[#ff9500]/10 border-l-4 border-l-[#ff9500]',
+    INFO: 'bg-[var(--ios-text-secondary)]/10 border-l-4 border-l-[var(--ios-text-secondary)]',
   };
 
   return (
     <div
       onClick={() => insight.targetView && onClick(insight.targetView)}
-      className={`flex items-start gap-3 px-4 py-3.5 ${severityStyles[insight.severity]} transition-all ${insight.targetView ? 'cursor-pointer hover:brightness-95 active:scale-[0.99]' : ''}`}
+      className={`flex items-start gap-3 px-4 py-3.5 ${severityStyles[insight.severity]} transition-all ${insight.targetView ? 'cursor-pointer hover:brightness-125 active:scale-[0.99]' : ''}`}
     >
       <span className="text-base shrink-0 mt-0.5">{insight.icon}</span>
       <div className="flex-1">
-        <p className={`text-xs font-medium leading-relaxed ${textStyles[insight.severity]}`}>
+        <p className="text-xs font-bold leading-relaxed" style={{ color: 'var(--ios-text)' }}>
           {insight.message}
         </p>
       </div>
@@ -875,7 +877,8 @@ const InsightCard: React.FC<{
           e.stopPropagation();
           onDismiss(insight.id);
         }}
-        className="shrink-0 p-1 rounded-full hover:bg-black/5 text-slate-400 hover:text-slate-600 transition-colors"
+        className="shrink-0 p-1 rounded-full hover:bg-black/20 transition-colors"
+        style={{ color: 'var(--ios-text-secondary)' }}
         aria-label="Dispensar insight"
       >
         <XIcon size={13} />

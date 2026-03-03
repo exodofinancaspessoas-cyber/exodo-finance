@@ -4,7 +4,7 @@ import {
     Goal, Budget
 } from '../types';
 import { DatabaseService } from './database';
-import { supabase } from './supabase';
+import { supabase, isSupabaseConfigured } from './supabase';
 import { toISODate } from '../utils';
 import { INITIAL_CATEGORIES_DATA } from './initialCategories';
 import { APP_VERSION, DEPLOY_DATE } from '../version';
@@ -200,6 +200,29 @@ export const StorageService = {
     logout: () => {
         localStorage.removeItem(STORAGE_KEYS.USER);
         StorageService.clearCache();
+    },
+
+    updateTheme: async (theme: 'light' | 'dark' | 'system') => {
+        const user = StorageService.getUser();
+        if (user) {
+            const updatedUser = { ...user, theme };
+            StorageService.setUser(updatedUser);
+
+            // If Supabase is configured, we could also sync this to public.profiles
+            if (isSupabaseConfigured() && supabase) {
+                try {
+                    const { data: { user: authUser } } = await supabase.auth.getUser();
+                    if (authUser) {
+                        await supabase
+                            .from('profiles')
+                            .update({ theme })
+                            .eq('id', authUser.id);
+                    }
+                } catch (e) {
+                    console.error('Error syncing theme to Supabase:', e);
+                }
+            }
+        }
     },
 
     // RECURRING

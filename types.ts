@@ -15,6 +15,7 @@ export interface User {
   email: string;
   password?: string;
   avatar?: string;
+  theme?: 'light' | 'dark' | 'system';
   settings?: {
     monthly_income?: number;
     reserve_percentage?: number; // Default 20%

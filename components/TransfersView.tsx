@@ -35,35 +35,36 @@ const AccountSelector = ({
 
     return (
         <div className="flex-1">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{label}</label>
+            <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest mb-2">{label}</label>
             <div className="relative">
                 <select
-                    className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pr-10 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 transition-all cursor-pointer"
+                    className="w-full appearance-none bg-black/5 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 pr-10 text-sm font-bold text-[var(--ios-text)] outline-none focus:ring-2 focus:ring-[#007aff]/30 transition-all cursor-pointer"
                     value={value}
                     onChange={e => onChange(e.target.value)}
                     required
+                    style={{ borderColor: 'var(--ios-glass-border)' }}
                 >
                     <option value="">Selecionar conta...</option>
                     {available.map(a => (
-                        <option key={a.id} value={a.id}>{a.name}</option>
+                        <option key={a.id} value={a.id} className="text-black">{a.name}</option>
                     ))}
                 </select>
-                <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 rotate-90 pointer-events-none" />
+                <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ios-text-secondary)] rotate-90 pointer-events-none" />
             </div>
 
             {/* Selected account preview */}
             {selected && (
-                <div className="mt-2 p-3 bg-white rounded-xl border border-slate-100 flex items-center gap-3 animate-fade-in">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                        <AccountIcon type={selected.type} className="w-4 h-4 text-slate-600" />
+                <div className="mt-2 p-3 bg-[var(--ios-card-bg)]/80 backdrop-blur-md rounded-xl border flex items-center gap-3 animate-fade-in" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                    <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center shrink-0">
+                        <AccountIcon type={selected.type} className="w-4 h-4 text-[var(--ios-text-secondary)]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-700 truncate">{selected.name}</p>
-                        <p className="text-xs text-slate-400">{selected.bank || selected.type}</p>
+                        <p className="text-[10px] font-black text-[var(--ios-text)] truncate uppercase tracking-widest leading-none mb-1">{selected.name}</p>
+                        <p className="text-[9px] font-bold text-[var(--ios-text-secondary)] uppercase tracking-widest leading-none">{selected.bank || selected.type}</p>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-xs font-bold text-slate-800">{formatCurrency(selected.current_balance)}</p>
-                        <p className="text-[10px] text-slate-400">saldo atual</p>
+                        <p className="text-sm font-black text-[var(--ios-text)] leading-none mb-1">{formatCurrency(selected.current_balance)}</p>
+                        <p className="text-[8px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest leading-none">saldo</p>
                     </div>
                 </div>
             )}
@@ -191,36 +192,38 @@ export default function TransfersView() {
         setIsModalOpen(true);
     };
 
+    const { hapticFeedback } = require('./ui/Skeleton');
+
     return (
-        <div>
+        <div className="animate-in fade-in duration-700">
             {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-800">Transferências</h2>
-                    <p className="text-sm text-slate-500 mt-0.5">Mova dinheiro entre suas contas</p>
+            <div className="flex justify-between items-end mb-10 px-1">
+                <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black text-[#5856d6] uppercase tracking-widest leading-none">Movimentações</span>
+                    <h1 className="text-4xl font-black text-[var(--ios-text)] tracking-tight leading-none uppercase">Transferências</h1>
                 </div>
                 <button
                     id="btn-nova-transferencia"
-                    onClick={() => openModal()}
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all hover:shadow-lg active:scale-95 font-semibold text-sm"
+                    onClick={() => { hapticFeedback(10); openModal(); }}
+                    className="bg-[#5856d6] hover:bg-[#5856d6]/90 text-white w-14 h-14 ios-squircle flex items-center justify-center shadow-lg shadow-[#5856d6]/20 transition-all active:scale-95 border border-white/10"
+                    aria-label="Nova Transferência"
                 >
-                    <Plus size={18} />
-                    Nova Transferência
+                    <Plus size={24} strokeWidth={3} />
                 </button>
             </div>
 
             {/* Summary Cards */}
             {!loading && accounts.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                     {accounts.slice(0, 4).map(acc => (
-                        <div key={acc.id} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
-                                    <AccountIcon type={acc.type} className="w-3.5 h-3.5 text-slate-500" />
+                        <div key={acc.id} className="ios-glass ios-squircle-sm border p-5 shadow-sm hover:shadow-md transition-all group" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <div className="flex items-center gap-2.5 mb-4">
+                                <div className="w-8 h-8 ios-squircle bg-black/5 dark:bg-white/5 flex items-center justify-center border border-[var(--ios-glass-border)] shadow-inner">
+                                    <AccountIcon type={acc.type} className="w-4 h-4 text-[var(--ios-text-secondary)]" />
                                 </div>
-                                <p className="text-xs font-bold text-slate-500 truncate">{acc.name}</p>
+                                <p className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest truncate">{acc.name}</p>
                             </div>
-                            <p className={`text-lg font-black ${acc.current_balance >= 0 ? 'text-slate-800' : 'text-red-600'}`}>
+                            <p className={`text-xl font-black tracking-tight ${acc.current_balance >= 0 ? 'text-[var(--ios-text)]' : 'text-[#ff3b30]'}`}>
                                 {formatCurrency(acc.current_balance)}
                             </p>
                         </div>
@@ -230,97 +233,105 @@ export default function TransfersView() {
 
             {/* Transfer History */}
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                    <Loader2 size={36} className="animate-spin mb-3" />
-                    <p className="text-sm">Carregando transferências...</p>
+                <div className="flex flex-col items-center justify-center py-24 text-[var(--ios-text-secondary)]">
+                    <Loader2 size={40} className="animate-spin mb-4 opacity-40 text-[#5856d6]" />
+                    <p className="text-xs font-black uppercase tracking-widest opacity-40">Carregando Movimentações...</p>
                 </div>
             ) : transfers.length === 0 ? (
-                <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-14 text-center">
-                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <ArrowRightLeft size={28} className="text-slate-400" />
+                <div className="ios-glass ios-squircle-md border-2 border-dashed py-24 text-center flex flex-col items-center justify-center px-6" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                    <div className="w-20 h-20 bg-black/5 ios-squircle flex items-center justify-center mb-6 border shadow-inner" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                        <ArrowRightLeft size={36} className="text-[var(--ios-text-secondary)] opacity-50" />
                     </div>
-                    <p className="text-lg font-bold text-slate-600">Nenhuma transferência</p>
-                    <p className="text-sm text-slate-400 mt-1">Clique em "Nova Transferência" para começar</p>
+                    <h2 className="text-xl font-black text-[var(--ios-text)] tracking-tight mb-2 uppercase">Nenhuma movimentação</h2>
+                    <p className="text-[var(--ios-text-secondary)] text-sm font-black uppercase tracking-widest max-w-xs px-4 opacity-70 mb-10">Realize transferências entre suas contas para manter o saldo atualizado.</p>
                     <button
-                        onClick={() => openModal()}
-                        className="mt-5 inline-flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors"
+                        onClick={() => { hapticFeedback(5); openModal(); }}
+                        className="bg-[#5856d6] text-white px-10 py-4 ios-squircle text-xs font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
                     >
-                        <Plus size={16} />
                         Criar primeira transferência
                     </button>
                 </div>
             ) : (
-                <div className="space-y-6">
+                <div className="space-y-10 pb-10">
                     {(Object.entries(groupedTransfers) as [string, Transfer[]][]).map(([month, monthTransfers]) => (
                         <div key={month}>
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                <CalendarDays size={12} />
-                                {formatMonthLabel(month)}
-                                <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[10px] font-black">
-                                    {monthTransfers.length}
+                            <div className="flex items-center gap-4 mb-6">
+                                <h3 className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                                    <CalendarDays size={14} className="text-[#5856d6]" />
+                                    {formatMonthLabel(month)}
+                                </h3>
+                                <div className="h-px flex-1 bg-black/5 dark:bg-white/5" />
+                                <span className="bg-[#5856d6]/10 text-[#5856d6] px-3 py-1 ios-squircle text-[10px] font-black uppercase tracking-widest border border-[#5856d6]/20">
+                                    {monthTransfers.length} {monthTransfers.length === 1 ? 'item' : 'itens'}
                                 </span>
-                            </h3>
-                            <div className="space-y-2">
+                            </div>
+                            <div className="space-y-3">
                                 {monthTransfers.map(t => {
                                     const from = accounts.find(a => a.id === t.from_account_id);
                                     const to = accounts.find(a => a.id === t.to_account_id);
                                     return (
-                                        <div key={t.id} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow group">
-                                            <div className="flex items-center gap-4">
+                                        <div key={t.id} className="ios-glass ios-squircle-sm border p-5 shadow-sm hover:shadow-xl hover:translate-y-[-2px] transition-all group" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                            <div className="flex items-center gap-5">
                                                 {/* Icon */}
-                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-                                                    <ArrowRightLeft size={18} className="text-slate-500" />
+                                                <div className="w-12 h-12 ios-squircle bg-black/5 dark:bg-white/5 border flex items-center justify-center shrink-0 shadow-inner" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                                    <ArrowRightLeft size={20} className="text-[#5856d6]" strokeWidth={2.5} />
                                                 </div>
 
                                                 {/* Accounts flow */}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="text-sm font-bold text-red-600 truncate">
-                                                            {from?.name ?? 'Conta removida'}
+                                                    <div className="flex items-center gap-3 flex-wrap mb-1.5">
+                                                        <span className="text-sm font-black text-[#ff3b30] uppercase tracking-tight">
+                                                            {from?.name ?? 'Removida'}
                                                         </span>
-                                                        <ChevronRight size={14} className="text-slate-300 shrink-0" />
-                                                        <span className="text-sm font-bold text-emerald-600 truncate">
-                                                            {to?.name ?? 'Conta removida'}
+                                                        <div className="w-6 h-6 ios-squircle bg-black/5 dark:bg-white/5 flex items-center justify-center border border-[var(--ios-glass-border)]">
+                                                            <ChevronRight size={12} className="text-[var(--ios-text-secondary)]" />
+                                                        </div>
+                                                        <span className="text-sm font-black text-[#34c759] uppercase tracking-tight">
+                                                            {to?.name ?? 'Removida'}
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                                                        <CalendarDays size={10} />
-                                                        {formatDate(t.date)}
+                                                    <div className="flex items-center gap-3">
+                                                        <p className="text-[9px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest flex items-center gap-1.5 opacity-60">
+                                                            <CalendarDays size={12} className="text-[var(--ios-text-secondary)]" />
+                                                            {formatDate(t.date)}
+                                                        </p>
                                                         {t.description && (
-                                                            <>
-                                                                <span className="text-slate-200">·</span>
-                                                                <FileText size={10} />
-                                                                <span className="truncate max-w-[140px]">{t.description}</span>
-                                                            </>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-1 h-1 rounded-full bg-[var(--ios-text-secondary)] opacity-30" />
+                                                                <p className="text-[9px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest flex items-center gap-1.5 opacity-80 truncate max-w-[150px]">
+                                                                    <FileText size={12} className="text-[var(--ios-text-secondary)]" />
+                                                                    {t.description}
+                                                                </p>
+                                                            </div>
                                                         )}
-                                                    </p>
+                                                    </div>
                                                 </div>
 
                                                 {/* Amount */}
-                                                <div className="shrink-0 text-right flex items-center gap-4">
+                                                <div className="shrink-0 text-right flex items-center gap-6">
                                                     <div>
-                                                        <p className="text-base font-black text-slate-800">{formatCurrency(t.amount)}</p>
-                                                        <div className="flex items-center gap-1 justify-end mt-0.5">
-                                                            <TrendingDown size={10} className="text-red-400" />
-                                                            <TrendingUp size={10} className="text-emerald-400" />
+                                                        <p className="text-xl font-black text-[var(--ios-text)] tracking-tighter leading-none mb-1">{formatCurrency(t.amount)}</p>
+                                                        <div className="flex items-center gap-1.5 justify-end mt-1">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-[#ff3b30] shadow-[0_0_8px_rgba(255,59,48,0.5)]" />
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-[#34c759] shadow-[0_0_8px_rgba(52,199,89,0.5)]" />
                                                         </div>
                                                     </div>
 
                                                     {/* Actions */}
-                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                                         <button
-                                                            onClick={(e) => { e.stopPropagation(); openModal(t); }}
-                                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            onClick={(e) => { e.stopPropagation(); hapticFeedback(5); openModal(t); }}
+                                                            className="w-10 h-10 ios-squircle bg-black/5 dark:bg-white/5 flex items-center justify-center text-[var(--ios-text-secondary)] hover:text-[#5856d6] transition-all border border-transparent hover:border-[#5856d6]/30 shadow-sm"
                                                             title="Editar"
                                                         >
-                                                            <Edit2 size={16} />
+                                                            <Edit2 size={16} strokeWidth={2.5} />
                                                         </button>
                                                         <button
-                                                            onClick={(e) => { e.stopPropagation(); handleDelete(t.id); }}
-                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            onClick={(e) => { e.stopPropagation(); hapticFeedback(20); handleDelete(t.id); }}
+                                                            className="w-10 h-10 ios-squircle bg-[#ff3b30]/10 flex items-center justify-center text-[#ff3b30] hover:brightness-110 transition-all border border-transparent hover:border-[#ff3b30]/30 shadow-sm"
                                                             title="Excluir"
                                                         >
-                                                            <Trash2 size={16} />
+                                                            <Trash2 size={16} strokeWidth={2.5} />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -336,32 +347,32 @@ export default function TransfersView() {
 
             {/* ── Modal ──────────────────────────────────────────────────────── */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in">
+                    <div className="ios-glass ios-squircle-md shadow-2xl w-full max-w-md overflow-hidden border animate-slide-up" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         {/* Modal Header */}
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center">
-                                    <ArrowRightLeft size={16} className="text-white" />
+                        <div className="px-7 py-6 border-b flex justify-between items-center bg-black/5" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-[#5856d6] text-white ios-squircle flex items-center justify-center shadow-lg shadow-[#5856d6]/20 border border-white/10">
+                                    <ArrowRightLeft size={22} strokeWidth={3} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800 text-base leading-tight">
+                                    <h3 className="font-black text-[var(--ios-text)] text-xl tracking-tight leading-none mb-1">
                                         {editingTransfer ? 'Editar Transferência' : 'Nova Transferência'}
                                     </h3>
-                                    <p className="text-xs text-slate-400">Mover saldo entre contas</p>
+                                    <p className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest leading-none opacity-60">Mover saldo entre contas</p>
                                 </div>
                             </div>
                             <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                onClick={() => { hapticFeedback(5); setIsModalOpen(false); }}
+                                className="w-10 h-10 flex items-center justify-center bg-black/5 text-[var(--ios-text-secondary)] hover:text-[#ff3b30] ios-squircle transition-all text-2xl leading-none shadow-inner"
                             >
-                                <X size={18} />
+                                &times;
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                        <form onSubmit={handleSubmit} className="p-7 space-y-7">
                             {/* Account selectors */}
-                            <div className="flex gap-3">
+                            <div className="flex gap-4">
                                 <AccountSelector
                                     label="Origem (De)"
                                     accounts={accounts}
@@ -369,9 +380,9 @@ export default function TransfersView() {
                                     onChange={id => setForm(f => ({ ...f, from: id, to: f.to === id ? '' : f.to }))}
                                     excludeId={form.to}
                                 />
-                                <div className="flex flex-col items-center justify-center pt-6 shrink-0">
-                                    <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
-                                        <ArrowRightLeft size={15} className="text-slate-500" />
+                                <div className="flex flex-col items-center justify-center pt-8 shrink-0">
+                                    <div className="w-10 h-10 ios-squircle bg-black/5 dark:bg-white/5 border flex items-center justify-center shadow-inner" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                        <ArrowRightLeft size={16} className="text-[#5856d6]" strokeWidth={2.5} />
                                     </div>
                                 </div>
                                 <AccountSelector
@@ -384,17 +395,17 @@ export default function TransfersView() {
                             </div>
 
                             {/* Amount */}
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Valor</label>
+                            <div className="space-y-3">
+                                <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Valor da Transferência</label>
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">R$</span>
+                                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-sm font-black text-[var(--ios-text-secondary)]">R$</span>
                                     <input
                                         type="number"
                                         step="0.01"
                                         min="0.01"
-                                        className={`w-full bg-slate-50 border rounded-xl pl-10 pr-4 py-3.5 text-xl font-black text-slate-800 outline-none focus:ring-2 transition-all ${isInsufficient
-                                            ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400 bg-red-50'
-                                            : 'border-slate-200 focus:ring-orange-500/30 focus:border-orange-400'
+                                        className={`w-full bg-black/5 border ios-squircle-sm pl-12 pr-6 py-6 text-3xl font-black text-[var(--ios-text)] outline-none focus:ring-4 transition-all shadow-inner ${isInsufficient
+                                            ? 'border-[#ff3b30] focus:ring-[#ff3b30]/10 bg-[#ff3b30]/5'
+                                            : 'border-[var(--ios-glass-border)] focus:ring-[#5856d6]/20'
                                             }`}
                                         placeholder="0,00"
                                         value={form.amount}
@@ -406,41 +417,37 @@ export default function TransfersView() {
 
                                 {/* Insufficient balance warning */}
                                 {isInsufficient && (
-                                    <p className="flex items-center gap-1.5 text-xs font-semibold text-red-500 mt-2 animate-fade-in">
-                                        <AlertCircle size={13} />
-                                        Saldo insuficiente. Disponível: {formatCurrency(fromAccount?.current_balance ?? 0)}
-                                    </p>
+                                    <div className="flex items-center gap-2 p-3 bg-[#ff3b30]/10 ios-squircle-sm border border-[#ff3b30]/20 animate-in slide-in-from-top-2">
+                                        <AlertCircle size={16} className="text-[#ff3b30]" />
+                                        <p className="text-[10px] font-black text-[#ff3b30] uppercase tracking-widest leading-none mt-0.5">
+                                            Atenção: Saldo insuficiente ({formatCurrency(fromAccount?.current_balance ?? 0)})
+                                        </p>
+                                    </div>
                                 )}
 
                                 {/* Preview */}
                                 {isReady && fromAccount && toAccount && (
-                                    <div className="mt-3 bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2 animate-fade-in">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Prévia após a transferência</p>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <TrendingDown size={14} className="text-red-500" />
-                                                <span className="text-xs font-bold text-slate-600">{fromAccount.name}</span>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="text-xs font-black text-red-600">
+                                    <div className="bg-black/5 dark:bg-white/5 border ios-squircle-sm p-5 space-y-4 animate-in fade-in zoom-in-95 shadow-inner" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                        <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                            <p className="text-[9px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">Saldo após transferência</p>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-[#ff3b30] shadow-[0_0_8px_rgba(255,59,48,0.5)]" />
+                                                    <span className="text-[10px] font-black text-[var(--ios-text)] uppercase tracking-widest">{fromAccount.name}</span>
+                                                </div>
+                                                <span className="text-xs font-black text-[#ff3b30] tracking-tight">
                                                     {formatCurrency(fromAccount.current_balance - transferAmount)}
                                                 </span>
-                                                <span className="text-[10px] text-slate-400 ml-1">
-                                                    (antes: {formatCurrency(fromAccount.current_balance)})
-                                                </span>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <TrendingUp size={14} className="text-emerald-500" />
-                                                <span className="text-xs font-bold text-slate-600">{toAccount.name}</span>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="text-xs font-black text-emerald-600">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-[#34c759] shadow-[0_0_8px_rgba(52,199,89,0.5)]" />
+                                                    <span className="text-[10px] font-black text-[var(--ios-text)] uppercase tracking-widest">{toAccount.name}</span>
+                                                </div>
+                                                <span className="text-xs font-black text-[#34c759] tracking-tight">
                                                     {formatCurrency(toAccount.current_balance + transferAmount)}
-                                                </span>
-                                                <span className="text-[10px] text-slate-400 ml-1">
-                                                    (antes: {formatCurrency(toAccount.current_balance)})
                                                 </span>
                                             </div>
                                         </div>
@@ -449,23 +456,23 @@ export default function TransfersView() {
                             </div>
 
                             {/* Date + Description */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Data</label>
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Data</label>
                                     <input
                                         type="date"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 transition-all"
+                                        className="w-full bg-black/5 border border-[var(--ios-glass-border)] ios-squircle-sm px-4 py-4 text-sm font-bold text-[var(--ios-text)] outline-none focus:ring-2 focus:ring-[#5856d6]/30 transition-all shadow-inner"
                                         value={form.date}
                                         onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                                         required
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descrição <span className="normal-case text-slate-300">(opcional)</span></label>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Descrição</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 transition-all"
-                                        placeholder="Ex: Reserva"
+                                        className="w-full bg-black/5 border border-[var(--ios-glass-border)] ios-squircle-sm px-4 py-4 text-sm font-bold text-[var(--ios-text)] placeholder:text-[var(--ios-text-secondary)]/30 outline-none focus:ring-2 focus:ring-[#5856d6]/30 transition-all shadow-inner"
+                                        placeholder="Opcional"
                                         value={form.description}
                                         onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                                     />
@@ -473,23 +480,23 @@ export default function TransfersView() {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-3 pt-1">
+                            <div className="flex flex-col md:flex-row gap-4 pt-4">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 px-4 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-semibold text-sm transition-colors"
+                                    onClick={() => { hapticFeedback(5); setIsModalOpen(false); }}
+                                    className="flex-1 py-5 ios-squircle font-black text-[10px] uppercase tracking-widest text-[var(--ios-text-secondary)] hover:bg-black/5 transition-all"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={!isReady || isSaving}
-                                    className="flex-1 px-4 py-3 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-md disabled:shadow-none"
+                                    className="flex-[2] py-5 bg-[#5856d6] hover:bg-[#5856d6]/90 text-white disabled:opacity-40 ios-squircle font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#5856d6]/30 active:scale-95 transition-all flex items-center justify-center gap-3 border border-white/10"
                                 >
                                     {isSaving ? (
-                                        <><Loader2 size={15} className="animate-spin" /> Salvando...</>
+                                        <><Loader2 size={18} className="animate-spin" /> Processando...</>
                                     ) : (
-                                        <><CheckCircle2 size={15} /> Confirmar Transferência</>
+                                        <><CheckCircle2 size={18} strokeWidth={3} /> {editingTransfer ? 'Salvar Alterações' : 'Confirmar Transferência'}</>
                                     )}
                                 </button>
                             </div>

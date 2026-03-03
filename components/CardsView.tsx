@@ -197,13 +197,13 @@ export default function CardsView() {
             {/* LARGE TITLE HEADER */}
             <div className="flex justify-between items-end px-1">
                 <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black text-[#5856d6] uppercase tracking-widest leading-none">Meus Recursos</span>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Cartões</h1>
+                    <span className="text-[10px] font-black text-[#007aff] uppercase tracking-widest leading-none">Meus Recursos</span>
+                    <h1 className="text-4xl font-black text-[var(--ios-text)] tracking-tight leading-none">Cartões</h1>
                 </div>
                 <button
                     id="trigger-new-card"
                     onClick={() => { hapticFeedback(10); handleOpenModal(); }}
-                    className="bg-slate-900 hover:bg-slate-800 text-white w-14 h-14 ios-squircle flex items-center justify-center shadow-lg shadow-slate-900/20 transition-all active:scale-95"
+                    className="bg-[var(--ios-text)] text-[var(--ios-bg)] w-14 h-14 ios-squircle flex items-center justify-center shadow-lg transition-all active:scale-95"
                     aria-label="Novo Cartão"
                 >
                     <PlusCircle size={24} strokeWidth={3} />
@@ -216,7 +216,7 @@ export default function CardsView() {
                     const percentUsed = (card.limit_used / card.limit) * 100;
 
                     return (
-                        <div key={card.id} className="bg-white/80 backdrop-blur-xl ios-squircle-md shadow-sm border border-slate-100 hover:shadow-xl hover:translate-y-[-4px] transition-all relative group overflow-hidden">
+                        <div key={card.id} className="ios-glass ios-squircle shadow-sm border hover:shadow-xl hover:translate-y-[-4px] transition-all relative group overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             <div className="p-6">
                                 <div className="flex justify-between items-start mb-6">
                                     <div className={`w-14 h-14 ios-squircle flex items-center justify-center text-white shadow-lg ${card.brand === 'MASTERCARD' ? 'bg-gradient-to-br from-[#eb001b] to-[#ff5f00]' :
@@ -229,20 +229,20 @@ export default function CardsView() {
                                     <div className="flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => handleOpenInvoiceSetup(card)}
-                                            className="w-10 h-10 ios-squircle bg-slate-100/50 flex items-center justify-center text-slate-400 hover:text-[#007aff] transition-all"
+                                            className="w-10 h-10 ios-squircle bg-black/5 flex items-center justify-center text-[var(--ios-text-secondary)] hover:text-[#007aff] transition-all border border-transparent hover:border-[var(--ios-glass-border)]"
                                             title="Configurar Início"
                                         >
                                             <FileText size={18} strokeWidth={2.5} />
                                         </button>
                                         <button
                                             onClick={() => { hapticFeedback(5); handleOpenModal(card); }}
-                                            className="w-10 h-10 ios-squircle bg-slate-100/50 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-all"
+                                            className="w-10 h-10 ios-squircle bg-black/5 flex items-center justify-center text-[var(--ios-text-secondary)] hover:text-[var(--ios-text)] transition-all border border-transparent hover:border-[var(--ios-glass-border)]"
                                         >
                                             <Edit size={18} strokeWidth={2.5} />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(card.id)}
-                                            className="w-10 h-10 ios-squircle bg-slate-100/50 flex items-center justify-center text-slate-400 hover:text-[#ff3b30] transition-all"
+                                            className="w-10 h-10 ios-squircle bg-[#ff3b30]/10 flex items-center justify-center text-[#ff3b30] hover:brightness-110 transition-all border border-transparent hover:border-[var(--ios-glass-border)]"
                                         >
                                             <Trash2 size={18} strokeWidth={2.5} />
                                         </button>
@@ -250,21 +250,21 @@ export default function CardsView() {
                                 </div>
 
                                 <div className="mb-6">
-                                    <h4 className="font-black text-xl text-slate-900 tracking-tight leading-tight mb-1">{card.name}</h4>
+                                    <h4 className="font-black text-xl text-[var(--ios-text)] tracking-tight leading-tight mb-1">{card.name}</h4>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{card.brand}</span>
-                                        <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                                        <span className="text-[10px] font-black text-[#5856d6] uppercase tracking-widest">{card.bank}</span>
+                                        <span className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">{card.brand}</span>
+                                        <span className="w-1 h-1 rounded-full bg-black/10 dark:bg-white/10"></span>
+                                        <span className="text-[10px] font-black text-[#007aff] uppercase tracking-widest">{card.bank}</span>
                                     </div>
                                 </div>
 
                                 <div className="space-y-6">
                                     <div>
                                         <div className="flex justify-between text-[10px] mb-2 font-black uppercase tracking-widest">
-                                            <span className="text-slate-400">Uso do Limite</span>
-                                            <span className={`${percentUsed > 90 ? 'text-[#ff3b30]' : 'text-slate-900'}`}>{Math.round(percentUsed)}%</span>
+                                            <span className="text-[var(--ios-text-secondary)]">Uso do Limite</span>
+                                            <span className={`${percentUsed > 90 ? 'text-[#ff3b30]' : 'text-[var(--ios-text)]'}`}>{Math.round(percentUsed)}%</span>
                                         </div>
-                                        <div className="w-full h-2.5 bg-slate-100 ios-squircle overflow-hidden">
+                                        <div className="w-full h-2.5 bg-black/10 ios-squircle overflow-hidden shadow-inner">
                                             <div
                                                 className={`h-full ios-squircle transition-all duration-1000 ease-out ${percentUsed > 90 ? 'bg-[#ff3b30]' : percentUsed > 70 ? 'bg-[#ff9500]' : 'bg-[#34c759]'
                                                     }`}
@@ -274,17 +274,17 @@ export default function CardsView() {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-4 bg-slate-50 ios-squircle-sm border border-slate-100">
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Fatura Atual</p>
-                                            <p className="font-black text-lg text-slate-900 tracking-tight leading-none">{formatCurrency(card.limit_used)}</p>
+                                        <div className="p-4 bg-black/5 ios-squircle-sm border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                            <p className="text-[9px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest mb-1.5 leading-none">Fatura Atual</p>
+                                            <p className="font-black text-lg text-[var(--ios-text)] tracking-tight leading-none">{formatCurrency(card.limit_used)}</p>
                                         </div>
-                                        <div className="p-4 bg-slate-50 ios-squircle-sm border border-slate-100">
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Disponível</p>
+                                        <div className="p-4 bg-black/5 ios-squircle-sm border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                            <p className="text-[9px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest mb-1.5 leading-none">Disponível</p>
                                             <p className="font-black text-lg text-[#34c759] tracking-tight leading-none">{formatCurrency(available)}</p>
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between text-[10px] pt-2 font-black uppercase tracking-widest text-slate-400">
+                                    <div className="flex justify-between text-[10px] pt-2 font-black uppercase tracking-widest text-[var(--ios-text-secondary)]">
                                         <div className="flex items-center gap-1.5">
                                             <div className="w-2 h-2 rounded-full bg-[#ff3b30]"></div>
                                             <span>Fecha dia {card.closing_day}</span>
@@ -296,8 +296,8 @@ export default function CardsView() {
                                     </div>
 
                                     {/* PROXIMAS FATURAS */}
-                                    <div className="pt-6 border-t border-slate-100">
-                                        <p className="text-[9px] font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center justify-between">
+                                    <div className="pt-6 border-t" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                        <p className="text-[9px] font-black text-[var(--ios-text)] uppercase tracking-widest mb-4 flex items-center justify-between">
                                             <span>Lançamentos Futuros</span>
                                             <ShieldCheck size={14} className="text-[#34c759]" />
                                         </p>
@@ -307,17 +307,17 @@ export default function CardsView() {
                                                 .sort((a, b) => a.date.localeCompare(b.date))
                                                 .slice(0, 3)
                                                 .map(t => (
-                                                    <div key={t.id} className="flex justify-between items-center bg-slate-50/50 p-3 ios-squircle-sm border border-slate-100/50">
+                                                    <div key={t.id} className="flex justify-between items-center bg-black/5 p-3 ios-squircle-sm border transition-colors hover:bg-black/10" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                                         <div className="flex flex-col">
-                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t.date.split('-').reverse().slice(0, 2).join('/')}</span>
-                                                            <span className="text-[11px] font-bold text-slate-900 truncate max-w-[120px]">{t.description.split('-').pop()?.trim()}</span>
+                                                            <span className="text-[9px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">{t.date.split('-').reverse().slice(0, 2).join('/')}</span>
+                                                            <span className="text-[11px] font-bold text-[var(--ios-text)] truncate max-w-[120px]">{t.description.split('-').pop()?.trim()}</span>
                                                         </div>
-                                                        <span className="font-black text-xs text-slate-900">{formatCurrency(t.amount)}</span>
+                                                        <span className="font-black text-xs text-[var(--ios-text)]">{formatCurrency(t.amount)}</span>
                                                     </div>
                                                 ))}
                                             {transactions.filter(t => t.card_id === card.id && t.status !== 'EXCLUIDA' && t.status !== 'PAGA').length === 0 && (
-                                                <div className="py-4 text-center bg-slate-50/50 ios-squircle-sm border border-dashed border-slate-200">
-                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tudo em dia</p>
+                                                <div className="py-4 text-center bg-black/5 ios-squircle-sm border border-dashed" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                                    <p className="text-[9px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">Tudo em dia</p>
                                                 </div>
                                             )}
                                         </div>
@@ -329,15 +329,15 @@ export default function CardsView() {
                 })}
 
                 {cards.length === 0 && (
-                    <div className="col-span-full py-24 ios-squircle-md border-2 border-dashed border-slate-200 flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm">
-                        <div className="w-20 h-20 ios-squircle bg-slate-100 flex items-center justify-center text-slate-300 mb-6">
+                    <div className="col-span-full py-24 ios-glass ios-squircle-md border-2 border-dashed flex flex-col items-center justify-center overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                        <div className="w-20 h-20 ios-squircle bg-black/5 flex items-center justify-center text-[var(--ios-text-secondary)] mb-6 border shadow-inner" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             <CreditCard size={40} />
                         </div>
-                        <h2 className="text-xl font-black text-slate-900 tracking-tight mb-2">Sem Cartões Ativos</h2>
-                        <p className="text-slate-400 text-sm font-medium max-w-xs text-center mb-8 px-4">Cadastre seus cartões para gerenciar limites, faturas e parcelamentos.</p>
+                        <h2 className="text-xl font-black text-[var(--ios-text)] tracking-tight mb-2">Sem Cartões Ativos</h2>
+                        <p className="text-[var(--ios-text-secondary)] text-sm font-black uppercase tracking-widest max-w-xs text-center mb-8 px-4 opacity-70">Cadastre seus cartões para gerenciar limites, faturas e parcelamentos.</p>
                         <button
                             onClick={() => { hapticFeedback(5); handleOpenModal(); }}
-                            className="bg-slate-900 text-white px-8 py-4 ios-squircle text-xs font-black uppercase tracking-widest shadow-lg shadow-slate-900/20 active:scale-95 transition-all"
+                            className="bg-[var(--ios-text)] text-[var(--ios-bg)] px-10 py-4 ios-squircle text-xs font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
                         >
                             Começar Agora
                         </button>
@@ -348,17 +348,17 @@ export default function CardsView() {
             {/* MODAL - EDIT / NEW */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in backdrop-blur-md">
-                    <div className="bg-white/95 backdrop-blur-xl rounded-3xl ios-squircle-md shadow-2xl w-full max-w-md overflow-hidden border border-white/50">
-                        <div className="p-7 border-b border-slate-100 flex justify-between items-center bg-white/20">
-                            <h3 className="font-black text-xl text-slate-900 tracking-tight">{editingCard ? 'Editar Dados' : 'Novo Cartão'}</h3>
-                            <button onClick={() => { hapticFeedback(5); setIsModalOpen(false); }} className="w-10 h-10 ios-squircle bg-slate-100 text-slate-400 hover:text-slate-900 transition-all flex items-center justify-center text-2xl leading-none">&times;</button>
+                    <div className="ios-glass rounded-3xl ios-squircle-md shadow-2xl w-full max-w-md overflow-hidden border animate-slide-up" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                        <div className="p-7 border-b flex justify-between items-center bg-black/5" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <h3 className="font-black text-xl text-[var(--ios-text)] tracking-tight">{editingCard ? 'Editar Dados' : 'Novo Cartão'}</h3>
+                            <button onClick={() => { hapticFeedback(5); setIsModalOpen(false); }} className="w-10 h-10 ios-squircle bg-black/5 text-[var(--ios-text-secondary)] hover:text-[#ff3b30] transition-all flex items-center justify-center text-2xl leading-none">&times;</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-7 space-y-6">
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nome do Cartão (Apelido)</label>
+                                <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Nome do Cartão (Apelido)</label>
                                 <input
                                     type="text"
-                                    className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-bold text-slate-900 placeholder:text-slate-300 shadow-inner"
+                                    className="w-full bg-black/5 border border-[var(--ios-glass-border)] ios-squircle-sm px-4 py-4 outline-none transition-all font-bold text-[var(--ios-text)] placeholder:text-slate-500 shadow-inner focus:ring-2 focus:ring-[#007aff]/50"
                                     placeholder="Ex: Nubank Black, Itaú Visa..."
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -367,13 +367,13 @@ export default function CardsView() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Limite Total do Cartão</label>
+                                <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Limite Total do Cartão</label>
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">R$</span>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[var(--ios-text-secondary)]">R$</span>
                                     <input
                                         type="number"
                                         step="0.01"
-                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm pl-11 pr-4 py-5 focus:bg-white outline-none transition-all font-black text-2xl text-slate-900 shadow-inner"
+                                        className="w-full bg-black/5 border border-[var(--ios-glass-border)] ios-squircle-sm pl-11 pr-4 py-5 outline-none transition-all font-black text-2xl text-[var(--ios-text)] shadow-inner focus:ring-2 focus:ring-[#007aff]/50"
                                         value={formData.limit || ''}
                                         onChange={e => setFormData({ ...formData, limit: Number(e.target.value) })}
                                         onFocus={e => e.target.select()}
@@ -385,22 +385,22 @@ export default function CardsView() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Dia Fechamento</label>
+                                    <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Dia Fechamento</label>
                                     <input
                                         type="number"
                                         min="1" max="31"
-                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-black text-center text-slate-900 shadow-inner"
+                                        className="w-full bg-black/5 border border-[var(--ios-glass-border)] ios-squircle-sm px-4 py-4 outline-none transition-all font-black text-center text-[var(--ios-text)] shadow-inner focus:ring-2 focus:ring-[#007aff]/50"
                                         value={formData.closing_day}
                                         onChange={e => setFormData({ ...formData, closing_day: Number(e.target.value) })}
                                         onFocus={e => e.target.select()} required
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Dia Vencimento</label>
+                                    <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Dia Vencimento</label>
                                     <input
                                         type="number"
                                         min="1" max="31"
-                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-black text-center text-slate-900 shadow-inner"
+                                        className="w-full bg-black/5 border border-[var(--ios-glass-border)] ios-squircle-sm px-4 py-4 outline-none transition-all font-black text-center text-[var(--ios-text)] shadow-inner focus:ring-2 focus:ring-[#007aff]/50"
                                         value={formData.due_day}
                                         onChange={e => setFormData({ ...formData, due_day: Number(e.target.value) })}
                                         onFocus={e => e.target.select()} required
@@ -410,9 +410,9 @@ export default function CardsView() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Bandeira</label>
+                                    <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Bandeira</label>
                                     <select
-                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none shadow-inner cursor-pointer"
+                                        className="w-full bg-black/5 border border-[var(--ios-glass-border)] ios-squircle-sm px-4 py-4 outline-none transition-all font-bold text-[var(--ios-text)] appearance-none shadow-inner cursor-pointer"
                                         value={formData.brand}
                                         onChange={e => setFormData({ ...formData, brand: e.target.value })}
                                     >
@@ -425,10 +425,10 @@ export default function CardsView() {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Banco Emissor</label>
+                                    <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Banco Emissor</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-bold text-slate-900 placeholder:text-slate-300 shadow-inner"
+                                        className="w-full bg-black/5 border border-[var(--ios-glass-border)] ios-squircle-sm px-4 py-4 outline-none transition-all font-bold text-[var(--ios-text)] placeholder:text-slate-500 shadow-inner focus:ring-2 focus:ring-[#007aff]/50"
                                         placeholder="Ex: Itaú"
                                         value={formData.bank}
                                         onChange={e => setFormData({ ...formData, bank: e.target.value })}
@@ -437,9 +437,9 @@ export default function CardsView() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Vincular a Conta Bancária</label>
+                                <label className="block text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest pl-1">Vincular a Conta Bancária</label>
                                 <select
-                                    className="w-full bg-slate-100/50 border-none ios-squircle-sm px-4 py-4 focus:bg-white outline-none transition-all font-bold text-slate-900 appearance-none shadow-inner cursor-pointer"
+                                    className="w-full bg-black/5 border border-[var(--ios-glass-border)] ios-squircle-sm px-4 py-4 outline-none transition-all font-bold text-[var(--ios-text)] appearance-none shadow-inner cursor-pointer"
                                     value={formData.account_id}
                                     onChange={e => {
                                         const accId = e.target.value;
@@ -462,14 +462,14 @@ export default function CardsView() {
                                 <button
                                     type="button"
                                     onClick={() => { hapticFeedback(5); setIsModalOpen(false); }}
-                                    className="flex-1 py-4 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 ios-squircle transition-colors"
+                                    className="flex-1 py-4 text-[var(--ios-text-secondary)] font-black text-xs uppercase tracking-widest hover:bg-black/5 ios-squircle transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="flex-[2] py-4 bg-slate-900 hover:bg-slate-800 text-white ios-squircle text-xs font-black uppercase tracking-widest shadow-lg shadow-slate-900/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-[2] py-4 bg-[var(--ios-text)] text-[var(--ios-bg)] ios-squircle text-xs font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? (
                                         <>
@@ -489,27 +489,27 @@ export default function CardsView() {
             {/* MODAL - INVOICE STARTUP */}
             {isInvoiceModalOpen && selectedCardForInvoice && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in backdrop-blur-md">
-                    <div className="bg-white/95 backdrop-blur-xl rounded-3xl ios-squircle-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/50">
-                        <div className="p-7 border-b border-slate-100 bg-white/20">
+                    <div className="ios-glass rounded-3xl ios-squircle-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border animate-slide-up" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                        <div className="p-7 border-b bg-black/5" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="font-black text-2xl text-slate-900 tracking-tight leading-none mb-2 flex items-center gap-3">
-                                        <div className="w-10 h-10 ios-squircle bg-[#007aff]/10 flex items-center justify-center text-[#007aff]">
+                                    <h3 className="font-black text-2xl text-[var(--ios-text)] tracking-tight leading-none mb-2 flex items-center gap-3">
+                                        <div className="w-10 h-10 ios-squircle bg-[#007aff]/10 flex items-center justify-center text-[#007aff] shadow-inner border border-[#007aff]/20">
                                             <FileText size={20} strokeWidth={2.5} />
                                         </div>
                                         Lançamento Inicial
                                     </h3>
                                     <div className="flex items-center gap-2 pl-1">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cartão:</span>
-                                        <span className="text-sm font-black text-[#5856d6] tracking-tight">{selectedCardForInvoice.name}</span>
+                                        <span className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">Cartão:</span>
+                                        <span className="text-sm font-black text-[#007aff] tracking-tight">{selectedCardForInvoice.name}</span>
                                     </div>
                                 </div>
-                                <button onClick={() => { hapticFeedback(5); setIsInvoiceModalOpen(false); }} className="w-10 h-10 ios-squircle bg-slate-100 text-slate-400 hover:text-slate-900 transition-all flex items-center justify-center text-2xl leading-none">&times;</button>
+                                <button onClick={() => { hapticFeedback(5); setIsInvoiceModalOpen(false); }} className="w-10 h-10 ios-squircle bg-black/5 text-[var(--ios-text-secondary)] hover:text-[#ff3b30] transition-all flex items-center justify-center text-2xl leading-none">&times;</button>
                             </div>
 
-                            <div className="mt-6 bg-[#007aff]/5 text-[#007aff] text-[11px] p-4 ios-squircle-sm border border-[#007aff]/10 flex gap-4">
+                            <div className="mt-6 bg-[#007aff]/10 text-[#007aff] text-[11px] p-4 ios-squircle-sm border border-[#007aff]/20 flex gap-4">
                                 <AlertCircle size={20} className="shrink-0" strokeWidth={2.5} />
-                                <p className="font-bold leading-relaxed">
+                                <p className="font-black uppercase tracking-widest leading-relaxed opacity-90 text-[9px]">
                                     Utilize esta tela para registrar saldos de faturas futuras (compras já parceladas).
                                     Isso sincroniza seu limite atual e prevê seus gastos dos próximos meses.
                                 </p>
@@ -518,14 +518,14 @@ export default function CardsView() {
 
                         <div className="flex-1 overflow-y-auto p-7 ios-scrollbar">
                             <div className="space-y-6">
-                                <div className="flex items-center justify-between p-5 bg-slate-50 ios-squircle-sm border border-slate-100 shadow-inner">
+                                <div className="flex items-center justify-between p-5 bg-black/5 ios-squircle-sm border shadow-inner" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 ios-squircle bg-[#007aff] text-white flex items-center justify-center shadow-lg shadow-[#007aff]/20">
                                             <Landmark size={24} strokeWidth={2.5} />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo Total das Próximas Faturas</p>
-                                            <p className="text-2xl font-black text-slate-900 tracking-tight leading-none">
+                                            <p className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">Saldo Total das Próximas Faturas</p>
+                                            <p className="text-2xl font-black text-[var(--ios-text)] tracking-tight leading-none">
                                                 {formatCurrency(invoiceSetupData.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0))}
                                             </p>
                                         </div>
@@ -538,26 +538,26 @@ export default function CardsView() {
                                         const isActive = Number(slot.amount) > 0;
 
                                         return (
-                                            <div key={`${slot.year}-${slot.monthIndex}`} className={`p-4 ios-squircle-sm border transition-all flex items-center justify-between ${isActive ? 'bg-[#007aff]/5 border-[#007aff]/20' : 'bg-white border-slate-100 hover:border-slate-200'}`}>
+                                            <div key={`${slot.year}-${slot.monthIndex}`} className={`p-4 ios-squircle-sm border transition-all flex items-center justify-between ${isActive ? 'bg-[#007aff]/10 border-[#007aff]/30 shadow-sm' : 'bg-black/5 border-transparent hover:border-[var(--ios-glass-border)]'}`}>
                                                 <div className="flex items-center gap-5">
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{slot.year}</span>
-                                                        <span className={`text-sm font-black tracking-tight ${isActive ? 'text-[#007aff]' : 'text-slate-900'}`}>{slot.month}</span>
+                                                        <span className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest leading-none mb-1">{slot.year}</span>
+                                                        <span className={`text-sm font-black tracking-tight ${isActive ? 'text-[#007aff]' : 'text-[var(--ios-text)]'}`}>{slot.month}</span>
                                                     </div>
-                                                    <div className="h-6 w-px bg-slate-100"></div>
+                                                    <div className="h-6 w-px bg-black/10 dark:bg-white/10"></div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Pagamento</span>
-                                                        <span className="text-[10px] font-bold text-slate-500">{dueDate.toLocaleDateString()}</span>
+                                                        <span className="text-[8px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest leading-none mb-1">Pagamento</span>
+                                                        <span className="text-[10px] font-bold text-[var(--ios-text-secondary)]">{dueDate.toLocaleDateString()}</span>
                                                     </div>
                                                 </div>
 
                                                 <div className="w-40 relative">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">R$</span>
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-[var(--ios-text-secondary)]">R$</span>
                                                     <input
                                                         type="number"
                                                         step="0.01"
                                                         placeholder="0,00"
-                                                        className={`w-full py-3 pl-8 pr-4 ios-squircle-sm outline-none font-black text-right text-sm transition-all shadow-inner ${isActive ? 'bg-[#007aff]/10 border-none text-[#007aff]' : 'bg-slate-100/50 border-none text-slate-900 focus:bg-white'}`}
+                                                        className={`w-full py-3 pl-8 pr-4 ios-squircle-sm outline-none font-black text-right text-sm transition-all shadow-inner ${isActive ? 'bg-[#007aff]/10 border border-[#007aff]/20 text-[#007aff]' : 'bg-black/5 border border-[var(--ios-glass-border)] text-[var(--ios-text)] focus:ring-2 focus:ring-[#007aff]/50'}`}
                                                         value={slot.amount || ''}
                                                         onFocus={e => e.target.select()}
                                                         onChange={e => handleSlotChange(index, e.target.value)}
@@ -570,10 +570,10 @@ export default function CardsView() {
                             </div>
                         </div>
 
-                        <div className="p-7 border-t border-slate-100 bg-slate-50 flex flex-col md:flex-row gap-3">
+                        <div className="p-7 border-t bg-black/5 flex flex-col md:flex-row gap-3" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             <button
                                 onClick={() => { hapticFeedback(5); setIsInvoiceModalOpen(false); }}
-                                className="flex-1 py-4 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-200 ios-squircle transition-colors"
+                                className="flex-1 py-4 text-[var(--ios-text-secondary)] font-black text-xs uppercase tracking-widest hover:bg-black/5 ios-squircle transition-colors"
                                 disabled={isSavingInvoices}
                             >
                                 Cancelar
@@ -581,7 +581,7 @@ export default function CardsView() {
                             <button
                                 onClick={handleSaveInvoices}
                                 disabled={isSavingInvoices}
-                                className="flex-[2] py-4 bg-[#007aff] hover:bg-[#007aff]/90 text-white ios-squircle text-xs font-black uppercase tracking-widest shadow-lg shadow-[#007aff]/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="flex-[2] py-4 bg-[#007aff] hover:brightness-110 text-white ios-squircle text-xs font-black uppercase tracking-widest shadow-lg shadow-[#007aff]/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isSavingInvoices ? (
                                     <>

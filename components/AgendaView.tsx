@@ -169,61 +169,61 @@ export default function AgendaView() {
             {/* Header / Summary */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center shrink-0 shadow-sm border border-rose-100">
-                        <CalendarDays size={32} />
+                    <div className="w-14 h-14 bg-[#ff2d55]/10 text-[#ff2d55] ios-squircle flex items-center justify-center shrink-0 shadow-sm border border-[#ff2d55]/20">
+                        <CalendarDays size={32} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-slate-800 tracking-tight">
-                            Agenda Financeira
+                        <span className="text-[10px] font-black text-[#5856d6] dark:text-[#7d7aff] uppercase tracking-widest leading-none">Planejamento</span>
+                        <h1 className="text-4xl font-black text-[var(--ios-text)] tracking-tight leading-none mt-1">
+                            Agenda
                         </h1>
-                        <p className="text-slate-500 text-sm font-medium">Controle o que entra e o que sai com precisão.</p>
                     </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Seletor de Mês */}
-                    <div className="flex items-center gap-1 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+                    <div className="flex items-center gap-1 bg-[var(--ios-card-bg)]/80 backdrop-blur-md p-1.5 ios-squircle-sm border" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         <button
                             onClick={prevMonth}
-                            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                            className="w-9 h-9 flex items-center justify-center text-[var(--ios-text-secondary)] hover:text-[#ff2d55] hover:bg-[#ff2d55]/10 ios-squircle transition-all"
                         >
-                            <ChevronLeft size={20} />
+                            <ChevronLeft size={20} strokeWidth={2.5} />
                         </button>
                         <div className="px-4 text-center min-w-[140px]">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none mb-1">Mês de Análise</span>
-                            <span className="text-sm font-bold text-slate-700 capitalize">
+                            <span className="text-[9px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest block leading-none mb-1">Período</span>
+                            <span className="text-sm font-black text-[var(--ios-text)] capitalize tracking-tight">
                                 {currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                             </span>
                         </div>
                         <button
                             onClick={nextMonth}
-                            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                            className="w-9 h-9 flex items-center justify-center text-[var(--ios-text-secondary)] hover:text-[#ff2d55] hover:bg-[#ff2d55]/10 ios-squircle transition-all"
                         >
-                            <ChevronRight size={20} />
+                            <ChevronRight size={20} strokeWidth={2.5} />
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+                    <div className="flex items-center gap-2 bg-[var(--ios-card-bg)]/80 backdrop-blur-md p-1.5 ios-squircle-sm border" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                            title="Lista Simples"
+                            className={`w-9 h-9 ios-squircle flex items-center justify-center transition-all ${viewMode === 'list' ? 'bg-[var(--ios-text)] text-[var(--ios-bg)] shadow-md' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
+                            title="Lista"
                         >
-                            <List size={20} />
+                            <List size={20} strokeWidth={2.5} />
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
-                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'timeline' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                            title="Linha do Tempo"
+                            className={`w-9 h-9 ios-squircle flex items-center justify-center transition-all ${viewMode === 'timeline' ? 'bg-[var(--ios-text)] text-[var(--ios-bg)] shadow-md' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
+                            title="Timeline"
                         >
-                            <Clock3 size={20} />
+                            <Clock3 size={20} strokeWidth={2.5} />
                         </button>
                         <button
                             onClick={() => setViewMode('calendar')}
-                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'calendar' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                            title="Calendário Mensal"
+                            className={`w-9 h-9 ios-squircle flex items-center justify-center transition-all ${viewMode === 'calendar' ? 'bg-[var(--ios-text)] text-[var(--ios-bg)] shadow-md' : 'text-[var(--ios-text-secondary)] hover:bg-black/5'}`}
+                            title="Calendário"
                         >
-                            <Calendar size={20} />
+                            <Calendar size={20} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
@@ -231,70 +231,70 @@ export default function AgendaView() {
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
+                <div className="bg-[var(--ios-card-bg)]/80 backdrop-blur-xl p-5 ios-squircle-sm border group hover:shadow-md transition-all" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><TrendingUp size={20} /></div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">A Receber</span>
+                        <div className="w-8 h-8 ios-squircle bg-[#34c759]/10 text-[#34c759] flex items-center justify-center"><TrendingUp size={18} strokeWidth={2.5} /></div>
+                        <span className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">A Receber</span>
                     </div>
-                    <p className="text-2xl font-black text-slate-800">{formatCurrency(stats.pending_income)}</p>
+                    <p className="text-2xl font-black text-[var(--ios-text)] tracking-tight">{formatCurrency(stats.pending_income)}</p>
                 </div>
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
+                <div className="bg-[var(--ios-card-bg)]/80 backdrop-blur-xl p-5 ios-squircle-sm border group hover:shadow-md transition-all" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-rose-50 text-rose-600 rounded-xl"><TrendingDown size={20} /></div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">A Pagar</span>
+                        <div className="w-8 h-8 ios-squircle bg-[#ff3b30]/10 text-[#ff3b30] flex items-center justify-center"><TrendingDown size={18} strokeWidth={2.5} /></div>
+                        <span className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">A Pagar</span>
                     </div>
-                    <p className="text-2xl font-black text-slate-800">{formatCurrency(stats.pending_expense)}</p>
+                    <p className="text-2xl font-black text-[var(--ios-text)] tracking-tight">{formatCurrency(stats.pending_expense)}</p>
                 </div>
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
+                <div className="bg-[var(--ios-card-bg)]/80 backdrop-blur-xl p-5 ios-squircle-sm border group hover:shadow-md transition-all" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-amber-50 text-amber-600 rounded-xl"><AlertCircle size={20} /></div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Atrasado</span>
+                        <div className="w-8 h-8 ios-squircle bg-[#ff9500]/10 text-[#ff9500] flex items-center justify-center"><AlertCircle size={18} strokeWidth={2.5} /></div>
+                        <span className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">Em Atraso</span>
                     </div>
-                    <p className={`text-2xl font-black ${stats.overdue < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                    <p className={`text-2xl font-black tracking-tight ${stats.overdue < 0 ? 'text-[#ff3b30]' : 'text-[#34c759]'}`}>
                         {formatCurrency(Math.abs(stats.overdue))}
                     </p>
                 </div>
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 group hover:shadow-md transition-all">
+                <div className="bg-[var(--ios-card-bg)]/80 backdrop-blur-xl p-5 ios-squircle-sm border group hover:shadow-md transition-all" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-slate-50 text-slate-600 rounded-xl"><CheckCircle2 size={20} /></div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Realizado (Líquido)</span>
+                        <div className="w-8 h-8 ios-squircle bg-[#007aff]/10 text-[#007aff] flex items-center justify-center"><CheckCircle2 size={18} strokeWidth={2.5} /></div>
+                        <span className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">Realizado</span>
                     </div>
-                    <p className="text-2xl font-black text-slate-800">{formatCurrency(stats.paid_income - stats.paid_expense)}</p>
+                    <p className="text-2xl font-black text-[var(--ios-text)] tracking-tight">{formatCurrency(stats.paid_income - stats.paid_expense)}</p>
                 </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200">
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
                 <div className="flex overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab('pendentes')}
-                        className={`px-6 py-4 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === 'pendentes' ? 'border-rose-600 text-rose-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                        className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${activeTab === 'pendentes' ? 'border-[#ff2d55] text-[#ff2d55]' : 'border-transparent text-[var(--ios-text-secondary)] hover:text-[var(--ios-text)]'}`}
                     >
-                        A Pagar/Receber
+                        Pagar/Receber
                     </button>
                     <button
                         onClick={() => setActiveTab('atrasadas')}
-                        className={`px-6 py-4 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === 'atrasadas' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                        className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${activeTab === 'atrasadas' ? 'border-[#ff9500] text-[#ff9500]' : 'border-transparent text-[var(--ios-text-secondary)] hover:text-[var(--ios-text)]'}`}
                     >
-                        Vencidas/Atrasadas
+                        Em Atraso
                     </button>
                     <button
                         onClick={() => setActiveTab('liquidadas')}
-                        className={`px-6 py-4 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${activeTab === 'liquidadas' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                        className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${activeTab === 'liquidadas' ? 'border-[#34c759] text-[#34c759]' : 'border-transparent text-[var(--ios-text-secondary)] hover:text-[var(--ios-text)]'}`}
                     >
-                        Pagos/Recebidos
+                        Finalizados
                     </button>
                 </div>
 
                 <div className="flex items-center gap-3 py-2 md:py-0">
                     <div className="relative group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-rose-600 transition-colors" size={16} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ios-text-secondary)] group-focus-within:text-[#ff2d55] transition-colors" size={16} />
                         <input
                             type="text"
-                            placeholder="Buscar na agenda..."
+                            placeholder="Buscar..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-slate-100 border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-rose-500 transition-all w-full md:w-64"
+                            className="bg-black/5 border-none ios-squircle-sm pl-10 pr-4 py-2 text-xs font-bold text-[var(--ios-text)] focus:ring-1 focus:ring-[#ff2d55]/30 transition-all w-full md:w-48"
                         />
                     </div>
                 </div>
@@ -303,18 +303,18 @@ export default function AgendaView() {
             {/* Content List */}
             <div className="space-y-8">
                 {viewMode === 'calendar' ? (
-                    <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+                    <div className="bg-[var(--ios-card-bg)]/80 backdrop-blur-xl ios-squircle-md border shadow-xl overflow-hidden animate-in fade-in duration-700" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         {/* Calendar Week Header */}
-                        <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100">
+                        <div className="grid grid-cols-7 bg-black/5 border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-                                <div key={day} className="py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <div key={day} className="py-3 text-center text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">
                                     {day}
                                 </div>
                             ))}
                         </div>
 
                         {/* Calendar Grid */}
-                        <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 border-l border-t border-transparent">
+                        <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-white/5 border-l border-t border-transparent" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             {(() => {
                                 const year = currentMonth.getFullYear();
                                 const month = currentMonth.getMonth();
@@ -335,9 +335,9 @@ export default function AgendaView() {
                                     const dayTrxs = transactions.filter(t => t.date === dateStr && t.status !== 'EXCLUIDA');
 
                                     cells.push(
-                                        <div key={dateStr} className={`min-h-[100px] md:min-h-[140px] p-2 hover:bg-slate-50/50 transition-colors group relative ${isToday ? 'bg-rose-50/20' : ''}`}>
+                                        <div key={dateStr} className={`min-h-[100px] md:min-h-[140px] p-2 hover:bg-black/5 transition-colors group relative ${isToday ? 'bg-[#ff2d55]/5' : ''}`}>
                                             <div className="flex justify-between items-center mb-1">
-                                                <span className={`text-xs font-black w-6 h-6 flex items-center justify-center rounded-full transition-all ${isToday ? 'bg-rose-600 text-white shadow-md shadow-rose-200 scale-110' : 'text-slate-400 group-hover:text-slate-900 group-hover:bg-slate-100'}`}>
+                                                <span className={`text-[10px] font-black w-7 h-7 flex items-center justify-center ios-squircle transition-all ${isToday ? 'bg-[#ff2d55] text-white shadow-lg' : 'text-[var(--ios-text-secondary)] group-hover:text-[var(--ios-text)] group-hover:bg-black/5'}`}>
                                                     {d}
                                                 </span>
                                             </div>
@@ -349,11 +349,11 @@ export default function AgendaView() {
                                                         <button
                                                             key={t.id}
                                                             onClick={!isPaid ? () => handleMarkAsPaid(t) : undefined}
-                                                            className={`w-full p-1 rounded-md text-[9px] font-bold truncate text-left transition-all ${isPaid
-                                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 opacity-60'
+                                                            className={`w-full p-1.5 rounded-lg text-[10px] font-bold truncate text-left transition-all ${isPaid
+                                                                ? 'bg-[#34c759]/10 text-[#34c759] border border-[#34c759]/20 opacity-60'
                                                                 : t.type === 'RECEITA'
-                                                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 hover:scale-[1.02]'
-                                                                    : 'bg-rose-50 text-rose-700 border border-rose-100 hover:scale-[1.02] active:bg-rose-100'
+                                                                    ? 'bg-[#34c759]/10 text-[#34c759] border border-[#34c759]/30 hover:scale-[1.02]'
+                                                                    : 'bg-[#ff3b30]/10 text-[#ff3b30] border border-[#ff3b30]/30 hover:scale-[1.02]'
                                                                 }`}
                                                             title={`${t.description}: ${formatCurrency(t.amount)}`}
                                                         >
@@ -379,23 +379,23 @@ export default function AgendaView() {
                     </div>
                 ) : (
                     groupedData.length === 0 || (groupedData.length === 1 && groupedData[0].data.length === 0) ? (
-                        <div className="bg-white py-20 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
-                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                                <Calendar className="text-slate-300" size={32} />
+                        <div className="bg-[var(--ios-card-bg)]/50 backdrop-blur-sm ios-squircle-md border-2 border-dashed p-20 flex flex-col items-center justify-center text-center" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <div className="w-16 h-16 bg-black/5 ios-squircle flex items-center justify-center mb-6 border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                <Calendar className="text-[var(--ios-text-secondary)]/30" size={32} />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-700">Nada encontrado aqui</h3>
-                            <p className="text-slate-400 text-sm max-w-xs mx-auto">Não há lançamentos para este filtro ou período selecionado.</p>
+                            <h3 className="text-xl font-black text-[var(--ios-text)] tracking-tight mb-2">Nada por aqui</h3>
+                            <p className="text-[var(--ios-text-secondary)] text-sm font-medium max-w-xs mx-auto">Não há lançamentos para este filtro ou período selecionado.</p>
                         </div>
                     ) : (
                         groupedData.map((group, idx) => (
                             <div key={idx} className="space-y-3">
                                 {viewMode === 'timeline' && (
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2 flex items-center gap-2">
-                                        <div className="w-1 h-3 bg-rose-600 rounded-full"></div>
+                                    <h3 className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest px-2 flex items-center gap-2 mb-4">
+                                        <div className="w-1 h-3 bg-[#ff2d55] rounded-full"></div>
                                         {group.title === 'Hoje' ? (
-                                            <span className="text-rose-600">Para Hoje</span>
+                                            <span className="text-[#ff2d55]">Para Hoje</span>
                                         ) : group.title === 'Em Atraso' ? (
-                                            <span className="text-rose-600">Em Atraso</span>
+                                            <span className="text-[#ff3b30]">Em Atraso</span>
                                         ) : (
                                             formatDate(group.title) || group.title
                                         )}
@@ -411,37 +411,38 @@ export default function AgendaView() {
                                         return (
                                             <div
                                                 key={trx.id}
-                                                className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 hover:border-rose-200 transition-all group active:scale-[0.98]"
+                                                className="bg-[var(--ios-card-bg)]/80 backdrop-blur-xl p-4 ios-squircle-sm border group hover:shadow-md transition-all active:scale-[0.98] mb-2"
+                                                style={{ borderColor: 'var(--ios-glass-border)' }}
                                             >
                                                 <div className="flex items-center justify-between gap-4">
                                                     <div className="flex items-center gap-4 flex-1 min-w-0">
                                                         {/* Type Indicator */}
-                                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${trx.type === 'RECEITA' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-600'
+                                                        <div className={`w-12 h-12 ios-squircle flex items-center justify-center shrink-0 ${trx.type === 'RECEITA' ? 'bg-[#34c759]/10 text-[#34c759]' : 'bg-black/5 text-[var(--ios-text-secondary)]'
                                                             }`}>
-                                                            {trx.type === 'RECEITA' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                                                            {trx.type === 'RECEITA' ? <TrendingUp size={22} strokeWidth={2.5} /> : <TrendingDown size={22} strokeWidth={2.5} />}
                                                         </div>
 
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-0.5">
-                                                                <h4 className="font-bold text-slate-800 truncate">{trx.description}</h4>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <h4 className="font-bold text-[var(--ios-text)] truncate">{trx.description}</h4>
                                                                 {trx.installments && (
-                                                                    <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md">
+                                                                    <span className="text-[9px] font-black bg-black/5 text-[var(--ios-text-secondary)] px-1.5 py-0.5 ios-squircle-sm border border-[var(--ios-glass-border)]">
                                                                         {trx.installments.current}/{trx.installments.total}
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                                                <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-                                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat?.color || '#94a3b8' }}></div>
+                                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                                                <div className="flex items-center gap-1.5 text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">
+                                                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cat?.color || '#94a3b8' }}></div>
                                                                     {cat?.name || 'Geral'}
                                                                 </div>
-                                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
-                                                                    <Wallet size={12} className="text-slate-400" />
+                                                                <div className="flex items-center gap-1.5 text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">
+                                                                    <Wallet size={12} strokeWidth={2.5} />
                                                                     {source}
                                                                 </div>
                                                                 {viewMode === 'list' && (
-                                                                    <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
-                                                                        <Calendar size={12} />
+                                                                    <div className="flex items-center gap-1.5 text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest">
+                                                                        <Calendar size={12} strokeWidth={2.5} />
                                                                         {formatDate(trx.date)}
                                                                     </div>
                                                                 )}
@@ -450,14 +451,14 @@ export default function AgendaView() {
                                                     </div>
 
                                                     <div className="text-right">
-                                                        <p className={`font-black text-lg ${trx.type === 'RECEITA' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                                        <p className={`font-black text-xl tracking-tighter leading-none mb-1 ${trx.type === 'RECEITA' ? 'text-[#34c759]' : 'text-[var(--ios-text)]'}`}>
                                                             {trx.type === 'DESPESA' ? '-' : ''}{formatCurrency(trx.amount + (trx.interest_amount || 0))}
                                                         </p>
                                                         {trx.interest_amount > 0 && (
-                                                            <p className="text-[9px] text-indigo-500 font-bold -mt-1">+ {formatCurrency(trx.interest_amount)} juros</p>
+                                                            <p className="text-[9px] text-[#5856d6] font-black uppercase tracking-widest leading-none mb-2">+ {formatCurrency(trx.interest_amount)} juros</p>
                                                         )}
-                                                        <span className={`text-[10px] font-black tracking-tighter uppercase px-2 py-0.5 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-700' :
-                                                            trx.date < toISODate(new Date()) ? 'bg-rose-100 text-rose-700' : 'bg-rose-100 text-rose-700'
+                                                        <span className={`text-[9px] font-black tracking-widest uppercase px-2 py-0.5 ios-squircle-sm ${isPaid ? 'bg-[#34c759]/10 text-[#34c759]' :
+                                                            trx.date < toISODate(new Date()) ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : 'bg-[#ff9500]/10 text-[#ff9500]'
                                                             }`}>
                                                             {trx.status}
                                                         </span>
@@ -466,10 +467,10 @@ export default function AgendaView() {
                                                     {!isPaid && (
                                                         <button
                                                             onClick={() => handleMarkAsPaid(trx)}
-                                                            className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center hover:scale-110 active:scale-90"
+                                                            className="w-10 h-10 ios-squircle bg-black/5 text-[var(--ios-text-secondary)] hover:bg-[#34c759] hover:text-white transition-all flex items-center justify-center shadow-sm border border-transparent hover:border-[#34c759]/20"
                                                             title="Confirmar Pagamento"
                                                         >
-                                                            <Check size={20} />
+                                                            <Check size={22} strokeWidth={2.5} />
                                                         </button>
                                                     )}
                                                 </div>
@@ -485,102 +486,104 @@ export default function AgendaView() {
 
             {/* Modal de Quitação de Lançamento (Design Pro Max) */}
             {payingTransaction && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 animate-in fade-in duration-300 backdrop-blur-md">
-                    <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-300 border border-slate-100">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 animate-in fade-in backdrop-blur-md">
+                    <div className="bg-[var(--ios-card-bg)]/95 backdrop-blur-xl ios-squircle-md shadow-2xl w-full max-w-sm overflow-hidden border animate-in zoom-in-95 slide-in-from-bottom-8" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         {/* Header do Modal */}
-                        <div className="p-8 pb-6">
-                            <div className="flex items-center gap-4 mb-3">
-                                <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-[1.25rem] flex items-center justify-center shrink-0 shadow-inner">
-                                    <CheckCircle2 size={32} />
+                        <div className="p-8 pb-6 bg-black/5">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="w-14 h-14 bg-[#34c759]/10 text-[#34c759] ios-squircle flex items-center justify-center shrink-0 border border-[#34c759]/20">
+                                    <CheckCircle2 size={32} strokeWidth={2.5} />
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-xl font-black text-slate-900 leading-tight">Quitar Lançamento</h3>
-                                    <p className="text-slate-500 text-sm truncate font-medium">{payingTransaction.description}</p>
+                                    <h3 className="text-xl font-black text-[var(--ios-text)] tracking-tight leading-none mb-1">Quitar Dados</h3>
+                                    <p className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest truncate leading-none">{payingTransaction.description}</p>
                                 </div>
                             </div>
-                            <p className="text-3xl font-black text-slate-900 tracking-tighter">
+                            <p className="text-4xl font-black text-[var(--ios-text)] tracking-tighter leading-none">
                                 {formatCurrency(payingTransaction.amount)}
                             </p>
                         </div>
 
                         {/* Corpo do Modal */}
-                        <div className="px-8 pb-8 space-y-5">
-                            <div className="space-y-4">
+                        <div className="p-8 space-y-5">
+                            <div>
                                 {/* Data do Pagamento */}
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Data do Pagamento</label>
+                                    <label className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest ml-1 mb-2 block">Data do Pagamento</label>
                                     <div className="relative">
                                         <input
                                             type="date"
                                             value={paymentDate}
                                             onChange={(e) => setPaymentDate(e.target.value)}
-                                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 focus:border-emerald-500 focus:bg-white outline-none transition-all"
+                                            className="w-full bg-black/5 border ios-squircle-sm px-4 py-4 text-sm font-bold text-[var(--ios-text)] outline-none focus:ring-1 focus:ring-[#34c759]/30 transition-all"
+                                            style={{ borderColor: 'var(--ios-glass-border)' }}
                                         />
                                     </div>
                                 </div>
 
                                 {/* Forma de Pagamento */}
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Forma de Pagamento</label>
+                                <div className="mt-5">
+                                    <label className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest ml-1 mb-2 block">Forma de Pagamento</label>
                                     <select
                                         value={paymentMethod}
                                         onChange={(e) => setPaymentMethod(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 focus:border-emerald-500 focus:bg-white outline-none transition-all appearance-none cursor-pointer"
+                                        className="w-full bg-black/5 border ios-squircle-sm px-4 py-4 text-sm font-bold text-[var(--ios-text)] outline-none focus:ring-1 focus:ring-[#34c759]/30 transition-all appearance-none cursor-pointer"
+                                        style={{ borderColor: 'var(--ios-glass-border)' }}
                                     >
-                                        <option value="DEBITO">Débito em Conta</option>
-                                        <option value="PIX">Transferência / PIX</option>
-                                        <option value="DINHEIRO">Dinheiro Espécie</option>
-                                        <option value="BOLETO">Boleto Bancário</option>
-                                        {payingTransaction.card_id && <option value="CREDITO">Cartão de Crédito</option>}
+                                        <option value="DEBITO" className="text-black">Débito em Conta</option>
+                                        <option value="PIX" className="text-black">PIX</option>
+                                        <option value="DINHEIRO" className="text-black">Dinheiro</option>
+                                        <option value="BOLETO" className="text-black">Boleto</option>
+                                        {payingTransaction.card_id && <option value="CREDITO" className="text-black">Cartão de Crédito</option>}
                                     </select>
                                 </div>
 
                                 {/* Conta de Saída */}
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">De qual conta saiu?</label>
+                                <div className="mt-5">
+                                    <label className="text-[10px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest ml-1 mb-2 block">Conta de Quitação</label>
                                     <select
                                         value={selectedAccountForPayment}
                                         onChange={(e) => setSelectedAccountForPayment(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 focus:border-emerald-500 focus:bg-white outline-none transition-all appearance-none cursor-pointer"
+                                        className="w-full bg-black/5 border ios-squircle-sm px-4 py-4 text-sm font-bold text-[var(--ios-text)] outline-none focus:ring-1 focus:ring-[#34c759]/30 transition-all appearance-none cursor-pointer"
+                                        style={{ borderColor: 'var(--ios-glass-border)' }}
                                     >
-                                        <option value="">Selecione uma conta...</option>
+                                        <option value="" className="text-black">Selecione uma conta...</option>
                                         {accounts.map(acc => (
-                                            <option key={acc.id} value={acc.id}>{acc.name} ({formatCurrency(acc.current_balance)})</option>
+                                            <option key={acc.id} value={acc.id} className="text-black">{acc.name} ({formatCurrency(acc.current_balance)})</option>
                                         ))}
                                     </select>
                                 </div>
 
                                 {/* Juros / Multas */}
-                                <div>
-                                    <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest ml-1 mb-2 block">Juros ou Multas Pagas (R$)</label>
-                                    <div className="relative group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400">
-                                            <TrendingUp size={16} />
-                                        </div>
+                                <div className="mt-5">
+                                    <label className="text-[10px] font-black text-[#5856d6] dark:text-[#7d7aff] uppercase tracking-widest ml-1 mb-2 block">Acréscimos (Juros/Multas)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-[#5856d6] dark:text-[#7d7aff]">R$</span>
                                         <input
                                             type="text"
                                             value={interestAmount}
                                             onChange={(e) => setInterestAmount(e.target.value)}
                                             placeholder="0,00"
-                                            className="w-full bg-indigo-50/50 border-2 border-indigo-100/50 rounded-2xl pl-10 pr-4 py-3.5 text-sm font-bold text-indigo-700 focus:border-indigo-400 focus:bg-white outline-none transition-all"
+                                            className="w-full bg-[#5856d6]/5 border ios-squircle-sm pl-11 pr-4 py-4 text-sm font-black text-[#5856d6] dark:text-[#7d7aff] outline-none focus:ring-1 focus:ring-[#5856d6]/30 transition-all"
+                                            style={{ borderColor: 'var(--ios-glass-border)' }}
                                         />
                                     </div>
-                                    <p className="text-[10px] text-slate-400 font-medium mt-1.5 ml-1">Este valor será somado ao total para fins de fluxo de caixa.</p>
+                                    <p className="text-[9px] font-black text-[var(--ios-text-secondary)] uppercase tracking-widest mt-2 ml-1 leading-tight">Este valor será somado ao total para efeitos de fluxo de caixa.</p>
                                 </div>
                             </div>
 
                             {/* Botões de Ação */}
-                            <div className="flex flex-col gap-3 pt-4">
+                            <div className="flex flex-col gap-3 pt-6">
                                 <button
                                     onClick={confirmPaymentWithAccount}
                                     disabled={!selectedAccountForPayment}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:grayscale text-white font-black py-4 rounded-2xl shadow-xl shadow-emerald-200 hover:shadow-emerald-300 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center gap-2 text-base"
+                                    className="w-full bg-[var(--ios-text)] text-[var(--ios-bg)] disabled:opacity-20 ios-squircle py-5 font-black text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
                                 >
                                     Confirmar Quitação
                                 </button>
                                 <button
                                     onClick={() => setPayingTransaction(null)}
-                                    className="w-full py-3 text-slate-400 font-bold hover:text-slate-600 transition-colors text-sm"
+                                    className="w-full py-4 text-[var(--ios-text-secondary)] font-black text-[10px] uppercase tracking-widest hover:text-[var(--ios-text)] transition-colors"
                                 >
                                     Cancelar
                                 </button>

@@ -461,9 +461,9 @@ export default function TransactionsView({
             case 'PAGA': return 'bg-[#34c759]/10 text-[#34c759]';
             case 'RECEBIDA': return 'bg-[#34c759]/10 text-[#34c759]';
             case 'ATRASADA': return 'bg-ios-overdue animate-overdue';
-            case 'INCOMPLETA': return 'bg-amber-100 text-amber-700 border border-amber-200';
-            case 'EXCLUIDA': return 'bg-slate-200 text-slate-500 line-through';
-            default: return 'bg-slate-100 text-slate-700';
+            case 'INCOMPLETA': return 'bg-amber-100/10 text-amber-500 border border-amber-500/20';
+            case 'EXCLUIDA': return 'bg-[var(--ios-text-secondary)]/10 text-[var(--ios-text-secondary)] line-through';
+            default: return 'bg-black/5 text-[var(--ios-text-secondary)]';
         }
     };
 
@@ -479,13 +479,13 @@ export default function TransactionsView({
                 <div className="flex justify-between items-end px-1">
                     <div className="flex flex-col gap-1">
                         <span className="text-[10px] font-black text-[#ff9500] uppercase tracking-widest leading-none">Visão Geral</span>
-                        <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Lançamentos</h1>
+                        <h1 className="text-4xl font-black tracking-tight leading-none" style={{ color: 'var(--ios-text)' }}>Lançamentos</h1>
                     </div>
                     {/* Month Stats Widget */}
-                    <div className="hidden md:flex items-center gap-4 bg-white/60 backdrop-blur-md p-3 px-5 ios-squircle border border-white/50 shadow-sm transition-all hover:shadow-md">
+                    <div className="hidden md:flex items-center gap-4 ios-glass p-3 px-5 ios-squircle border shadow-sm transition-all hover:shadow-md" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         <div className="flex flex-col items-end">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pendente este mês</span>
-                            <span className="text-lg font-black text-slate-900 leading-none">{formatCurrency(monthStats.pendingTotal)}</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: 'var(--ios-text-secondary)' }}>Pendente este mês</span>
+                            <span className="text-lg font-black leading-none" style={{ color: 'var(--ios-text)' }}>{formatCurrency(monthStats.pendingTotal)}</span>
                         </div>
                         <div className="w-10 h-10 ios-squircle bg-[#007aff]/10 flex items-center justify-center text-[#007aff]">
                             <TrendingDown size={20} strokeWidth={2.5} />
@@ -497,24 +497,26 @@ export default function TransactionsView({
                 <div className="ios-glass p-2 ios-squircle-md border border-white/30 shadow-lg flex flex-col md:flex-row gap-4 items-stretch md:items-center">
                     <div className="flex-1 flex gap-2">
                         <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ios-text-secondary)]" size={18} />
                             <input
                                 type="text"
                                 placeholder="Buscar lançamento..."
-                                className="w-full pl-11 pr-4 py-4 bg-white/50 ios-squircle-sm border-none outline-none text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white transition-all shadow-inner"
+                                className="w-full pl-11 pr-4 py-4 bg-black/5 ios-squircle-sm border-none outline-none text-sm font-bold placeholder:text-[var(--ios-text-secondary)] opacity-10 focus:bg-black/10 transition-all shadow-inner"
+                                style={{ color: 'var(--ios-text)' }}
                                 value={filters.search}
                                 onChange={e => setFilters({ ...filters, search: e.target.value })}
                             />
                         </div>
                         <button
                             onClick={() => { hapticFeedback(5); setShowFilters(!showFilters); }}
-                            className={`w-14 h-14 ios-squircle flex items-center justify-center transition-all active:scale-95 border-b-2 ${showFilters ? 'bg-[#007aff] text-white border-[#007aff]/30 shadow-lg' : 'bg-white text-slate-500 border-slate-100 hover:bg-slate-50'}`}
+                            className={`w-14 h-14 ios-squircle flex items-center justify-center transition-all active:scale-95 border-b-2 ${showFilters ? 'bg-[#007aff] text-white border-[#007aff]/30 shadow-lg' : 'bg-black/5 text-[var(--ios-text-secondary)] hover:bg-black/10'}`}
+                            style={{ borderColor: showFilters ? undefined : 'var(--ios-glass-border)' }}
                         >
                             <Filter size={20} strokeWidth={2.5} />
                         </button>
                     </div>
 
-                    <div className="flex bg-slate-200/40 p-1 ios-squircle-md gap-1">
+                    <div className="flex bg-black/5 p-1 ios-squircle-md gap-1">
                         {[
                             { id: 'ALL', label: 'Todos', icon: LayoutDashboard },
                             { id: 'RECEITA', label: 'Receitas', icon: ArrowUpCircle, color: '#007aff' },
@@ -523,7 +525,8 @@ export default function TransactionsView({
                             <button
                                 key={btn.id}
                                 onClick={() => { hapticFeedback(5); setFilters({ ...filters, type: btn.id as any }); setShowRecurring(false); }}
-                                className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${filters.type === btn.id && !showRecurring ? 'bg-white text-slate-900 shadow-md scale-[1.02]' : 'text-slate-500 hover:bg-white/40'}`}
+                                className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${filters.type === btn.id && !showRecurring ? 'bg-white dark:bg-slate-800 shadow-md scale-[1.02]' : 'hover:bg-black/5'}`}
+                                style={{ color: filters.type === btn.id && !showRecurring ? 'var(--ios-text)' : 'var(--ios-text-secondary)' }}
                             >
                                 <btn.icon size={14} strokeWidth={3} className={filters.type === btn.id ? (btn.color ? `text-[${btn.color}]` : 'text-[#007aff]') : 'opacity-40'} />
                                 <span>{btn.label}</span>
@@ -531,7 +534,8 @@ export default function TransactionsView({
                         ))}
                         <button
                             onClick={() => { hapticFeedback(5); setShowRecurring(true); setFilters({ ...filters, type: 'ALL' }); }}
-                            className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${showRecurring ? 'bg-white text-[#ff9500] shadow-md scale-[1.02]' : 'text-slate-500 hover:bg-white/40'}`}
+                            className={`flex-1 md:px-5 py-2.5 ios-squircle text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${showRecurring ? 'bg-white/10 text-[#ff9500] shadow-md scale-[1.02]' : 'hover:bg-black/5'}`}
+                            style={{ color: showRecurring ? '#ff9500' : 'var(--ios-text-secondary)' }}
                         >
                             <Repeat size={14} strokeWidth={3} className={showRecurring ? 'text-[#ff9500]' : 'opacity-40'} />
                             <span>Recorrência</span>
@@ -542,131 +546,142 @@ export default function TransactionsView({
 
             {/* Advanced Filters Panel */}
             {showFilters && (
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4 animate-slide-down">
+                <div className="ios-glass p-4 ios-squircle border shadow-sm space-y-4 animate-slide-down" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Tipo</label>
+                            <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Tipo</label>
                             <select
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.type}
                                 onChange={e => setFilters({ ...filters, type: e.target.value as any })}
                             >
-                                <option value="ALL">Todos os Tipos</option>
-                                <option value="RECEITA">Receitas</option>
-                                <option value="DESPESA">Despesas</option>
+                                <option value="ALL" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Todos os Tipos</option>
+                                <option value="RECEITA" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Receitas</option>
+                                <option value="DESPESA" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Despesas</option>
                             </select>
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Status</label>
+                            <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Status</label>
                             <select
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.status}
                                 onChange={e => setFilters({ ...filters, status: e.target.value as any })}
                             >
-                                <option value="ALL">Todos os Status</option>
-                                <option value="PREVISTA">Prevista</option>
-                                <option value="CONFIRMADA">Confirmada</option>
-                                <option value="ATRASADA">Atrasada</option>
-                                <option value="INCOMPLETA">Incompletas</option>
-                                {filters.type !== 'DESPESA' && <option value="RECEBIDA">Recebida</option>}
-                                {filters.type !== 'RECEITA' && <option value="PAGA">Paga</option>}
-                                <option value="EXCLUIDA">ExcluÃ­das</option>
+                                <option value="ALL" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Todos os Status</option>
+                                <option value="PREVISTA" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Prevista</option>
+                                <option value="CONFIRMADA" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Confirmada</option>
+                                <option value="ATRASADA" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Atrasada</option>
+                                <option value="INCOMPLETA" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Incompletas</option>
+                                {filters.type !== 'DESPESA' && <option value="RECEBIDA" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Recebida</option>}
+                                {filters.type !== 'RECEITA' && <option value="PAGA" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Paga</option>}
+                                <option value="EXCLUIDA" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Excluídas</option>
                             </select>
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Categoria</label>
+                            <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Categoria</label>
                             <select
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.category}
                                 onChange={e => setFilters({ ...filters, category: e.target.value })}
                             >
-                                <option value="ALL">Todas as Categorias</option>
+                                <option value="ALL" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Todas as Categorias</option>
                                 {categories
                                     .filter(c => filters.type === 'ALL' || c.type === filters.type)
                                     .map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        <option key={cat.id} value={cat.id} className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">{cat.name}</option>
                                     ))
                                 }
                             </select>
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Conta/CartÃ£o</label>
+                            <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Conta/Cartão</label>
                             <select
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.account}
                                 onChange={e => setFilters({ ...filters, account: e.target.value })}
                             >
-                                <option value="ALL">Todas as Contas</option>
-                                <optgroup label="Contas">
-                                    {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                                <option value="ALL" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">Todas as Contas</option>
+                                <optgroup label="Contas" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">
+                                    {accounts.map(acc => <option key={acc.id} value={acc.id} className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">{acc.name}</option>)}
                                 </optgroup>
-                                <optgroup label="CartÃµes">
-                                    {cards.map(card => <option key={card.id} value={card.id}>{card.name}</option>)}
+                                <optgroup label="Cartões" className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">
+                                    {cards.map(card => <option key={card.id} value={card.id} className="bg-[var(--ios-card-bg)] text-[var(--ios-text)]">{card.name}</option>)}
                                 </optgroup>
                             </select>
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data InÃ­cio</label>
+                            <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Data Início</label>
                             <input
                                 type="date"
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.startDate}
                                 onChange={e => setFilters({ ...filters, startDate: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Data Fim</label>
+                            <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Data Fim</label>
                             <input
                                 type="date"
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.endDate}
                                 onChange={e => setFilters({ ...filters, endDate: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor MÃ­nimo</label>
+                            <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Valor Mínimo</label>
                             <input
                                 type="number"
                                 placeholder="R$ 0,00"
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.minAmount}
                                 onChange={e => setFilters({ ...filters, minAmount: e.target.value })}
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-1 block font-mono">Valor MÃ¡ximo</label>
+                            <label className="text-xs font-bold uppercase mb-1 block font-mono" style={{ color: 'var(--ios-text-secondary)' }}>Valor Máximo</label>
                             <input
                                 type="number"
                                 placeholder="R$ Infinito"
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                className="w-full p-2.5 border rounded-lg text-sm bg-black/5 outline-none transition-all"
+                                style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                 value={filters.maxAmount}
                                 onChange={e => setFilters({ ...filters, maxAmount: e.target.value })}
                             />
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50">
+                    <div className="flex flex-wrap gap-2 pt-2 border-t" style={{ borderColor: 'var(--ios-glass-border)' }}>
                         <button
                             onClick={() => {
                                 const b = getMonthBounds(0);
                                 setFilters({ ...filters, startDate: b.start, endDate: b.end });
                             }}
-                            className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold text-slate-600 transition-colors"
+                            className="px-3 py-1 bg-black/5 hover:bg-black/10 rounded-full text-xs font-bold transition-colors"
+                            style={{ color: 'var(--ios-text-secondary)' }}
                         >
-                            Este MÃªs
+                            Este Mês
                         </button>
                         <button
                             onClick={() => {
                                 const b = getMonthBounds(1);
                                 setFilters({ ...filters, startDate: b.start, endDate: b.end });
                             }}
-                            className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-bold text-slate-600 transition-colors"
+                            className="px-3 py-1 bg-black/5 hover:bg-black/10 rounded-full text-xs font-bold transition-colors"
+                            style={{ color: 'var(--ios-text-secondary)' }}
                         >
-                            PrÃ³ximo MÃªs
+                            Próximo Mês
                         </button>
                         <button
                             onClick={() => setFilters({ ...filters, startDate: '', endDate: '' })}
-                            className="px-3 py-1 bg-slate-100 hover:bg-red-50 hover:text-red-600 rounded-full text-xs font-bold text-slate-600 transition-colors"
+                            className="px-3 py-1 bg-black/5 hover:bg-red-500/10 hover:text-red-500 rounded-full text-xs font-bold transition-colors"
+                            style={{ color: 'var(--ios-text-secondary)' }}
                         >
                             Ver Tudo (Sem data)
                         </button>
@@ -675,7 +690,7 @@ export default function TransactionsView({
                                 setExportData(filteredTransactions);
                                 setIsExportModalOpen(true);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-bold transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-[#007aff]/10 text-[#007aff] hover:bg-[#007aff]/20 rounded-lg text-sm font-black transition-colors"
                         >
                             <Download size={16} /> Exportar Filtrados
                         </button>
@@ -684,35 +699,35 @@ export default function TransactionsView({
             )}
 
             {/* COMPACT STATS BAR */}
-            <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-2.5 overflow-x-auto">
-                <div className={`flex items-center gap-2 shrink-0 pr-3 border-r border-slate-100 ${monthStats.type === 'RECEITA' ? 'text-[#007aff]' : 'text-slate-700'}`}>
+            <div className="flex items-center gap-2 ios-glass rounded-xl border shadow-sm px-4 py-2.5 overflow-x-auto" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                <div className={`flex items-center gap-2 shrink-0 pr-3 border-r ${monthStats.type === 'RECEITA' ? 'text-[#007aff]' : ''}`} style={{ borderColor: 'var(--ios-glass-border)', color: monthStats.type === 'RECEITA' ? undefined : 'var(--ios-text)' }}>
                     <Clock size={14} className="shrink-0 text-slate-400" />
                     <div>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">
+                        <p className="text-[9px] font-bold uppercase tracking-wider leading-none" style={{ color: 'var(--ios-text-secondary)' }}>
                             {monthStats.type === 'RECEITA' ? 'A Receber' : 'Pendentes'}
                         </p>
                         <p className="text-sm font-black leading-tight">{formatCurrency(monthStats.pendingTotal)}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 px-3 border-r border-slate-100 text-red-600">
+                <div className="flex items-center gap-2 shrink-0 px-3 border-r text-[#ff3b30]" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <AlertTriangle size={14} className="shrink-0" />
                     <div>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">Atrasadas</p>
+                        <p className="text-[9px] font-bold uppercase tracking-wider leading-none" style={{ color: 'var(--ios-text-secondary)' }}>Atrasadas</p>
                         <p className="text-sm font-black leading-tight">{monthStats.overdueCount}</p>
                     </div>
                 </div>
                 <div className={`flex items-center gap-2 shrink-0 pl-3 ${monthStats.overdueCount > 0 ? 'text-[#ff3b30] animate-overdue' : 'text-[#34c759]'}`}>
                     <CheckCircle size={14} className="shrink-0" />
                     <div>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">Status</p>
+                        <p className="text-[9px] font-bold uppercase tracking-wider leading-none" style={{ color: 'var(--ios-text-secondary)' }}>Status</p>
                         <p className="text-sm font-black leading-tight">
                             {monthStats.overdueCount > 0 ? 'ATENÇÃO!' : 'EM DIA'}
                         </p>
                     </div>
                 </div>
-                <div className="ml-auto shrink-0 text-right pl-3 border-l border-slate-100">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">Exibindo</p>
-                    <p className="text-sm font-black text-slate-700 leading-tight">{filteredTransactions.length}</p>
+                <div className="ml-auto shrink-0 text-right pl-3 border-l" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                    <p className="text-[9px] font-bold uppercase tracking-wider leading-none" style={{ color: 'var(--ios-text-secondary)' }}>Exibindo</p>
+                    <p className="text-sm font-black leading-tight" style={{ color: 'var(--ios-text)' }}>{filteredTransactions.length}</p>
                 </div>
             </div>
 
@@ -720,41 +735,41 @@ export default function TransactionsView({
             <div id="recurring-rules-section">
                 {
                     recurringRules.length > 0 ? (
-                        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="ios-glass rounded-xl border shadow-sm overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             <button
                                 onClick={() => setShowRecurring(!showRecurring)}
-                                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
+                                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-black/5 transition-colors"
                             >
                                 <div className="flex items-center gap-2.5">
-                                    <Repeat size={16} className="text-blue-500" />
-                                    <span className="text-sm font-semibold text-slate-700">Regras Recorrentes</span>
-                                    <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    <Repeat size={16} className="text-[#007aff]" />
+                                    <span className="text-sm font-bold" style={{ color: 'var(--ios-text)' }}>Regras Recorrentes</span>
+                                    <span className="bg-[#007aff]/10 text-[#007aff] text-[10px] font-bold px-2 py-0.5 rounded-full">
                                         {recurringRules.filter(r => r.active).length} ativas
                                     </span>
                                 </div>
-                                <ChevronRight size={16} className={`text-slate-400 transition-transform duration-200 ${showRecurring ? 'rotate-90' : ''}`} />
+                                <ChevronRight size={16} className="text-slate-400 transition-transform duration-200" style={{ transform: showRecurring ? 'rotate(90deg)' : 'none' }} />
                             </button>
 
                             {showRecurring && (
-                                <div className="border-t border-slate-100 divide-y divide-slate-50">
+                                <div className="border-t divide-y" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                     {recurringRules.map(rule => {
                                         const cat = categories.find(c => c.id === rule.category_id);
-                                        const freqLabel: Record<string, string> = { DIARIO: 'DiÃ¡rio', SEMANAL: 'Semanal', MENSAL: 'Mensal', ANUAL: 'Anual' };
+                                        const freqLabel: Record<string, string> = { DIARIO: 'Diário', SEMANAL: 'Semanal', MENSAL: 'Mensal', ANUAL: 'Anual' };
                                         return (
                                             <div key={rule.id} className={`flex items-center justify-between px-5 py-3 ${!rule.active ? 'opacity-50' : ''}`}>
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color || '#94a3b8' }} />
                                                     <div>
-                                                        <p className="text-sm font-medium text-slate-800">{rule.description}</p>
-                                                        <p className="text-xs text-slate-400">
+                                                        <p className="text-sm font-bold" style={{ color: 'var(--ios-text)' }}>{rule.description}</p>
+                                                        <p className="text-xs" style={{ color: 'var(--ios-text-secondary)' }}>
                                                             {freqLabel[rule.frequency] || rule.frequency}
-                                                            {rule.day_of_month ? ` Â· Dia ${rule.day_of_month}` : ''}
-                                                            {cat ? ` Â· ${cat.name}` : ''}
+                                                            {rule.day_of_month ? ` · Dia ${rule.day_of_month}` : ''}
+                                                            {cat ? ` · ${cat.name}` : ''}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className={`text-sm font-bold ${rule.type === 'FIXO' ? 'text-slate-700' : 'text-orange-600'}`}>
+                                                    <span className={`text-sm font-black ${rule.type === 'FIXO' ? '' : 'text-[#ff9500]'}`} style={{ color: rule.type === 'FIXO' ? 'var(--ios-text)' : undefined }}>
                                                         {formatCurrency(rule.amount)}
                                                     </span>
                                                     <button
@@ -791,10 +806,10 @@ export default function TransactionsView({
                         </div>
                     ) : (
                         showRecurring && (
-                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-8 text-center">
-                                <Repeat size={32} className="mx-auto text-slate-300 mb-2 opacity-20" />
-                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Nenhuma regra recorrente</p>
-                                <p className="text-xs text-slate-400 mt-1">Crie um novo lanÃ§amento e marque "Repetir" para comeÃ§ar.</p>
+                            <div className="bg-black/5 border rounded-xl p-8 text-center" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                <Repeat size={32} className="mx-auto text-[var(--ios-text-secondary)] mb-2 opacity-20" />
+                                <p className="text-sm font-bold uppercase tracking-widest" style={{ color: 'var(--ios-text-secondary)' }}>Nenhuma regra recorrente</p>
+                                <p className="text-xs mt-1" style={{ color: 'var(--ios-text-secondary)' }}>Crie um novo lançamento e marque "Repetir" para começar.</p>
                             </div>
                         )
                     )
@@ -804,7 +819,7 @@ export default function TransactionsView({
             {/* Batch Actions Bar */}
             {
                 selectedTransactions.size > 0 && (
-                    <div className="bg-slate-800 text-white p-3 rounded-lg flex items-center justify-between shadow-lg animate-fade-in sticky top-4 z-30">
+                    <div className="bg-[var(--ios-text)] text-[var(--ios-bg)] p-3 rounded-lg flex items-center justify-between shadow-lg animate-fade-in sticky top-4 z-30">
                         <span className="font-bold text-sm ml-2">{selectedTransactions.size} selecionados</span>
                         <div className="flex gap-2">
                             <button
@@ -813,20 +828,20 @@ export default function TransactionsView({
                                     setExportData(selected);
                                     setIsExportModalOpen(true);
                                 }}
-                                className="p-2 hover:bg-slate-700 rounded-lg text-blue-300 hover:text-blue-200 flex items-center gap-2 text-sm"
+                                className="p-2 hover:bg-[var(--ios-bg)]/20 rounded-lg text-[#007aff] hover:text-[#007aff]/80 flex items-center gap-2 text-sm"
                                 title="Exportar Selecionados"
                             >
                                 <Download size={16} /> Exportar
                             </button>
                             <button
                                 onClick={handleBatchDelete}
-                                className="p-2 hover:bg-slate-700 rounded-lg text-red-300 hover:text-red-200 flex items-center gap-2 text-sm disabled:opacity-50"
+                                className="p-2 hover:bg-[var(--ios-bg)]/20 rounded-lg text-[#ff3b30] hover:text-[#ff3b30]/80 flex items-center gap-2 text-sm disabled:opacity-50"
                                 title="Excluir"
                                 disabled={isSaving}
                             >
                                 {isSaving ? (
                                     <>
-                                        <div className="w-4 h-4 border-2 border-red-300/20 border-t-red-300 rounded-full animate-spin" />
+                                        <div className="w-4 h-4 border-2 border-[#ff3b30]/20 border-t-[#ff3b30] rounded-full animate-spin" />
                                         Excluindo...
                                     </>
                                 ) : (
@@ -839,59 +854,59 @@ export default function TransactionsView({
             }
 
             {/* Transactions List */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="ios-glass rounded-xl shadow-sm border overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-medium">
+                        <thead className="bg-black/5 text-xs uppercase font-medium" style={{ color: 'var(--ios-text-secondary)' }}>
                             <tr>
                                 <th className="px-4 py-4 w-10">
-                                    <button onClick={selectAll} className="text-slate-400 hover:text-slate-600">
+                                    <button onClick={selectAll} className="hover:text-[#ff9500]">
                                         {selectedTransactions.size === filteredTransactions.length && filteredTransactions.length > 0
                                             ? <CheckSquare size={18} />
                                             : <Square size={18} />}
                                     </button>
                                 </th>
                                 <th className="px-6 py-4">Data</th>
-                                <th className="px-6 py-4">DescriÃ§Ã£o</th>
+                                <th className="px-6 py-4">Descrição</th>
                                 <th className="px-6 py-4">Categoria</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4 text-right">Valor</th>
                                 <th className="px-6 py-4"></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-sm">
+                        <tbody className="divide-y text-sm" style={{ borderColor: 'var(--ios-glass-border)' }}>
                             {filteredTransactions.map(t => {
                                 const isTransfer = t.payment_method === 'TRANSFERENCIA';
-                                const category = isTransfer ? { name: 'TransferÃªncia', color: '#6366f1', icon: 'ArrowRightLeft' } : categories.find(c => c.id === t.category_id);
+                                const category = isTransfer ? { name: 'Transferência', color: '#6366f1', icon: 'ArrowRightLeft' } : categories.find(c => c.id === t.category_id);
                                 const isSelected = selectedTransactions.has(t.id);
 
                                 return (
-                                    <tr key={t.id} className={`hover:bg-slate-50 transition-colors group ${isSelected ? 'bg-blue-50/30' : ''} ${t.status === 'EXCLUIDA' ? 'opacity-60 grayscale-[0.5]' : ''}`}>
+                                    <tr key={t.id} className={`hover:bg-black/5 transition-colors group ${isSelected ? 'bg-[#007aff]/10' : ''} ${t.status === 'EXCLUIDA' ? 'opacity-60 grayscale-[0.5]' : ''}`}>
                                         <td className="px-4 py-4">
-                                            <button onClick={() => toggleSelection(t.id)} className={`${isSelected ? 'text-blue-600' : 'text-slate-300 hover:text-slate-400'}`}>
+                                            <button onClick={() => toggleSelection(t.id)} className={`${isSelected ? 'text-[#007aff]' : 'text-[var(--ios-text-secondary)] opacity-30 hover:opacity-100'}`}>
                                                 {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
                                             </button>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap font-mono text-xs">
+                                        <td className="px-6 py-4 whitespace-nowrap font-mono text-xs" style={{ color: 'var(--ios-text-secondary)' }}>
                                             <div className="flex flex-col">
                                                 <span>{formatDate(t.date)}</span>
                                                 {t.status === 'ATRASADA' && (
-                                                    <span className="text-[9px] font-bold text-red-500 uppercase flex items-center gap-0.5">
+                                                    <span className="text-[9px] font-bold text-[#ff3b30] uppercase flex items-center gap-0.5">
                                                         <AlertTriangle size={8} /> Vencido
                                                     </span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 font-medium text-slate-800">
+                                        <td className="px-6 py-4 font-bold" style={{ color: 'var(--ios-text)' }}>
                                             <div className="flex flex-col">
                                                 <span className="flex items-center gap-1.5">
-                                                    {isTransfer && <ArrowRightLeft size={14} className="text-blue-500" />}
+                                                    {isTransfer && <ArrowRightLeft size={14} className="text-[#007aff]" />}
                                                     {t.description}
-                                                    {t.payment_method === 'CREDITO' && <CreditCard size={12} className="text-slate-400" />}
-                                                    {t.recurrence_id && <RefreshCw size={10} className="text-blue-400" title="Recorrente" />}
+                                                    {t.payment_method === 'CREDITO' && <CreditCard size={12} className="text-[var(--ios-text-secondary)]" />}
+                                                    {t.recurrence_id && <RefreshCw size={10} className="text-[#007aff]" title="Recorrente" />}
                                                 </span>
                                                 {t.installments && (
-                                                    <span className="text-[10px] text-slate-400 bg-slate-100 w-fit px-1 rounded flex items-center gap-1">
+                                                    <span className="text-[10px] bg-black/5 w-fit px-1 rounded flex items-center gap-1" style={{ color: 'var(--ios-text-secondary)' }}>
                                                         {t.installments.current}/{t.installments.total}
                                                     </span>
                                                 )}
@@ -901,15 +916,15 @@ export default function TransactionsView({
                                             <div className="flex items-center gap-2">
                                                 <div
                                                     className="w-2 h-2 rounded-full"
-                                                    style={{ backgroundColor: category?.color || '#cbd5e1' }}
+                                                    style={{ backgroundColor: category?.color || 'var(--ios-text-secondary)' }}
                                                 />
-                                                <span className="text-slate-600 text-sm">
+                                                <span className="text-sm" style={{ color: 'var(--ios-text-secondary)' }}>
                                                     {category?.name || 'Geral'}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${isTransfer ? 'bg-blue-50 text-blue-600' : getStatusColor(t.status)}`}>
+                                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${isTransfer ? 'bg-[#007aff]/10 text-[#007aff]' : getStatusColor(t.status)}`}>
                                                 {isTransfer ? 'TRANSFERIDO' : t.status}
                                             </span>
                                         </td>
@@ -922,7 +937,7 @@ export default function TransactionsView({
                                                 {t.status === 'EXCLUIDA' ? (
                                                     <button
                                                         onClick={() => handleRestore(t.id)}
-                                                        className="p-1 px-2 bg-blue-50 text-blue-600 rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-blue-100 transition-colors"
+                                                        className="p-1 px-2 bg-[#007aff]/10 text-[#007aff] rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-[#007aff]/20 transition-colors"
                                                         title="Restaurar"
                                                     >
                                                         <RotateCcw size={14} /> RESTAURAR
@@ -932,14 +947,14 @@ export default function TransactionsView({
                                                         {t.status !== 'PAGA' && t.status !== 'RECEBIDA' && (
                                                             <button
                                                                 onClick={() => handleOpenPayModal(t)}
-                                                                className="p-1 px-2 bg-green-50 text-green-600 rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-green-100 transition-colors"
+                                                                className="p-1 px-2 bg-[#34c759]/10 text-[#34c759] rounded-lg font-bold text-[10px] flex items-center gap-1 hover:bg-[#34c759]/20 transition-colors"
                                                             >
                                                                 <Check size={14} /> QUITAR
                                                             </button>
                                                         )}
                                                         <button
                                                             onClick={() => isTransfer ? alert('EdiÃ§Ã£o de transferÃªncias em breve.') : handleOpenModal(t)}
-                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 group-hover:text-blue-600 transition-colors disabled:opacity-50"
+                                                            className="p-1.5 hover:bg-black/5 rounded-lg text-[var(--ios-text-secondary)] hover:text-[#007aff] transition-colors disabled:opacity-50"
                                                             disabled={isSaving || isTransfer}
                                                         >
                                                             <Edit size={16} />
@@ -957,7 +972,7 @@ export default function TransactionsView({
                                                                     handleDelete(t.id);
                                                                 }
                                                             }}
-                                                            className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 group-hover:text-red-500 transition-colors disabled:opacity-50"
+                                                            className="p-1.5 hover:bg-[#ff3b30]/10 rounded-lg text-[var(--ios-text-secondary)] hover:text-[#ff3b30] transition-colors disabled:opacity-50"
                                                             disabled={isSaving}
                                                         >
                                                             <Trash2 size={16} />
@@ -973,11 +988,11 @@ export default function TransactionsView({
                     </table>
 
                     {filteredTransactions.length === 0 && (
-                        <div className="p-16 text-center text-slate-400 flex flex-col items-center">
-                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                        <div className="p-16 text-center flex flex-col items-center" style={{ color: 'var(--ios-text-secondary)' }}>
+                            <div className="w-16 h-16 bg-black/5 rounded-full flex items-center justify-center mb-4 text-[var(--ios-text-secondary)] opacity-20">
                                 <Search size={32} />
                             </div>
-                            <p>Nenhuma transaÃ§Ã£o encontrada com estes filtros.</p>
+                            <p>Nenhuma transação encontrada com estes filtros.</p>
                         </div>
                     )}
                 </div>
@@ -1005,48 +1020,51 @@ export default function TransactionsView({
             {/* QUICK PAY MODAL */}
             {
                 isPayModalOpen && payTrx && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform animate-scale-up">
-                            <div className="p-6 bg-slate-50 border-b border-slate-100">
-                                <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                                    <CheckCircle className="text-green-600" /> Quitar LanÃ§amento
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+                        <div className="ios-glass rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform animate-scale-up border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <div className="p-6 bg-black/5 border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                <h3 className="font-bold text-lg flex items-center gap-2" style={{ color: 'var(--ios-text)' }}>
+                                    <CheckCircle className="text-[#34c759]" /> Quitar Lançamento
                                 </h3>
-                                <p className="text-sm text-slate-500 mt-1">{payTrx.description}</p>
-                                <p className="text-xl font-bold text-slate-800 mt-2">{formatCurrency(payTrx.amount)}</p>
+                                <p className="text-sm mt-1" style={{ color: 'var(--ios-text-secondary)' }}>{payTrx.description}</p>
+                                <p className="text-xl font-black mt-2" style={{ color: 'var(--ios-text)' }}>{formatCurrency(payTrx.amount)}</p>
                             </div>
 
                             <div className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data do Pagamento</label>
+                                    <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: 'var(--ios-text-secondary)' }}>Data do Pagamento</label>
                                     <input
                                         type="date"
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500/20"
+                                        className="w-full bg-black/5 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#34c759]/20"
+                                        style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                         value={payFormData.date}
                                         onChange={e => setPayFormData({ ...payFormData, date: e.target.value })}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Forma de Pagamento</label>
+                                    <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: 'var(--ios-text-secondary)' }}>Forma de Pagamento</label>
                                     <select
-                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none bg-white font-medium text-slate-700"
+                                        className="w-full bg-black/5 border rounded-lg px-3 py-2 outline-none font-bold"
+                                        style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                         value={payFormData.payment_method}
                                         onChange={e => setPayFormData({ ...payFormData, payment_method: e.target.value as PaymentMethod })}
                                     >
-                                        <option value="DEBITO">DÃ©bito em Conta</option>
+                                        <option value="DEBITO">Débito em Conta</option>
                                         <option value="PIX">Pix</option>
-                                        <option value="DINHEIRO">Dinheiro (EspÃ©cie)</option>
-                                        <option value="CREDITO">CartÃ£o de CrÃ©dito</option>
+                                        <option value="DINHEIRO">Dinheiro (Espécie)</option>
+                                        <option value="CREDITO">Cartão de Crédito</option>
                                         <option value="BOLETO">Boleto (Pago)</option>
-                                        <option value="TRANSFERENCIA">TransferÃªncia</option>
+                                        <option value="TRANSFERENCIA">Transferência</option>
                                     </select>
                                 </div>
 
                                 {payFormData.payment_method === 'CREDITO' ? (
                                     <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Qual CartÃ£o?</label>
+                                        <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: 'var(--ios-text-secondary)' }}>Qual Cartão?</label>
                                         <select
-                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none bg-white font-medium text-slate-700"
+                                            className="w-full bg-black/5 border rounded-lg px-3 py-2 outline-none font-bold"
+                                            style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                             value={payFormData.card_id}
                                             onChange={e => setPayFormData({ ...payFormData, card_id: e.target.value })}
                                             required
@@ -1057,9 +1075,10 @@ export default function TransactionsView({
                                     </div>
                                 ) : (
                                     <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">De qual Conta saiu?</label>
+                                        <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: 'var(--ios-text-secondary)' }}>De qual Conta saiu?</label>
                                         <select
-                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none bg-white font-medium text-slate-700"
+                                            className="w-full bg-black/5 border rounded-lg px-3 py-2 outline-none font-bold"
+                                            style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                             value={payFormData.account_id}
                                             onChange={e => setPayFormData({ ...payFormData, account_id: e.target.value })}
                                             required
@@ -1071,35 +1090,36 @@ export default function TransactionsView({
                                 )}
 
                                 <div className="pt-2">
-                                    <label className="block text-[10px] font-bold text-blue-500 uppercase mb-1">Juros ou Multas Pagas (R$)</label>
+                                    <label className="block text-[10px] font-bold text-[#007aff] uppercase mb-1">Juros ou Multas Pagas (R$)</label>
                                     <div className="relative">
-                                        <TrendingDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
+                                        <TrendingDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#007aff]/60" />
                                         <input
                                             type="number"
                                             step="0.01"
-                                            className="w-full border border-blue-100 bg-blue-50/20 rounded-lg pl-9 pr-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/10 font-mono text-lg font-bold text-blue-700"
+                                            className="w-full bg-[#007aff]/5 border border-[#007aff]/20 rounded-lg pl-9 pr-3 py-3 outline-none focus:ring-2 focus:ring-[#007aff]/10 font-mono text-lg font-bold text-[#007aff]"
                                             value={payFormData.interest_amount}
                                             onChange={e => setPayFormData({ ...payFormData, interest_amount: e.target.value })}
                                             placeholder="0,00"
                                             onFocus={e => e.target.select()}
                                         />
                                     </div>
-                                    <p className="text-[9px] text-slate-400 mt-1">Este valor serÃ¡ somado ao total para fins de fluxo de caixa.</p>
+                                    <p className="text-[9px] mt-1" style={{ color: 'var(--ios-text-secondary)' }}>Este valor será somado ao total para fins de fluxo de caixa.</p>
                                 </div>
                             </div>
 
                             <div className="p-6 pt-0 flex gap-3">
                                 <button
                                     onClick={() => setIsPayModalOpen(false)}
-                                    className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors"
+                                    className="flex-1 py-3 font-bold hover:bg-black/5 rounded-xl transition-colors"
+                                    style={{ color: 'var(--ios-text-secondary)' }}
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleConfirmPay}
-                                    className="flex-[2] py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 transition-transform active:scale-95"
+                                    className="flex-[2] py-3 bg-[#34c759] hover:bg-[#2fb34f] text-white font-bold rounded-xl shadow-lg shadow-[#34c759]/20 transition-transform active:scale-95"
                                 >
-                                    Confirmar QuitaÃ§Ã£o
+                                    Confirmar Quitação
                                 </button>
                             </div>
                         </div>
@@ -1111,13 +1131,13 @@ export default function TransactionsView({
             {
                 isCategoryManagerOpen && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
-                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] border border-slate-200">
-                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <div className="ios-glass rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <div className="p-6 border-b flex justify-between items-center bg-black/5" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                 <div>
-                                    <h3 className="font-bold text-xl text-slate-800">ConfiguraÃ§Ã£o de Categorias</h3>
-                                    <p className="text-xs text-slate-500 mt-1">Personalize suas categorias e subcategorias</p>
+                                    <h3 className="font-bold text-xl" style={{ color: 'var(--ios-text)' }}>Configuração de Categorias</h3>
+                                    <p className="text-xs mt-1" style={{ color: 'var(--ios-text-secondary)' }}>Personalize suas categorias e subcategorias</p>
                                 </div>
-                                <button onClick={() => setIsCategoryManagerOpen(false)} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">&times;</button>
+                                <button onClick={() => setIsCategoryManagerOpen(false)} className="hover:bg-black/5 p-2 rounded-full transition-colors" style={{ color: 'var(--ios-text-secondary)' }}>&times;</button>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -1128,15 +1148,16 @@ export default function TransactionsView({
                                             setCategoryFormData({ name: '', color: '#6366f1', icon: 'Folder' });
                                             setIsCategoryModalOpen(true);
                                         }}
-                                        className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/10"
+                                        className="flex-1 py-3 bg-[var(--ios-text)] text-[var(--ios-bg)] rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-black/10"
                                     >
                                         <Plus size={16} /> Nova Categoria Principal
                                     </button>
                                     <button
                                         onClick={handleResetCategories}
-                                        className="px-4 py-3 border border-slate-200 text-slate-500 rounded-xl font-bold text-sm hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center gap-2"
+                                        className="px-4 py-3 border rounded-xl font-bold text-sm hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] transition-all flex items-center gap-2"
+                                        style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text-secondary)' }}
                                     >
-                                        <Trash size={16} /> Restaurar PadrÃµes
+                                        <Trash size={16} /> Restaurar Padrões
                                     </button>
                                 </div>
 
@@ -1145,12 +1166,12 @@ export default function TransactionsView({
                                     {parentCategories.map(parent => {
                                         const subs = subCategories.filter(s => s.parent_id === parent.id);
                                         return (
-                                            <div key={parent.id} className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/30">
-                                                <div className="p-4 bg-white flex items-center justify-between border-b border-slate-50">
+                                            <div key={parent.id} className="border rounded-2xl overflow-hidden bg-black/5" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                                <div className="p-4 bg-black/5 flex items-center justify-between border-b" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: parent.color }} />
-                                                        <span className="font-bold text-slate-700">{parent.name}</span>
-                                                        <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                                        <span className="font-bold" style={{ color: 'var(--ios-text)' }}>{parent.name}</span>
+                                                        <span className="text-[10px] bg-black/10 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider" style={{ color: 'var(--ios-text-secondary)' }}>
                                                             {subs.length} subcategorias
                                                         </span>
                                                     </div>
@@ -1160,13 +1181,13 @@ export default function TransactionsView({
                                                                 const newName = prompt('Novo nome para a categoria:', parent.name);
                                                                 if (newName) StorageService.saveCategory({ ...parent, name: newName }).then(loadData);
                                                             }}
-                                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            className="p-2 text-[var(--ios-text-secondary)] hover:text-[#007aff] hover:bg-[#007aff]/10 rounded-lg transition-colors"
                                                         >
                                                             <Edit size={16} />
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteCategory(parent.id)}
-                                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                            className="p-2 text-[var(--ios-text-secondary)] hover:text-[#ff3b30] hover:bg-[#ff3b30]/10 rounded-lg transition-colors"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -1176,14 +1197,14 @@ export default function TransactionsView({
                                                 <div className="p-4 flex flex-wrap gap-2">
                                                     {subs.map(sub => (
                                                         <div key={sub.id} className="group relative">
-                                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:border-blue-300 transition-all">
+                                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/5 border rounded-lg text-sm transition-all" style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text-secondary)' }}>
                                                                 {sub.name}
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         handleDeleteCategory(sub.id);
                                                                     }}
-                                                                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 transition-all"
+                                                                    className="opacity-0 group-hover:opacity-100 p-1 text-[var(--ios-text-secondary)] hover:text-[#ff3b30] transition-all"
                                                                 >
                                                                     <X size={12} />
                                                                 </button>
@@ -1205,7 +1226,8 @@ export default function TransactionsView({
                                                                 }).then(loadData);
                                                             }
                                                         }}
-                                                        className="px-3 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs font-bold text-slate-400 hover:border-blue-300 hover:text-blue-500 transition-all flex items-center gap-1"
+                                                        className="px-3 py-1.5 border border-dashed rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                                                        style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text-secondary)' }}
                                                     >
                                                         <Plus size={12} /> Adicionar
                                                     </button>
@@ -1216,8 +1238,8 @@ export default function TransactionsView({
                                 </div>
                             </div>
 
-                            <div className="p-6 bg-slate-50 border-t border-slate-100">
-                                <button onClick={() => setIsCategoryManagerOpen(false)} className="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all">
+                            <div className="p-6 bg-black/5 border-t" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                                <button onClick={() => setIsCategoryManagerOpen(false)} className="w-full py-3 bg-[#007aff]/10 hover:bg-[#007aff]/20 text-[#007aff] font-bold rounded-xl transition-all">
                                     Fechar Configurações
                                 </button>
                             </div>
@@ -1230,21 +1252,22 @@ export default function TransactionsView({
             {
                 isCategoryModalOpen && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
-                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-up border border-slate-200">
-                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <div className="ios-glass rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-up border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+                            <div className="p-6 border-b flex justify-between items-center bg-black/5" style={{ borderColor: 'var(--ios-glass-border)' }}>
                                 <div>
-                                    <h3 className="font-bold text-lg text-slate-800">Nova Categoria</h3>
-                                    <p className="text-xs text-slate-400">Criar uma nova categoria principal</p>
+                                    <h3 className="font-bold text-lg" style={{ color: 'var(--ios-text)' }}>Nova Categoria</h3>
+                                    <p className="text-xs" style={{ color: 'var(--ios-text-secondary)' }}>Criar uma nova categoria principal</p>
                                 </div>
-                                <button onClick={() => setIsCategoryModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">&times;</button>
+                                <button onClick={() => setIsCategoryModalOpen(false)} className="hover:bg-black/5 p-2 rounded-full transition-colors" style={{ color: 'var(--ios-text-secondary)' }}>&times;</button>
                             </div>
                             <form onSubmit={handleSaveCategory} className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Nome da Categoria</label>
+                                    <label className="block text-[10px] font-bold uppercase mb-2" style={{ color: 'var(--ios-text-secondary)' }}>Nome da Categoria</label>
                                     <input
                                         type="text"
                                         placeholder="Ex: Alimentação, Lazer..."
-                                        className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-900/10 font-medium"
+                                        className="w-full bg-black/5 border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#007aff]/20 font-bold"
+                                        style={{ borderColor: 'var(--ios-glass-border)', color: 'var(--ios-text)' }}
                                         value={categoryFormData.name}
                                         onChange={e => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
                                         autoFocus
@@ -1253,14 +1276,14 @@ export default function TransactionsView({
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Cor de Identificação</label>
+                                    <label className="block text-[10px] font-bold uppercase mb-2" style={{ color: 'var(--ios-text-secondary)' }}>Cor de Identificação</label>
                                     <div className="flex flex-wrap gap-2">
                                         {['#007aff', '#34c759', '#ff9500', '#ff3b30', '#30b0c7', '#ffcc00', '#af52de', '#ff2d55', '#5856d6', '#8e8e93'].map(color => (
                                             <button
                                                 key={color}
                                                 type="button"
                                                 onClick={() => setCategoryFormData({ ...categoryFormData, color })}
-                                                className={`w-8 h-8 rounded-full transition-all ${categoryFormData.color === color ? 'ring-2 ring-offset-2 ring-slate-900 scale-110 shadow-lg' : 'hover:scale-105'}`}
+                                                className={`w-8 h-8 rounded-full transition-all ${categoryFormData.color === color ? 'ring-2 ring-offset-2 ring-[#007aff] scale-110 shadow-lg' : 'hover:scale-105'}`}
                                                 style={{ backgroundColor: color }}
                                             />
                                         ))}
@@ -1271,13 +1294,14 @@ export default function TransactionsView({
                                     <button
                                         type="button"
                                         onClick={() => setIsCategoryModalOpen(false)}
-                                        className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors"
+                                        className="flex-1 py-3 font-bold hover:bg-black/5 rounded-xl transition-colors"
+                                        style={{ color: 'var(--ios-text-secondary)' }}
                                     >
                                         Cancelar
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-[2] py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg shadow-slate-900/20 transition-transform active:scale-95"
+                                        className="flex-[2] py-3 bg-[#007aff] hover:bg-[#0074f0] text-white font-bold rounded-xl shadow-lg shadow-[#007aff]/20 transition-transform active:scale-95"
                                     >
                                         Criar Categoria
                                     </button>
