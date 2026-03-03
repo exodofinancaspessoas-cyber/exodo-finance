@@ -448,7 +448,7 @@ export default function Dashboard({ currentMonth, onChangeMonth, onChangeView }:
       )}
 
       {/* ── HERO: Linha de Saldo ─────────────────────────────────────────── */}
-      <div id="hero-balance" className="relative ios-glass ios-squircle-lg p-8 shadow-2xl shadow-black/5 border" style={{ borderColor: 'var(--ios-glass-border)' }}>
+      <div id="hero-balance" className="relative ios-glass ios-squircle-lg overflow-hidden p-8 shadow-2xl shadow-black/5 border" style={{ borderColor: 'var(--ios-glass-border)' }}>
         <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#007aff]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10">
