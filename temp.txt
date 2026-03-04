@@ -1,0 +1,7 @@
+
+$SUPABASE_URL = "https://mozbwnrikotnrtrfifqn.supabase.co"
+# Using the service role key to simulate a request or I need a valid session token
+$SESSION_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." # I don't have a fresh one
+
+# Actually I can't easily simulate a session token.
+# But I can check the logs of the edge function.

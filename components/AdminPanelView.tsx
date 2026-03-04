@@ -395,9 +395,10 @@ export default function AdminPanelView() {
                                     <th className="px-6 py-4 text-left">Usuário</th>
                                     <th className="px-4 py-4 text-left">Status</th>
                                     <th className="px-4 py-4 text-left hidden md:table-cell">Dias</th>
-                                    <th className="px-4 py-4 text-right hidden md:table-cell">Saldo</th>
-                                    <th className="px-4 py-4 text-right hidden lg:table-cell">Transações</th>
-                                    <th className="px-4 py-4 text-left hidden lg:table-cell">Última Ativ.</th>
+                                    <th className="px-4 py-4 text-right">Recebimentos</th>
+                                    <th className="px-4 py-4 text-right text-gray-400">Pendente</th>
+                                    <th className="px-4 py-4 text-right hidden lg:table-cell">Saldo</th>
+                                    <th className="px-4 py-4 text-left hidden xl:table-cell">Última Ativ.</th>
                                     <th className="px-4 py-4 text-right">Ações</th>
                                 </tr>
                             </thead>
@@ -482,6 +483,7 @@ function UserRow({ user, onView, onUnblock, onExtend, onBlock, onDelete, actionL
     onBlock: () => void;
     onDelete: () => void;
     actionLoading: boolean;
+    key?: string;
 }) {
     const [open, setOpen] = useState(false);
 
@@ -497,13 +499,16 @@ function UserRow({ user, onView, onUnblock, onExtend, onBlock, onDelete, actionL
             <td className="px-4 py-4 hidden md:table-cell font-mono text-xs text-[var(--ios-text-secondary)]">
                 {user.status === 'BLOQUEADO' ? '—' : `${user.dias_restantes}d`}
             </td>
-            <td className="px-4 py-4 text-right hidden md:table-cell font-black text-xs" style={{ color: user.total_balance >= 0 ? '#34c759' : '#ff3b30' }}>
+            <td className="px-4 py-4 text-right font-black text-xs text-[#34c759]">
+                {formatCurrency(user.confirmed_income || 0)}
+            </td>
+            <td className="px-4 py-4 text-right font-bold text-xs text-gray-400">
+                {formatCurrency(user.pending_income || 0)}
+            </td>
+            <td className="px-4 py-4 text-right hidden lg:table-cell font-black text-xs" style={{ color: user.total_balance >= 0 ? '#34c759' : '#ff3b30' }}>
                 {formatCurrency(user.total_balance)}
             </td>
-            <td className="px-4 py-4 text-right hidden lg:table-cell text-[var(--ios-text-secondary)] text-xs font-mono">
-                {user.total_transactions}
-            </td>
-            <td className="px-4 py-4 hidden lg:table-cell text-[var(--ios-text-secondary)] text-xs font-mono">
+            <td className="px-4 py-4 hidden xl:table-cell text-[var(--ios-text-secondary)] text-xs font-mono">
                 {user.last_activity ? formatDate(user.last_activity) : '—'}
             </td>
             <td className="px-4 py-4 text-right">

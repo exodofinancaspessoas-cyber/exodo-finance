@@ -33,6 +33,8 @@ export interface AdminUser {
     notes: string | null;
     total_transactions: number;
     total_balance: number;
+    confirmed_income: number;
+    pending_income: number;
     last_activity: string | null;
     status: 'ATIVO' | 'EXPIRANDO' | 'EXPIRADO' | 'PRO' | 'BLOQUEADO';
     dias_restantes: number;

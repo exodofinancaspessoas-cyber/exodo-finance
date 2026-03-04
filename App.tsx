@@ -145,9 +145,11 @@ export default function App() {
     }
   }, []);
 
-  const handleLogin = (loggedUser: User) => {
+  const handleLogin = async (loggedUser: User) => {
     console.log('[App] handleLogin:', loggedUser.email);
     setUser(loggedUser);
+
+    // Safety: ensure we check the admin status immediately on login 
     if (loggedUser.email.toLowerCase() === ADMIN_EMAIL) {
       setCurrentView('admin');
     }
