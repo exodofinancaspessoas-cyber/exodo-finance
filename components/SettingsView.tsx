@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 /* UX Audit bypass: placeholder aria-label label */
-import { Settings, ShieldAlert, Trash2, RotateCcw, Database, AlertTriangle, CheckSquare, Square, X, Play, Sparkles, Sun, Moon, Monitor } from 'lucide-react';
+import { Settings, ShieldAlert, Trash2, RotateCcw, Database, AlertTriangle, CheckSquare, Square, X, Play, Sparkles, Sun, Moon, Monitor, Shield } from 'lucide-react';
 import { User } from '../types';
 import { StorageService } from '../services/storage';
+import { useIsAdmin } from '../hooks/useIsAdmin';
 
 type ResetOption = {
     id: string;
@@ -24,12 +25,15 @@ const RESET_OPTIONS: ResetOption[] = [
 export default function SettingsView({
     user,
     onUpdateTheme,
-    onRestartTour
+    onRestartTour,
+    onChangeView,
 }: {
     user: User,
     onUpdateTheme: (theme: 'light' | 'dark' | 'system') => void,
-    onRestartTour: () => void
+    onRestartTour: () => void,
+    onChangeView?: (view: string) => void,
 }) {
+    const isAdmin = useIsAdmin();
     const [isSaving, setIsSaving] = useState(false);
     const [isPartialModalOpen, setIsPartialModalOpen] = useState(false);
     const [selectedOptions, setSelectedOptions] = useState<Set<string>>(new Set(['transactions', 'recurring']));
@@ -95,6 +99,23 @@ export default function SettingsView({
             </div>
 
             <div className="grid grid-cols-1 gap-6">
+                {/* Admin Panel Button — visible only for admin */}
+                {isAdmin && (
+                    <button
+                        onClick={() => onChangeView?.('admin')}
+                        className="w-full flex items-center gap-4 p-5 ios-glass rounded-2xl border border-[#ff9500]/40 bg-[#ff9500]/5 hover:bg-[#ff9500]/10 transition-all group"
+                    >
+                        <div className="w-10 h-10 rounded-xl bg-[#ff9500]/10 flex items-center justify-center">
+                            <Shield size={20} className="text-[#ff9500]" />
+                        </div>
+                        <div className="text-left">
+                            <p className="font-black text-[var(--ios-text)] text-sm">Painel Admin</p>
+                            <p className="text-[10px] text-[var(--ios-text-secondary)] font-bold uppercase tracking-widest">Gerenciar usuários do sistema</p>
+                        </div>
+                        <div className="ml-auto text-[#ff9500] text-xs font-black uppercase tracking-widest opacity-70 group-hover:opacity-100">Acessar →</div>
+                    </button>
+                )}
+
                 {/* Appearance Section */}
                 <div className="ios-glass ios-squircle-lg border transition-all overflow-hidden" style={{ borderColor: 'var(--ios-glass-border)' }}>
                     <div className="p-6 border-b transition-colors" style={{ borderColor: 'var(--ios-glass-border)', backgroundColor: 'rgba(0,0,0,0.03)' }}>

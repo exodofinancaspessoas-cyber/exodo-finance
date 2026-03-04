@@ -26,6 +26,7 @@ import ActionManual from './components/ActionManual';
 import TransactionFormModal from './components/TransactionFormModal';
 import AgendaView from './components/AgendaView';
 import FluxoCaixaView from './components/FluxoCaixaView';
+import AdminPanelView from './components/AdminPanelView';
 import { Sparkles, Plus } from 'lucide-react';
 import FinanceChat from './components/FinanceChat';
 import { generateInsights } from './services/aiInsights';
@@ -203,11 +204,13 @@ export default function App() {
       case 'settings': return <SettingsView
         user={user}
         onUpdateTheme={handleUpdateTheme}
+        onChangeView={setCurrentView}
         onRestartTour={() => {
           localStorage.removeItem('onboarding_completed');
           setShowManual(true);
         }}
       />;
+      case 'admin': return <AdminPanelView />;
       case 'loading': return <div className="h-full w-full flex items-center justify-center font-bold text-slate-300">Carregando...</div>;
       default:
         return <Dashboard currentMonth={currentMonth} onChangeMonth={setCurrentMonth} onChangeView={setCurrentView} />;
