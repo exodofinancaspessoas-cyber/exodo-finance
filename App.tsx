@@ -32,9 +32,9 @@ import FinanceChat from './components/FinanceChat';
 import { generateInsights } from './services/aiInsights';
 
 export default function App() {
-  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL ?? '';
+  const ADMIN_EMAIL = 'exodofinancaspessoas@gmail.com';
   const [user, setUser] = useState<User | null>(null);
-  const isAdmin = !!user?.email && user.email === ADMIN_EMAIL;
+  const isAdmin = !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL;
   const [currentView, setCurrentView] = useState('dashboard');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -113,22 +113,21 @@ export default function App() {
     setUser(loadedUser);
 
     if (loadedUser) {
+      if (loadedUser.email && loadedUser.email.toLowerCase() === ADMIN_EMAIL) {
+        setCurrentView('admin');
+      }
+
       (async () => {
         try {
           console.log('[App] Starting recurring expenses processing...');
           await StorageService.processRecurringExpenses();
 
-          // Smart Onboarding: If user has accounts, they are not new.
-          // This prevents the tour from appearing even if they clear localStorage but keep their DB data.
           const accounts = await StorageService.getAccounts();
           if (accounts.length > 0 && !localStorage.getItem('onboarding_completed')) {
             localStorage.setItem('onboarding_completed', 'true');
             setShowManual(false);
           }
 
-          console.log('[App] Recurring expenses processing complete.');
-
-          // Compute insight count for sidebar badge
           const [txs, cats, accs, budgets, goals, recurring] = await Promise.all([
             StorageService.getTransactions(),
             StorageService.getCategories(),
@@ -147,7 +146,11 @@ export default function App() {
   }, []);
 
   const handleLogin = (loggedUser: User) => {
+    console.log('[App] handleLogin:', loggedUser.email);
     setUser(loggedUser);
+    if (loggedUser.email.toLowerCase() === ADMIN_EMAIL) {
+      setCurrentView('admin');
+    }
   };
 
   if (!user) {

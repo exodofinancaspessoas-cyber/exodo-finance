@@ -1,5 +1,7 @@
-export const APP_VERSION = '1.10.0'; // Admin Panel + User Management
-export const DEPLOY_DATE = '2026-03-04 13:49';
+export const APP_VERSION = '1.10.2'; // Hardcoded Admin Portal Fallback
+export const DEPLOY_DATE = '2026-03-04 14:35';
+
+
 
 
 export const VersionInfo = {

@@ -8,7 +8,8 @@ import {
 } from 'lucide-react';
 import { User } from '../types';
 import FinanceChat from './FinanceChat';
-import { VersionInfo } from '../version';
+import { VersionInfo } from '../version_info';
+
 import { hapticFeedback } from './ui/Skeleton';
 import { isSupabaseConfigured } from '../services/supabase';
 
@@ -119,7 +120,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-black text-[var(--ios-text)] truncate">{user.name}</p>
                             <p className="text-[9px] text-[var(--ios-text-secondary)] font-black uppercase tracking-wider flex items-center gap-1">
-                                v{VersionInfo.version}
+                                v{VersionInfo.version} • {user.email}
                                 {isSupabaseConfigured() ? (
                                     <Cloud size={10} className="text-[#34c759]" />
                                 ) : (
@@ -242,7 +243,7 @@ export default function Layout({ currentView, onChangeView, user, onLogout, onOp
                                 <div>
                                     <p className="font-black text-sm text-white leading-tight">{user.name}</p>
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                                        v{VersionInfo.version}
+                                        v{VersionInfo.version} • {user.email}
                                         {isSupabaseConfigured() ? (
                                             <Cloud size={9} className="text-emerald-500" />
                                         ) : (

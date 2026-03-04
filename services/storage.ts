@@ -7,7 +7,8 @@ import { DatabaseService } from './database';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { toISODate } from '../utils';
 import { INITIAL_CATEGORIES_DATA } from './initialCategories';
-import { APP_VERSION, DEPLOY_DATE } from '../version';
+import { APP_VERSION, DEPLOY_DATE } from '../version_info';
+
 
 const STORAGE_KEYS = {
     USER: 'exodo_user',
