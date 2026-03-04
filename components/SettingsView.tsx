@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Settings, ShieldAlert, Trash2, RotateCcw, Database, AlertTriangle, CheckSquare, Square, X, Play, Sparkles, Sun, Moon, Monitor, Shield } from 'lucide-react';
 import { User } from '../types';
 import { StorageService } from '../services/storage';
-import { useIsAdmin } from '../hooks/useIsAdmin';
 
 type ResetOption = {
     id: string;
@@ -33,7 +32,8 @@ export default function SettingsView({
     onRestartTour: () => void,
     onChangeView?: (view: string) => void,
 }) {
-    const isAdmin = useIsAdmin();
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL ?? '';
+    const isAdmin = !!user.email && user.email === adminEmail;
     const [isSaving, setIsSaving] = useState(false);
     const [isPartialModalOpen, setIsPartialModalOpen] = useState(false);
     const [selectedOptions, setSelectedOptions] = useState<Set<string>>(new Set(['transactions', 'recurring']));
