@@ -32,7 +32,9 @@ import FinanceChat from './components/FinanceChat';
 import { generateInsights } from './services/aiInsights';
 
 export default function App() {
+  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL ?? '';
   const [user, setUser] = useState<User | null>(null);
+  const isAdmin = !!user?.email && user.email === ADMIN_EMAIL;
   const [currentView, setCurrentView] = useState('dashboard');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -144,8 +146,38 @@ export default function App() {
     }
   }, []);
 
+  const handleLogin = (loggedUser: User) => {
+    setUser(loggedUser);
+  };
+
   if (!user) {
-    return <Auth onLogin={setUser} />;
+    return <Auth onLogin={handleLogin} />;
+  }
+
+  // Admin-only view: skip finance app entirely
+  if (isAdmin) {
+    return (
+      <div className="min-h-screen bg-[var(--ios-bg)] font-sans text-[var(--ios-text)]">
+        <div className="flex items-center justify-between px-8 py-5 border-b ios-glass" style={{ borderColor: 'var(--ios-glass-border)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center text-white font-black text-lg">Ê</div>
+            <div>
+              <h1 className="text-base font-black text-[var(--ios-text)] leading-tight">Êxodo Finance</h1>
+              <p className="text-[9px] font-black uppercase tracking-widest text-[#ff9500]">Painel Admin</p>
+            </div>
+          </div>
+          <button
+            onClick={() => { StorageService.logout(); setUser(null); }}
+            className="text-xs font-bold text-[var(--ios-text-secondary)] hover:text-[#ff3b30] transition-colors flex items-center gap-1.5"
+          >
+            Sair
+          </button>
+        </div>
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <AdminPanelView />
+        </div>
+      </div>
+    );
   }
 
   const renderView = () => {
